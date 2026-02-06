@@ -29,7 +29,7 @@ size default args "-d", "${DATA}/pmd/pmd-core",
   output 
     stdout digest 0x077687d8e9973f7028f08bc2c39e0cee67bb5b2a,
     stderr digest 0xda39a3ee5e6b4b0d3255bfef95601890afd80709,
-    "pmd-report.txt" digest(text) 0x9ac4266f6d867118bf6365f3c935b97526705c2c;
+    "pmd-report.txt" digest(text) 0x1d13a02c4acad144599488e196ddc1ea625dc80d;
 
 size large args "-d", "${DATA}/pmd/eclipse",
                 "-t", "${THREADS}",

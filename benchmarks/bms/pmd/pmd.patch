@@ -1,6 +1,790 @@
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/ast/DumpFacade.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/ast/DumpFacade.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/ast/DumpFacade.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/ast/DumpFacade.java	2026-07-04 23:56:28.066311196 +0100
+@@ -78,11 +78,11 @@
+             if (image != null) {
+                 writer.print(image);
+             }
+-            for (String extra : extras) {
++            extras.stream().forEach(extra -> {
+                 writer.print('(');
+                 writer.print(extra);
+                 writer.print(')');
+-            }
++            });
+         }
+ 
+         writer.println();
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/metrics/ApexMetrics.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/metrics/ApexMetrics.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/metrics/ApexMetrics.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/metrics/ApexMetrics.java	2026-07-04 23:56:28.066600461 +0100
+@@ -137,11 +137,11 @@
+     public static List<ASTMethod> findOps(ASTUserClassOrInterface<?> node) {
+         List<ASTMethod> candidates = node.findChildrenOfType(ASTMethod.class);
+         List<ASTMethod> result = new ArrayList<>(candidates);
+-        for (ASTMethod method : candidates) {
++        candidates.stream().forEach(method -> {
+             if (method.getImage().matches("(<clinit>|<init>|clone)")) {
+                 result.remove(method);
+             }
+-        }
++        });
+         return result;
+     }
+ }
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/AbstractApexRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/AbstractApexRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/AbstractApexRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/AbstractApexRule.java	2026-07-04 23:56:28.066801355 +0100
+@@ -137,11 +137,11 @@
+     }
+ 
+     protected void visitAll(List<? extends Node> nodes, RuleContext ctx) {
+-        for (Object element : nodes) {
++        nodes.stream().forEach((Object element) -> {
+             if (element instanceof ApexNode<?>) {
+                 ((ApexNode<?>) element).jjtAccept(this, ctx);
+             }
+-        }
++        });
+     }
+ 
+     /**
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/bestpractices/ApexUnitTestClassShouldHaveAssertsRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/bestpractices/ApexUnitTestClassShouldHaveAssertsRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/bestpractices/ApexUnitTestClassShouldHaveAssertsRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/bestpractices/ApexUnitTestClassShouldHaveAssertsRule.java	2026-07-04 23:56:28.067104654 +0100
+@@ -89,18 +89,11 @@
+         final List<ASTBlockStatement> blockStatements = node.findDescendantsOfType(ASTBlockStatement.class);
+         final List<ASTStatement> statements = new ArrayList<>();
+         final List<ASTMethodCallExpression> methodCalls = new ArrayList<>();
+-        for (ASTBlockStatement blockStatement : blockStatements) {
++        blockStatements.stream().forEach(blockStatement -> {
+             statements.addAll(blockStatement.findDescendantsOfType(ASTStatement.class));
+             methodCalls.addAll(blockStatement.findDescendantsOfType(ASTMethodCallExpression.class));
+-        }
+-        boolean isAssertFound = false;
+-
+-        for (final ASTMethodCallExpression methodCallExpression : methodCalls) {
+-            if (ASSERT_METHODS.contains(methodCallExpression.getFullMethodName().toLowerCase(Locale.ROOT))) {
+-                isAssertFound = true;
+-                break;
+-            }
+-        }
++        });
++        boolean isAssertFound = methodCalls.stream().anyMatch(methodCallExpression -> ASSERT_METHODS.contains(methodCallExpression.getFullMethodName().toLowerCase(Locale.ROOT)));
+ 
+         // If we didn't find assert method invocations the simple way and we have a
+         // configured pattern, try it
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/bestpractices/AvoidGlobalModifierRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/bestpractices/AvoidGlobalModifierRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/bestpractices/AvoidGlobalModifierRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/bestpractices/AvoidGlobalModifierRule.java	2026-07-04 23:56:28.067274177 +0100
+@@ -67,11 +67,6 @@
+ 
+     private boolean hasRestAnnotation(ASTModifierNode modifierNode) {
+         List<ASTAnnotation> annotations = modifierNode.findChildrenOfType(ASTAnnotation.class);
+-        for (ASTAnnotation annotation : annotations) {
+-            if (annotation.hasImageEqualTo("RestResource")) {
+-                return true;
+-            }
+-        }
+-        return false;
++        return annotations.stream().anyMatch(annotation -> annotation.hasImageEqualTo("RestResource"));
+     }
+ }
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/codestyle/FieldDeclarationsShouldBeAtStartRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/codestyle/FieldDeclarationsShouldBeAtStartRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/codestyle/FieldDeclarationsShouldBeAtStartRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/codestyle/FieldDeclarationsShouldBeAtStartRule.java	2026-07-04 23:56:28.067431347 +0100
+@@ -53,11 +53,11 @@
+             return data;
+         }
+ 
+-        for (ASTField field : fields) {
++        fields.stream().forEach(field -> {
+             if (NODE_BY_SOURCE_LOCATION_COMPARATOR.compare(field, firstNonFieldDeclaration.get()) > 0) {
+                 addViolation(data, field, field.getName());
+             }
+-        }
++        });
+ 
+         return data;
+     }
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/codestyle/VariableNamingConventionsRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/codestyle/VariableNamingConventionsRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/codestyle/VariableNamingConventionsRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/codestyle/VariableNamingConventionsRule.java	2026-07-04 23:56:28.067598478 +0100
+@@ -87,9 +87,9 @@
+         definePropertyDescriptor(CHECK_MEMBERS_DESCRIPTOR);
+         definePropertyDescriptor(CHECK_LOCALS_DESCRIPTOR);
+         definePropertyDescriptor(CHECK_PARAMETERS_DESCRIPTOR);
+-        for (PropertyDescriptor<List<String>> property : suffixOrPrefixProperties()) {
++        suffixOrPrefixProperties().stream().forEach(property -> {
+             definePropertyDescriptor(property);
+-        }
++        });
+ 
+         setProperty(CODECLIMATE_CATEGORIES, "Style");
+         // Note: x10 as Apex has not automatic refactoring
+@@ -231,12 +231,7 @@
+     }
+ 
+     public boolean hasPrefixesOrSuffixes() {
+-        for (PropertyDescriptor<List<String>> desc : suffixOrPrefixProperties()) {
+-            if (!getProperty(desc).isEmpty()) {
+-                return true;
+-            }
+-        }
+-        return false;
++        return suffixOrPrefixProperties().stream().anyMatch(desc -> !getProperty(desc).isEmpty());
+     }
+ 
+     @Override
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/errorprone/AvoidNonExistentAnnotationsRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/errorprone/AvoidNonExistentAnnotationsRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/errorprone/AvoidNonExistentAnnotationsRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/errorprone/AvoidNonExistentAnnotationsRule.java	2026-07-04 23:56:28.067813756 +0100
+@@ -59,11 +59,11 @@
+     }
+ 
+     private Object checkForNonExistentAnnotation(final ApexNode<?> node, final ASTModifierNode modifierNode, final Object data) {
+-        for (ASTAnnotation annotation : modifierNode.findChildrenOfType(ASTAnnotation.class)) {
++        modifierNode.findChildrenOfType(ASTAnnotation.class).stream().forEach(annotation -> {
+             if (!annotation.isResolved()) {
+                 addViolationWithMessage(data, node, "Use of non existent annotations will lead to broken Apex code which will not compile in the future.");
+             }
+-        }
++        });
+         return data;
+     }
+ }
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/errorprone/InaccessibleAuraEnabledGetterRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/errorprone/InaccessibleAuraEnabledGetterRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/errorprone/InaccessibleAuraEnabledGetterRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/errorprone/InaccessibleAuraEnabledGetterRule.java	2026-07-04 23:56:28.068011684 +0100
+@@ -33,7 +33,7 @@
+         if (hasAuraEnabledAnnotation(propModifiers)) {
+             // Find getters/setters if any
+             List<ASTMethod> methods = node.findChildrenOfType(ASTMethod.class);
+-            for (ASTMethod method : methods) {
++            methods.stream().forEach(method -> {
+                 // Find getter method
+                 if (!"void".equals(method.getReturnType())) {
+                     // Ensure getter is not private or protected
+@@ -42,7 +42,7 @@
+                         addViolation(data, node);
+                     }
+                 }
+-            }
++            });
+         }
+         return data;
+     }
+@@ -57,11 +57,6 @@
+ 
+     private boolean hasAuraEnabledAnnotation(ASTModifierNode modifierNode) {
+         List<ASTAnnotation> annotations = modifierNode.findChildrenOfType(ASTAnnotation.class);
+-        for (ASTAnnotation annotation : annotations) {
+-            if (annotation.hasImageEqualTo("AuraEnabled")) {
+-                return true;
+-            }
+-        }
+-        return false;
++        return annotations.stream().anyMatch(annotation -> annotation.hasImageEqualTo("AuraEnabled"));
+     }
+ }
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/errorprone/MethodWithSameNameAsEnclosingClassRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/errorprone/MethodWithSameNameAsEnclosingClassRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/errorprone/MethodWithSameNameAsEnclosingClassRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/errorprone/MethodWithSameNameAsEnclosingClassRule.java	2026-07-04 23:56:28.068209853 +0100
+@@ -27,13 +27,13 @@
+ 
+         List<ASTMethod> methods = node.findDescendantsOfType(ASTMethod.class);
+ 
+-        for (ASTMethod m : methods) {
++        methods.stream().forEach(m -> {
+             String methodName = m.getImage();
+ 
+             if (!m.isConstructor() && methodName.equalsIgnoreCase(className)) {
+                 addViolation(data, m);
+             }
+-        }
++        });
+ 
+         return data;
+     }
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexBadCryptoRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexBadCryptoRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexBadCryptoRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexBadCryptoRule.java	2026-07-04 23:56:28.068467200 +0100
+@@ -48,24 +48,24 @@
+         }
+ 
+         List<ASTFieldDeclaration> fieldDecl = node.findDescendantsOfType(ASTFieldDeclaration.class);
+-        for (ASTFieldDeclaration var : fieldDecl) {
++        fieldDecl.stream().forEach(var -> {
+             findSafeVariables(var);
+-        }
++        });
+ 
+         List<ASTVariableDeclaration> variableDecl = node.findDescendantsOfType(ASTVariableDeclaration.class);
+-        for (ASTVariableDeclaration var : variableDecl) {
++        variableDecl.stream().forEach(var -> {
+             findSafeVariables(var);
+-        }
++        });
+ 
+         List<ASTMethodCallExpression> methodCalls = node.findDescendantsOfType(ASTMethodCallExpression.class);
+-        for (ASTMethodCallExpression methodCall : methodCalls) {
++        methodCalls.stream().forEach(methodCall -> {
+             if (Helper.isMethodName(methodCall, CRYPTO, ENCRYPT) || Helper.isMethodName(methodCall, CRYPTO, DECRYPT)
+                     || Helper.isMethodName(methodCall, CRYPTO, ENCRYPT_WITH_MANAGED_IV)
+                     || Helper.isMethodName(methodCall, CRYPTO, DECRYPT_WITH_MANAGED_IV)) {
+ 
+                 validateStaticIVorKey(methodCall, data);
+             }
+-        }
++        });
+ 
+         potentiallyStaticBlob.clear();
+ 
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexDangerousMethodsRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexDangerousMethodsRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexDangerousMethodsRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexDangerousMethodsRule.java	2026-07-04 23:56:28.068738306 +0100
+@@ -56,7 +56,7 @@
+         collectBenignVariables(node);
+ 
+         List<ASTMethodCallExpression> methodCalls = node.findDescendantsOfType(ASTMethodCallExpression.class);
+-        for (ASTMethodCallExpression methodCall : methodCalls) {
++        methodCalls.stream().forEach(methodCall -> {
+             if (Helper.isMethodName(methodCall, CONFIGURATION, DISABLE_CRUD)) {
+                 addViolation(data, methodCall);
+             }
+@@ -64,7 +64,7 @@
+             if (Helper.isMethodName(methodCall, SYSTEM, DEBUG)) {
+                 validateParameters(methodCall, data);
+             }
+-        }
++        });
+ 
+         whiteListedVariables.clear();
+ 
+@@ -73,31 +73,31 @@
+ 
+     private void collectBenignVariables(ASTUserClass node) {
+         List<ASTField> fields = node.findDescendantsOfType(ASTField.class);
+-        for (ASTField field : fields) {
++        fields.stream().forEach(field -> {
+             if (BOOLEAN.equalsIgnoreCase(field.getType())) {
+                 whiteListedVariables.add(Helper.getFQVariableName(field));
+             }
+ 
+-        }
++        });
+ 
+         List<ASTVariableDeclaration> declarations = node.findDescendantsOfType(ASTVariableDeclaration.class);
+-        for (ASTVariableDeclaration decl : declarations) {
++        declarations.stream().forEach(decl -> {
+             if (BOOLEAN.equalsIgnoreCase(decl.getType())) {
+                 whiteListedVariables.add(Helper.getFQVariableName(decl));
+             }
+-        }
++        });
+ 
+     }
+ 
+     private void validateParameters(ASTMethodCallExpression methodCall, Object data) {
+         List<ASTVariableExpression> variables = methodCall.findDescendantsOfType(ASTVariableExpression.class);
+-        for (ASTVariableExpression var : variables) {
++        variables.stream().forEach(var -> {
+             if (REGEXP.matcher(var.getImage()).matches()) {
+                 if (!whiteListedVariables.contains(Helper.getFQVariableName(var))) {
+                     addViolation(data, methodCall);
+                 }
+             }
+-        }
++        });
+     }
+ 
+ }
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexOpenRedirectRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexOpenRedirectRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexOpenRedirectRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexOpenRedirectRule.java	2026-07-04 23:56:28.069036232 +0100
+@@ -44,24 +44,24 @@
+         }
+ 
+         List<ASTAssignmentExpression> assignmentExprs = node.findDescendantsOfType(ASTAssignmentExpression.class);
+-        for (ASTAssignmentExpression assignment : assignmentExprs) {
++        assignmentExprs.stream().forEach(assignment -> {
+             findSafeLiterals(assignment);
+-        }
++        });
+ 
+         List<ASTVariableDeclaration> variableDecls = node.findDescendantsOfType(ASTVariableDeclaration.class);
+-        for (ASTVariableDeclaration varDecl : variableDecls) {
++        variableDecls.stream().forEach(varDecl -> {
+             findSafeLiterals(varDecl);
+-        }
++        });
+ 
+         List<ASTField> fieldDecl = node.findDescendantsOfType(ASTField.class);
+-        for (ASTField fDecl : fieldDecl) {
++        fieldDecl.stream().forEach(fDecl -> {
+             findSafeLiterals(fDecl);
+-        }
++        });
+ 
+         List<ASTNewObjectExpression> newObjects = node.findDescendantsOfType(ASTNewObjectExpression.class);
+-        for (ASTNewObjectExpression newObj : newObjects) {
++        newObjects.stream().forEach(newObj -> {
+             checkNewObjects(newObj, data);
+-        }
++        });
+ 
+         listOfStringLiteralVariables.clear();
+ 
+@@ -148,18 +148,18 @@
+     private void getObjectValue(ApexNode<?> node, Object data) {
+         // PageReference(foo);
+         final List<ASTVariableExpression> variableExpressions = node.findChildrenOfType(ASTVariableExpression.class);
+-        for (ASTVariableExpression variable : variableExpressions) {
++        variableExpressions.stream().forEach(variable -> {
+             if (variable.getIndexInParent() == 0
+                     && !listOfStringLiteralVariables.contains(Helper.getFQVariableName(variable))) {
+                 addViolation(data, variable);
+             }
+-        }
++        });
+ 
+         // PageReference(foo + bar)
+         final List<ASTBinaryExpression> binaryExpressions = node.findChildrenOfType(ASTBinaryExpression.class);
+-        for (ASTBinaryExpression z : binaryExpressions) {
++        binaryExpressions.stream().forEach(z -> {
+             getObjectValue(z, data);
+-        }
++        });
+     }
+ 
+ }
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexSOQLInjectionRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexSOQLInjectionRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexSOQLInjectionRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexSOQLInjectionRule.java	2026-07-04 23:56:28.069320435 +0100
+@@ -66,40 +66,40 @@
+         }
+ 
+         final List<ASTMethod> methodExpr = node.findDescendantsOfType(ASTMethod.class);
+-        for (ASTMethod m : methodExpr) {
++        methodExpr.stream().forEach(m -> {
+             findSafeVariablesInSignature(m);
+-        }
++        });
+ 
+         final List<ASTFieldDeclaration> fieldExpr = node.findDescendantsOfType(ASTFieldDeclaration.class);
+-        for (ASTFieldDeclaration a : fieldExpr) {
++        fieldExpr.stream().forEach(a -> {
+             findSanitizedVariables(a);
+             findSelectContainingVariables(a);
+-        }
++        });
+ 
+         // String foo = String.escapeSignleQuotes(...);
+         final List<ASTVariableDeclaration> variableDecl = node.findDescendantsOfType(ASTVariableDeclaration.class);
+-        for (ASTVariableDeclaration a : variableDecl) {
++        variableDecl.stream().forEach(a -> {
+             findSanitizedVariables(a);
+             findSelectContainingVariables(a);
+-        }
++        });
+ 
+         // baz = String.escapeSignleQuotes(...);
+         final List<ASTAssignmentExpression> assignmentCalls = node.findDescendantsOfType(ASTAssignmentExpression.class);
+-        for (ASTAssignmentExpression a : assignmentCalls) {
++        assignmentCalls.stream().forEach(a -> {
+             findSanitizedVariables(a);
+             findSelectContainingVariables(a);
+-        }
++        });
+ 
+         // Database.query(...) check
+         final List<ASTMethodCallExpression> potentialDbQueryCalls = node
+                 .findDescendantsOfType(ASTMethodCallExpression.class);
+ 
+-        for (ASTMethodCallExpression m : potentialDbQueryCalls) {
++        potentialDbQueryCalls.stream().forEach(m -> {
+             if (!Helper.isTestMethodOrClass(m) && isQueryMethodCall(m)) {
+                 reportStrings(m, data);
+                 reportVariables(m, data);
+             }
+-        }
++        });
+ 
+         safeVariables.clear();
+         selectContainingVariables.clear();
+@@ -230,10 +230,10 @@
+     private void reportStrings(ASTMethodCallExpression m, Object data) {
+         final HashSet<ASTVariableExpression> setOfSafeVars = new HashSet<>();
+         final List<ASTStandardCondition> conditions = m.findDescendantsOfType(ASTStandardCondition.class);
+-        for (ASTStandardCondition c : conditions) {
++        conditions.stream().forEach(c -> {
+             List<ASTVariableExpression> vars = c.findDescendantsOfType(ASTVariableExpression.class);
+             setOfSafeVars.addAll(vars);
+-        }
++        });
+ 
+         final List<ASTBinaryExpression> binaryExpr = m.findChildrenOfType(ASTBinaryExpression.class);
+         for (ASTBinaryExpression b : binaryExpr) {
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexSuggestUsingNamedCredRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexSuggestUsingNamedCredRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexSuggestUsingNamedCredRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexSuggestUsingNamedCredRule.java	2026-07-04 23:56:28.069608276 +0100
+@@ -47,19 +47,19 @@
+         }
+ 
+         List<ASTVariableDeclaration> variableDecls = node.findDescendantsOfType(ASTVariableDeclaration.class);
+-        for (ASTVariableDeclaration varDecl : variableDecls) {
++        variableDecls.stream().forEach(varDecl -> {
+             findAuthLiterals(varDecl);
+-        }
++        });
+ 
+         List<ASTField> fieldDecl = node.findDescendantsOfType(ASTField.class);
+-        for (ASTField fDecl : fieldDecl) {
++        fieldDecl.stream().forEach(fDecl -> {
+             findFieldLiterals(fDecl);
+-        }
++        });
+ 
+         List<ASTMethodCallExpression> methodCalls = node.findDescendantsOfType(ASTMethodCallExpression.class);
+-        for (ASTMethodCallExpression method : methodCalls) {
++        methodCalls.stream().forEach(method -> {
+             flagAuthorizationHeaders(method, data);
+-        }
++        });
+ 
+         listOfAuthorizationVariables.clear();
+ 
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexXSSFromEscapeFalseRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexXSSFromEscapeFalseRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexXSSFromEscapeFalseRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexXSSFromEscapeFalseRule.java	2026-07-04 23:56:28.069873076 +0100
+@@ -36,11 +36,11 @@
+         }
+ 
+         List<ASTMethodCallExpression> methodCalls = node.findDescendantsOfType(ASTMethodCallExpression.class);
+-        for (ASTMethodCallExpression methodCall : methodCalls) {
++        methodCalls.stream().forEach(methodCall -> {
+             if (Helper.isMethodName(methodCall, ADD_ERROR)) {
+                 validateBooleanParameter(methodCall, data);
+             }
+-        }
++        });
+         return data;
+     }
+ 
+@@ -62,9 +62,9 @@
+ 
+     private void validateLiteralPresence(ASTMethodCallExpression methodCall, Object data) {
+         List<ASTVariableExpression> variables = methodCall.findDescendantsOfType(ASTVariableExpression.class);
+-        for (ASTVariableExpression v : variables) {
++        variables.stream().forEach(v -> {
+             addViolation(data, v);
+-        }
++        });
+     }
+ 
+ }
+diff '--color=auto' -ur ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexXSSFromURLParamRule.java ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexXSSFromURLParamRule.java
+--- ./pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexXSSFromURLParamRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-apex/src/main/java/net/sourceforge/pmd/lang/apex/rule/security/ApexXSSFromURLParamRule.java	2026-07-04 23:56:28.070111352 +0100
+@@ -109,11 +109,11 @@
+ 
+         List<ASTVariableExpression> nodes = node.findChildrenOfType(ASTVariableExpression.class);
+ 
+-        for (ASTVariableExpression varExpression : nodes) {
++        nodes.stream().forEach(varExpression -> {
+             if (urlParameterStrings.contains(Helper.getFQVariableName(varExpression))) {
+                 addViolation(data, nodes.get(0));
+             }
+-        }
++        });
+ 
+         return data;
+     }
+@@ -230,9 +230,9 @@
+             // Look for: foo + bar
+             final List<ASTBinaryExpression> ops = node.findChildrenOfType(ASTBinaryExpression.class);
+             if (!ops.isEmpty()) {
+-                for (ASTBinaryExpression o : ops) {
++                ops.stream().forEach(o -> {
+                     processBinaryExpression(o, data);
+-                }
++                });
+             }
+ 
+         }
+@@ -264,12 +264,12 @@
+         }
+ 
+         final List<ASTVariableExpression> nodes = node.findChildrenOfType(ASTVariableExpression.class);
+-        for (ASTVariableExpression n : nodes) {
++        nodes.stream().forEach(n -> {
+ 
+             if (urlParameterStrings.contains(Helper.getFQVariableName(n))) {
+                 addViolation(data, n);
+             }
+-        }
++        });
+     }
+ 
+ }
+diff '--color=auto' -ur ./pmd-core/src/main/java/net/sourceforge/pmd/lang/ast/AbstractNode.java ../build/pmd-core/src/main/java/net/sourceforge/pmd/lang/ast/AbstractNode.java
+--- ./pmd-core/src/main/java/net/sourceforge/pmd/lang/ast/AbstractNode.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-core/src/main/java/net/sourceforge/pmd/lang/ast/AbstractNode.java	2026-07-04 23:56:28.070489711 +0100
+@@ -10,6 +10,8 @@
+ import java.util.List;
+ import java.util.Objects;
+ import java.util.logging.Logger;
++import java.util.stream.Collectors;
++import java.util.stream.StreamSupport;
+ import javax.xml.parsers.DocumentBuilder;
+ import javax.xml.parsers.DocumentBuilderFactory;
+ import javax.xml.parsers.ParserConfigurationException;
+@@ -386,8 +388,7 @@
+ 
+     private static <T> void findDescendantsOfType(final Node node, final Class<? extends T> targetType, final List<T> results,
+                                                   final boolean crossFindBoundaries) {
+-
+-        for (Node child : node.children()) {
++        StreamSupport.stream(node.children().spliterator(), false).forEach(child -> {
+             if (targetType.isAssignableFrom(child.getClass())) {
+                 results.add(targetType.cast(child));
+             }
+@@ -395,18 +396,15 @@
+             if (crossFindBoundaries || !child.isFindBoundary()) {
+                 findDescendantsOfType(child, targetType, results, crossFindBoundaries);
+             }
+-        }
++        });
+     }
+ 
+     @Override
+     public <T> List<T> findChildrenOfType(final Class<T> targetType) {
+-        final List<T> list = new ArrayList<>();
+-        for (Node child : children()) {
+-            if (targetType.isInstance(child)) {
+-                list.add(targetType.cast(child));
+-            }
+-        }
+-        return list;
++        return StreamSupport.stream(children().spliterator(), false)
++                .filter(targetType::isInstance)
++                .map(targetType::cast)
++                .collect(Collectors.toCollection(ArrayList::new));
+     }
+ 
+     @Override
+@@ -465,18 +463,19 @@
+     }
+ 
+     private static <T> T getFirstDescendantOfType(final Class<T> descendantType, final Node node) {
+-        for (Node n1 : node.children()) {
+-            if (descendantType.isAssignableFrom(n1.getClass())) {
+-                return descendantType.cast(n1);
+-            }
+-            if (!n1.isFindBoundary()) {
+-                final T n2 = getFirstDescendantOfType(descendantType, n1);
+-                if (n2 != null) {
+-                    return n2;
+-                }
+-            }
+-        }
+-        return null;
++        return StreamSupport.stream(node.children().spliterator(), false)
++                .map(n1 -> {
++                    if (descendantType.isAssignableFrom(n1.getClass())) {
++                        return descendantType.cast(n1);
++                    } else if (!n1.isFindBoundary()) {
++                        return getFirstDescendantOfType(descendantType, n1);
++                    } else {
++                        return null;
++                    }
++                })
++                .filter(Objects::nonNull)
++                .findFirst()
++                .orElse(null);
+     }
+ 
+     @Override
+diff '--color=auto' -ur ./pmd-core/src/main/java/net/sourceforge/pmd/lang/internal/DefaultRulechainVisitor.java ../build/pmd-core/src/main/java/net/sourceforge/pmd/lang/internal/DefaultRulechainVisitor.java
+--- ./pmd-core/src/main/java/net/sourceforge/pmd/lang/internal/DefaultRulechainVisitor.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-core/src/main/java/net/sourceforge/pmd/lang/internal/DefaultRulechainVisitor.java	2026-07-04 23:56:28.070779922 +0100
+@@ -6,6 +6,7 @@
+ 
+ import java.util.Collections;
+ import java.util.List;
++import java.util.stream.StreamSupport;
+ 
+ import net.sourceforge.pmd.Rule;
+ import net.sourceforge.pmd.RuleContext;
+@@ -28,15 +29,12 @@
+ 
+     @Override
+     protected void indexNodes(List<Node> nodes, RuleContext ctx) {
+-        for (Node node : nodes) {
+-            indexNodeRec(node);
+-        }
++        nodes.stream().forEach(this::indexNodeRec);
+     }
+ 
+     protected void indexNodeRec(Node top) {
+         indexNode(top);
+-        for (Node child : top.children()) {
+-            indexNodeRec(child);
+-        }
++        StreamSupport.stream(top.children().spliterator(), false)
++                .forEach(this::indexNodeRec);
+     }
+ }
+diff '--color=auto' -ur ./pmd-core/src/main/java/net/sourceforge/pmd/lang/metrics/MetricsUtil.java ../build/pmd-core/src/main/java/net/sourceforge/pmd/lang/metrics/MetricsUtil.java
+--- ./pmd-core/src/main/java/net/sourceforge/pmd/lang/metrics/MetricsUtil.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-core/src/main/java/net/sourceforge/pmd/lang/metrics/MetricsUtil.java	2026-07-04 23:56:28.070994905 +0100
+@@ -7,6 +7,8 @@
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Objects;
++import java.util.stream.Collectors;
++import java.util.stream.StreamSupport;
+ 
+ import net.sourceforge.pmd.lang.ast.Node;
+ 
+@@ -55,13 +57,10 @@
+         Objects.requireNonNull(resultOption, "The result option must not be null");
+ 
+ 
+-        List<Double> values = new ArrayList<>();
+-        for (O op : ops) {
+-            if (key.supports(op)) {
+-                double val = computeMetric(key, op, options);
+-                values.add(val);
+-            }
+-        }
++        List<Double> values = StreamSupport.stream(ops.spliterator(), false)
++                .filter(key::supports)
++                .map(op -> computeMetric(key, op, options))
++                .collect(Collectors.toCollection(ArrayList::new));
+ 
+         // FUTURE use streams to do that when we upgrade the compiler to 1.8
+         switch (resultOption) {
+@@ -167,27 +166,25 @@
+     }
+ 
+     private static double sum(List<Double> values) {
+-        double sum = 0;
+-        for (double val : values) {
+-            sum += val;
+-        }
+-        return sum;
++        return values.stream().mapToDouble(Double::doubleValue).sum();
+     }
+ 
+ 
+     private static double highest(List<Double> values) {
+-        double highest = Double.NEGATIVE_INFINITY;
+-        for (double val : values) {
+-            if (val > highest) {
+-                highest = val;
+-            }
+-        }
++        double highest = values.stream()
++                .mapToDouble(Double::doubleValue)
++                .max()
++                .orElse(Double.NEGATIVE_INFINITY);
++
+         return highest == Double.NEGATIVE_INFINITY ? 0 : highest;
+     }
+ 
+ 
+     private static double average(List<Double> values) {
+-        return sum(values) / values.size();
++        return values.stream()
++                .mapToDouble(Double::doubleValue)
++                .average()
++                .orElse(Double.NaN);
+     }
+ 
+ 
+diff '--color=auto' -ur ./pmd-core/src/main/java/net/sourceforge/pmd/lang/rule/AbstractRuleChainVisitor.java ../build/pmd-core/src/main/java/net/sourceforge/pmd/lang/rule/AbstractRuleChainVisitor.java
+--- ./pmd-core/src/main/java/net/sourceforge/pmd/lang/rule/AbstractRuleChainVisitor.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-core/src/main/java/net/sourceforge/pmd/lang/rule/AbstractRuleChainVisitor.java	2026-07-04 23:58:50.960221778 +0100
+@@ -14,6 +14,7 @@
+ import java.util.Set;
+ import java.util.logging.Level;
+ import java.util.logging.Logger;
++import java.util.stream.Stream;
+ 
+ import net.sourceforge.pmd.Report;
+ import net.sourceforge.pmd.Rule;
+@@ -74,34 +75,39 @@
+ 
+         // For each RuleSet, only if this source file applies
+         try (TimedOperation to = TimeTracker.startOperation(TimedOperationCategory.RULECHAIN_RULE)) {
+-            for (Map.Entry<RuleSet, List<Rule>> entry : ruleSetRules.entrySet()) {
++            ruleSetRules.entrySet().stream().forEach(entry -> {
+                 RuleSet ruleSet = entry.getKey();
+                 if (!ruleSet.applies(ctx.getSourceCodeFile())) {
+-                    continue;
++                    return;
+                 }
+ 
+                 // For each rule, allow it to visit the nodes it desires
+-                for (Rule rule : entry.getValue()) {
+-                    int visits = 0;
++                entry.getValue().stream().forEach(rule -> {
+                     if (!RuleSet.applies(rule, ctx.getLanguageVersion())) {
+-                        continue;
++                        return;
+                     }
+                     // CPD-OFF
+                     try (TimedOperation rcto = TimeTracker.startOperation(TimedOperationCategory.RULECHAIN_RULE, rule.getName())) {
+                         ctx.setCurrentRule(rule);
+                         final List<String> nodeNames = rule.getRuleChainVisits();
+-                        for (int j = 0; j < nodeNames.size(); j++) {
+-                            List<Node> ns = nodeNameToNodes.get(nodeNames.get(j));
+-                            for (Node node : ns) {
+-                                // Visit with underlying Rule, not the RuleReference
+-                                Rule actualRule = rule;
+-                                while (actualRule instanceof RuleReference) {
+-                                    actualRule = ((RuleReference) actualRule).getRule();
+-                                }
+-                                visit(actualRule, node, ctx);
+-                            }
+-                            visits += ns.size();
+-                        }
++                        int visits = nodeNames.stream()
++                                .map(nodeNameToNodes::get)
++                                .mapToInt(ns -> {
++                                    ns.stream().forEach(node -> {
++                                        // Visit with underlying Rule, not the RuleReference
++                                        Rule actualRule = Stream.iterate(rule, r -> ((RuleReference) r).getRule())
++                                                .filter(r -> !(r instanceof RuleReference))
++                                                .findFirst()
++                                                .orElse(rule);
++
++                                        visit(actualRule, node, ctx);
++                                    });
++
++                                    return ns.size();
++                                })
++                                .sum();
++
++
+                         rcto.close(visits);
+                     } catch (RuntimeException e) {
+                         if (ctx.isIgnoreExceptions()) {
+@@ -118,8 +124,8 @@
+                         ctx.setCurrentRule(null);
+                     }
+                     // CPD-ON
+-                }
+-            }
++                });
++            });
+         }
+     }
+ 
 diff '--color=auto' -ur ./pmd-core/src/main/java/net/sourceforge/pmd/PMD.java ../build/pmd-core/src/main/java/net/sourceforge/pmd/PMD.java
---- ./pmd-core/src/main/java/net/sourceforge/pmd/PMD.java	2023-08-25 00:27:38.000000000 +0000
-+++ ../build/pmd-core/src/main/java/net/sourceforge/pmd/PMD.java	2023-08-29 06:11:36.676900539 +0000
+--- ./pmd-core/src/main/java/net/sourceforge/pmd/PMD.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-core/src/main/java/net/sourceforge/pmd/PMD.java	2026-07-04 23:56:28.071390365 +0100
 @@ -507,7 +507,7 @@
              TimeTracker.startGlobalTracking();
          }
@@ -11,8 +795,8 @@ diff '--color=auto' -ur ./pmd-core/src/main/java/net/sourceforge/pmd/PMD.java ..
          final Level oldLogLevel = LOG.getLevel();
          // Need to do this, since the static logger has already been initialized
 diff '--color=auto' -ur ./pmd-core/src/main/java/net/sourceforge/pmd/processor/MultiThreadProcessor.java ../build/pmd-core/src/main/java/net/sourceforge/pmd/processor/MultiThreadProcessor.java
---- ./pmd-core/src/main/java/net/sourceforge/pmd/processor/MultiThreadProcessor.java	2023-08-25 00:27:38.000000000 +0000
-+++ ../build/pmd-core/src/main/java/net/sourceforge/pmd/processor/MultiThreadProcessor.java	2023-08-29 06:45:59.592976444 +0000
+--- ./pmd-core/src/main/java/net/sourceforge/pmd/processor/MultiThreadProcessor.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-core/src/main/java/net/sourceforge/pmd/processor/MultiThreadProcessor.java	2026-07-04 23:56:28.071585468 +0100
 @@ -45,10 +45,20 @@
      @Override
      protected void collectReports(List<Renderer> renderers) {
@@ -35,8 +819,8 @@ diff '--color=auto' -ur ./pmd-core/src/main/java/net/sourceforge/pmd/processor/M
              Thread.currentThread().interrupt();
          } catch (final ExecutionException ee) {
 diff '--color=auto' -ur ./pmd-core/src/main/java/net/sourceforge/pmd/renderers/AbstractRenderer.java ../build/pmd-core/src/main/java/net/sourceforge/pmd/renderers/AbstractRenderer.java
---- ./pmd-core/src/main/java/net/sourceforge/pmd/renderers/AbstractRenderer.java	2023-08-25 00:27:38.000000000 +0000
-+++ ../build/pmd-core/src/main/java/net/sourceforge/pmd/renderers/AbstractRenderer.java	2023-08-29 06:11:36.676900539 +0000
+--- ./pmd-core/src/main/java/net/sourceforge/pmd/renderers/AbstractRenderer.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-core/src/main/java/net/sourceforge/pmd/renderers/AbstractRenderer.java	2026-07-04 23:56:28.071733997 +0100
 @@ -105,8 +105,6 @@
              this.writer.flush();
          } catch (IOException e) {
@@ -46,3 +830,1216 @@ diff '--color=auto' -ur ./pmd-core/src/main/java/net/sourceforge/pmd/renderers/A
          }
      }
  
+diff '--color=auto' -ur ./pmd-doc/src/main/java/net/sourceforge/pmd/docs/DeadLinksChecker.java ../build/pmd-doc/src/main/java/net/sourceforge/pmd/docs/DeadLinksChecker.java
+--- ./pmd-doc/src/main/java/net/sourceforge/pmd/docs/DeadLinksChecker.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-doc/src/main/java/net/sourceforge/pmd/docs/DeadLinksChecker.java	2026-07-04 23:56:28.071934117 +0100
+@@ -211,10 +211,10 @@
+             LOG.info("No errors found!");
+         } else {
+             LOG.warning("Found dead link(s):");
+-            for (Path file : joined.keySet()) {
++            joined.keySet().stream().forEach(file -> {
+                 System.err.println(rootDirectory.relativize(file).toString());
+                 joined.get(file).forEach(LOG::warning);
+-            }
++            });
+             throw new AssertionError("Dead links detected");
+         }
+     }
+diff '--color=auto' -ur ./pmd-doc/src/main/java/net/sourceforge/pmd/docs/RuleDocGenerator.java ../build/pmd-doc/src/main/java/net/sourceforge/pmd/docs/RuleDocGenerator.java
+--- ./pmd-doc/src/main/java/net/sourceforge/pmd/docs/RuleDocGenerator.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-doc/src/main/java/net/sourceforge/pmd/docs/RuleDocGenerator.java	2026-07-04 23:56:28.072137596 +0100
+@@ -105,9 +105,9 @@
+     }
+ 
+     private void ensureAllLanguages(Map<Language, List<RuleSet>> sortedRulesets) {
+-        for (Language language : LanguageRegistry.findWithRuleSupport()) {
++        LanguageRegistry.findWithRuleSupport().stream().forEach(language -> {
+             sortedRulesets.putIfAbsent(language, Collections.emptyList());
+-        }
++        });
+     }
+ 
+     private void generateSidebar(Map<Language, List<RuleSet>> sortedRulesets) throws IOException {
+@@ -122,7 +122,7 @@
+ 
+         List<RuleSet> rulesets = new ArrayList<>();
+         RuleSetLoader ruleSetLoader = new RuleSetLoader();
+-        for (String filename : additionalRulesets) {
++        additionalRulesets.stream().forEach(filename -> {
+             try {
+                 // do not take rulesets from pmd-test or pmd-core
+                 if (!filename.contains("pmd-test") && !filename.contains("pmd-core")) {
+@@ -134,7 +134,7 @@
+                 // ignore rulesets, we can't read
+                 LOG.log(Level.WARNING, "ruleset file " + filename + " ignored (" + e.getMessage() + ")", e);
+             }
+-        }
++        });
+         return rulesets;
+     }
+ 
+@@ -147,9 +147,9 @@
+                                                                                                                 TreeMap::new,
+                                                                                                                 Collectors.toCollection(ArrayList::new)));
+ 
+-        for (List<RuleSet> rulesetsOfOneLanguage : rulesetsByLanguage.values()) {
++        rulesetsByLanguage.values().stream().forEach(rulesetsOfOneLanguage -> {
+             rulesetsOfOneLanguage.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+-        }
++        });
+         return rulesetsByLanguage;
+     }
+ 
+@@ -194,13 +194,13 @@
+             lines.add("---");
+             lines.add(GENERATED_WARNING_NO_SOURCE);
+ 
+-            for (RuleSet ruleset : entry.getValue()) {
++            entry.getValue().stream().forEach(ruleset -> {
+                 lines.add("## " + ruleset.getName());
+                 lines.add("");
+                 lines.add("{% include callout.html content=\"" + getRuleSetDescriptionSingleLine(ruleset) + "\" %}");
+                 lines.add("");
+ 
+-                for (Rule rule : getSortedRules(ruleset)) {
++                getSortedRules(ruleset).stream().forEach(rule -> {
+                     String link = RULESET_INDEX_PERMALINK_PATTERN
+                             .replace("${language.tersename}", languageTersename)
+                             .replace("${ruleset.name}", RuleSetUtils.getRuleSetFilename(ruleset));
+@@ -228,16 +228,16 @@
+                                 + (rule.isDeprecated() ? DEPRECATION_LABEL_SMALL : "")
+                                 + getShortRuleDescription(rule));
+                     }
+-                }
++                });
+                 lines.add("");
+-            }
++            });
+ 
+             List<RuleSet> additionalRulesetsForLanguage = sortedAdditionalRulesets.get(entry.getKey());
+             if (additionalRulesetsForLanguage != null) {
+                 lines.add("## Additional rulesets");
+                 lines.add("");
+ 
+-                for (RuleSet ruleset : additionalRulesetsForLanguage) {
++                additionalRulesetsForLanguage.stream().forEach(ruleset -> {
+                     boolean deprecated = RuleSetUtils.isRuleSetDeprecated(ruleset);
+ 
+                     String rulesetName = ruleset.getName() + " (`" + RuleSetUtils.getRuleSetClasspath(ruleset) + "`)";
+@@ -257,7 +257,7 @@
+                     lines.add("    It contains the following rules:");
+                     lines.add("");
+                     StringBuilder rules = new StringBuilder();
+-                    for (Rule rule : getSortedRules(ruleset)) {
++                    getSortedRules(ruleset).stream().forEach(rule -> {
+                         if (rules.length() == 0) {
+                             rules.append("    ");
+                         } else {
+@@ -277,10 +277,10 @@
+                         } else {
+                             rules.append(rule.getName());
+                         }
+-                    }
++                    });
+                     lines.add(rules.toString());
+                     lines.add("");
+-                }
++                });
+                 lines.add("");
+             }
+ 
+@@ -357,7 +357,7 @@
+                 lines.add("---");
+                 lines.add(GENERATED_WARNING.replace("${source}", ruleSetSourceFilepath));
+ 
+-                for (Rule rule : getSortedRules(ruleset)) {
++                getSortedRules(ruleset).stream().forEach(rule -> {
+                     lines.add("## " + rule.getName());
+                     lines.add("");
+ 
+@@ -426,12 +426,12 @@
+                     if (!rule.getExamples().isEmpty()) {
+                         lines.add("**Example(s):**");
+                         lines.add("");
+-                        for (String example : rule.getExamples()) {
++                        rule.getExamples().stream().forEach(example -> {
+                             lines.add("``` " + mapLanguageForHighlighting(languageTersename));
+                             lines.addAll(toLines("{%raw%}" + StringUtils.stripToEmpty(example) + "{%endraw%}"));
+                             lines.add("```");
+                             lines.add("");
+-                        }
++                        });
+                     }
+ 
+                     List<PropertyDescriptor<?>> properties = new ArrayList<>(rule.getPropertyDescriptors());
+@@ -499,7 +499,7 @@
+                         lines.add("```");
+                         lines.add("");
+                     }
+-                }
++                });
+ 
+                 writer.write(path, lines);
+                 System.out.println("Generated " + path);
+@@ -591,11 +591,11 @@
+     }
+ 
+     private String getRuleSetKeywords(RuleSet ruleset) {
+-        List<String> ruleNames = new LinkedList<>();
+-        for (Rule rule : ruleset.getRules()) {
+-            ruleNames.add(rule.getName());
+-        }
+-        return ruleset.getName() + ", " + StringUtils.join(ruleNames, ", ");
++        String ruleNames = ruleset.getRules().stream()
++                .map(Rule::getName)
++                .collect(Collectors.joining(", "));
++
++        return ruleset.getName() + ", " + ruleNames;
+     }
+ 
+     private List<Rule> getSortedRules(RuleSet ruleset) {
+@@ -620,18 +620,15 @@
+         // this also provides a default fallback path, which is used in unit tests.
+         // if the actual file is found during walkFileTree, then the default fallback path
+         // is replaced by a correct path.
+-        for (List<RuleSet> rulesets : sortedRulesets.values()) {
+-            for (RuleSet ruleset : rulesets) {
+-                String rulesetFilename = RuleSetUtils.normalizeForwardSlashes(StringUtils.chomp(ruleset.getFileName()));
+-                allRulesets.put(ruleset.getFileName(), rulesetFilename);
+-                for (Rule rule : ruleset.getRules()) {
+-                    String ruleClass = rule.getRuleClass();
+-                    String relativeSourceFilename = ruleClass.replaceAll("\\.", Matcher.quoteReplacement(File.separator))
+-                            + ".java";
+-                    allRules.put(ruleClass, RuleSetUtils.normalizeForwardSlashes(relativeSourceFilename));
+-                }
+-            }
+-        }
++        sortedRulesets.values().stream().flatMap(Collection::stream).forEach(ruleset -> {
++            String rulesetFilename = RuleSetUtils.normalizeForwardSlashes(StringUtils.chomp(ruleset.getFileName()));
++            allRulesets.put(ruleset.getFileName(), rulesetFilename);
++            ruleset.getRules().stream().forEach(rule -> {
++                String ruleClass = rule.getRuleClass();
++                String relativeSourceFilename = ruleClass.replaceAll("\\.", Matcher.quoteReplacement(File.separator)) + ".java";
++                allRules.put(ruleClass, RuleSetUtils.normalizeForwardSlashes(relativeSourceFilename));
++            });
++        });
+ 
+         // then go and search the actual files
+         try {
+@@ -641,25 +638,23 @@
+                     String path = file.toString();
+ 
+                     if (path.contains("src")) {
+-                        String foundRuleClass = null;
+-                        for (Map.Entry<String, String> entry : allRules.entrySet()) {
+-                            if (path.endsWith(entry.getValue())) {
+-                                foundRuleClass = entry.getKey();
+-                                break;
+-                            }
+-                        }
++                        String foundRuleClass = allRules.entrySet()
++                                .stream()
++                                .filter(entry -> path.endsWith(entry.getValue()))
++                                .findFirst()
++                                .map(Map.Entry::getKey)
++                                .orElse(null);
+                         if (foundRuleClass != null) {
+                             Path foundPath = root.relativize(file);
+                             allRules.put(foundRuleClass, RuleSetUtils.normalizeForwardSlashes(foundPath.toString()));
+                         }
+ 
+-                        String foundRuleset = null;
+-                        for (Map.Entry<String, String> entry : allRulesets.entrySet()) {
+-                            if (path.endsWith(entry.getValue())) {
+-                                foundRuleset = entry.getKey();
+-                                break;
+-                            }
+-                        }
++                        String foundRuleset = allRulesets.entrySet()
++                                .stream()
++                                .filter(entry -> path.endsWith(entry.getValue()))
++                                .findFirst()
++                                .map(Map.Entry::getKey)
++                                .orElse(null);
+                         if (foundRuleset != null) {
+                             Path foundPath = root.relativize(file);
+                             allRulesets.put(foundRuleset, RuleSetUtils.normalizeForwardSlashes(foundPath.toString()));
+diff '--color=auto' -ur ./pmd-doc/src/main/java/net/sourceforge/pmd/docs/RuleSetUtils.java ../build/pmd-doc/src/main/java/net/sourceforge/pmd/docs/RuleSetUtils.java
+--- ./pmd-doc/src/main/java/net/sourceforge/pmd/docs/RuleSetUtils.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-doc/src/main/java/net/sourceforge/pmd/docs/RuleSetUtils.java	2026-07-04 23:56:28.072457600 +0100
+@@ -43,14 +43,9 @@
+      * @return
+      */
+     public static boolean isRuleSetDeprecated(RuleSet ruleset) {
+-        boolean result = true;
+-        for (Rule rule : ruleset.getRules()) {
+-            if (!(rule instanceof RuleReference) || !rule.isDeprecated()) {
+-                result = false;
+-                break;
+-            }
+-        }
+-        return result;
++        return ruleset.getRules()
++                .stream()
++                .noneMatch(rule -> !(rule instanceof RuleReference) || !rule.isDeprecated());
+     }
+ 
+     public static String getRuleSetClasspath(RuleSet ruleset) {
+diff '--color=auto' -ur ./pmd-doc/src/main/java/net/sourceforge/pmd/docs/SidebarGenerator.java ../build/pmd-doc/src/main/java/net/sourceforge/pmd/docs/SidebarGenerator.java
+--- ./pmd-doc/src/main/java/net/sourceforge/pmd/docs/SidebarGenerator.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-doc/src/main/java/net/sourceforge/pmd/docs/SidebarGenerator.java	2026-07-04 23:56:28.072611027 +0100
+@@ -56,7 +56,7 @@
+ 
+     List<Map<String, Object>> generateRuleReferenceSection(Map<Language, List<RuleSet>> sortedRulesets) {
+         List<Map<String, Object>> newFolderItems = new ArrayList<>();
+-        for (Map.Entry<Language, List<RuleSet>> entry : sortedRulesets.entrySet()) {
++        sortedRulesets.entrySet().stream().forEach(entry -> {
+             Map<String, Object> newFolderItem = new LinkedHashMap<>();
+             newFolderItem.put("title", null);
+             newFolderItem.put("output", "web, pdf");
+@@ -75,16 +75,16 @@
+             ruleIndexSubfolderItem.put("url", "/pmd_rules_" + entry.getKey().getTerseName() + ".html");
+             subfolderitems.add(ruleIndexSubfolderItem);
+ 
+-            for (RuleSet ruleset : entry.getValue()) {
++            entry.getValue().stream().forEach(ruleset -> {
+                 Map<String, Object> subfolderitem = new LinkedHashMap<>();
+                 subfolderitem.put("title", ruleset.getName());
+                 subfolderitem.put("output", "web, pdf");
+                 subfolderitem.put("url", "/pmd_rules_" + entry.getKey().getTerseName() + "_" + RuleSetUtils.getRuleSetFilename(ruleset) + ".html");
+                 subfolderitems.add(subfolderitem);
+-            }
++            });
+ 
+             newFolderItems.add(newFolderItem);
+-        }
++        });
+         return newFolderItems;
+     }
+ 
+diff '--color=auto' -ur ./pmd-doc/src/test/java/net/sourceforge/pmd/docs/RuleSetResolverTest.java ../build/pmd-doc/src/test/java/net/sourceforge/pmd/docs/RuleSetResolverTest.java
+--- ./pmd-doc/src/test/java/net/sourceforge/pmd/docs/RuleSetResolverTest.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-doc/src/test/java/net/sourceforge/pmd/docs/RuleSetResolverTest.java	2026-07-04 23:56:28.072776237 +0100
+@@ -39,13 +39,13 @@
+         assertFalse(additionalRulesets.isEmpty());
+ 
+         RuleSetFactory ruleSetFactory = RulesetsFactoryUtils.defaultFactory();
+-        for (String filename : additionalRulesets) {
++        additionalRulesets.stream().forEach(filename -> {
+             try {
+                 ruleSetFactory.createRuleSet(filename);
+             } catch (RuntimeException | RuleSetNotFoundException e) {
+                 fail("Couldn't load ruleset " + filename + ": " + e.getMessage());
+             }
+-        }
++        });
+     }
+ 
+     @Test
+diff '--color=auto' -ur ./pmd-html/src/main/java/net/sourceforge/pmd/lang/html/ast/HtmlTreeBuilder.java ../build/pmd-html/src/main/java/net/sourceforge/pmd/lang/html/ast/HtmlTreeBuilder.java
+--- ./pmd-html/src/main/java/net/sourceforge/pmd/lang/html/ast/HtmlTreeBuilder.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-html/src/main/java/net/sourceforge/pmd/lang/html/ast/HtmlTreeBuilder.java	2026-07-04 23:56:28.072980288 +0100
+@@ -27,11 +27,11 @@
+     }
+     
+     private void addChildren(HtmlNode parent, Node node) {
+-        for (Node child : node.childNodes()) {
++        node.childNodes().stream().forEach(child -> {
+             HtmlNode converted = convertJsoupNode(child);
+             parent.jjtAddChild(converted, parent.getNumChildren());
+             addChildren(converted, child);
+-        }
++        });
+     }
+ 
+     private HtmlNode convertJsoupNode(Node node) {
+diff '--color=auto' -ur ./pmd-html/src/main/java/net/sourceforge/pmd/lang/html/rule/AbstractHtmlRule.java ../build/pmd-html/src/main/java/net/sourceforge/pmd/lang/html/rule/AbstractHtmlRule.java
+--- ./pmd-html/src/main/java/net/sourceforge/pmd/lang/html/rule/AbstractHtmlRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-html/src/main/java/net/sourceforge/pmd/lang/html/rule/AbstractHtmlRule.java	2026-07-04 23:56:28.073127087 +0100
+@@ -29,11 +29,11 @@
+ 
+     @Override
+     public void apply(List<? extends Node> nodes, RuleContext ctx) {
+-        for (Node node : nodes) {
++        nodes.stream().forEach((Node node) -> {
+             if (node instanceof HtmlNode) {
+                 ((HtmlNode) node).acceptVisitor(this, ctx);
+             }
+-        }
++        });
+     }
+ 
+     //
+diff '--color=auto' -ur ./pmd-html/src/test/java/net/sourceforge/pmd/lang/html/HtmlJavaRuleTest.java ../build/pmd-html/src/test/java/net/sourceforge/pmd/lang/html/HtmlJavaRuleTest.java
+--- ./pmd-html/src/test/java/net/sourceforge/pmd/lang/html/HtmlJavaRuleTest.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-html/src/test/java/net/sourceforge/pmd/lang/html/HtmlJavaRuleTest.java	2026-07-04 23:56:28.073297446 +0100
+@@ -17,7 +17,6 @@
+ import net.sourceforge.pmd.lang.LanguageVersion;
+ import net.sourceforge.pmd.lang.Parser;
+ import net.sourceforge.pmd.lang.ast.Node;
+-import net.sourceforge.pmd.lang.ast.xpath.Attribute;
+ import net.sourceforge.pmd.lang.html.ast.ASTHtmlElement;
+ import net.sourceforge.pmd.lang.html.rule.AbstractHtmlRule;
+ 
+@@ -45,12 +44,12 @@
+ 
+             @Override
+             public Object visit(ASTHtmlElement node, Object data) {
+-                for (Attribute attribute : node.getAttributes()) {
++                node.getAttributes().stream().forEach(attribute -> {
+                     if ("{".equals(attribute.getValue())) {
+                         RuleContext ctx = (RuleContext) data;
+                         ctx.addViolation(node);
+                     }
+-                }
++                });
+                 return super.visit(node, data);
+             }
+         };
+diff '--color=auto' -ur ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/AbstractJavaRule.java ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/AbstractJavaRule.java
+--- ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/AbstractJavaRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/AbstractJavaRule.java	2026-07-04 23:56:28.073490109 +0100
+@@ -161,11 +161,10 @@
+     }
+ 
+     protected void visitAll(List<? extends Node> nodes, RuleContext ctx) {
+-        for (Object element : nodes) {
+-            if (element instanceof JavaNode) {
+-                ((JavaNode) element).jjtAccept(this, ctx);
+-            }
+-        }
++        nodes.stream()
++                .filter(JavaNode.class::isInstance)
++                .map(JavaNode.class::cast)
++                .forEach(element -> element.jjtAccept(this, ctx));
+     }
+ 
+     /**
+diff '--color=auto' -ur ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/design/AbstractNcssCountRule.java ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/design/AbstractNcssCountRule.java
+--- ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/design/AbstractNcssCountRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/design/AbstractNcssCountRule.java	2026-07-04 23:56:28.073721274 +0100
+@@ -4,6 +4,8 @@
+ 
+ package net.sourceforge.pmd.lang.java.rule.design;
+ 
++import java.util.stream.IntStream;
++
+ import net.sourceforge.pmd.annotation.InternalApi;
+ import net.sourceforge.pmd.lang.ast.Node;
+ import net.sourceforge.pmd.lang.java.ast.ASTBreakStatement;
+@@ -54,13 +56,10 @@
+ 
+     @Override
+     public Object visit(JavaNode node, Object data) {
+-        int numNodes = 0;
+-
+-        for (int i = 0; i < node.getNumChildren(); i++) {
+-            JavaNode n = (JavaNode) node.getChild(i);
+-            Integer treeSize = (Integer) n.jjtAccept(this, data);
+-            numNodes += treeSize.intValue();
+-        }
++        int numNodes = IntStream.range(0, node.getNumChildren())
++                .mapToObj(node::getChild)
++                .mapToInt(n -> (Integer) n.jjtAccept(this, data))
++                .sum();
+ 
+         if (this.nodeClass.isInstance(node)) {
+             // Add 1 to account for base node
+@@ -86,13 +85,11 @@
+      * @return count of the number of children of the node, plus one
+      */
+     protected Integer countNodeChildren(Node node, Object data) {
+-        Integer nodeCount = null;
+-        int lineCount = 0;
+-        for (int i = 0; i < node.getNumChildren(); i++) {
+-            nodeCount = (Integer) ((JavaNode) node.getChild(i)).jjtAccept(this, data);
+-            lineCount += nodeCount.intValue();
+-        }
+-        return ++lineCount;
++        return 1 + IntStream.range(0, node.getNumChildren())
++                .mapToObj(node::getChild)
++                .map(JavaNode.class::cast)
++                .mapToInt(javaNode -> (Integer) javaNode.jjtAccept(this, data))
++                .sum();
+     }
+ 
+     @Override
+diff '--color=auto' -ur ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/design/ExcessiveNodeCountRule.java ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/design/ExcessiveNodeCountRule.java
+--- ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/design/ExcessiveNodeCountRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/design/ExcessiveNodeCountRule.java	2026-07-04 23:56:28.073907250 +0100
+@@ -4,6 +4,8 @@
+ 
+ package net.sourceforge.pmd.lang.java.rule.design;
+ 
++import java.util.stream.IntStream;
++
+ import net.sourceforge.pmd.lang.java.ast.JavaNode;
+ import net.sourceforge.pmd.lang.java.rule.AbstractStatisticalJavaRule;
+ import net.sourceforge.pmd.stat.DataPoint;
+@@ -30,12 +32,10 @@
+ 
+     @Override
+     public Object visit(JavaNode node, Object data) {
+-        int numNodes = 0;
+-
+-        for (int i = 0; i < node.getNumChildren(); i++) {
+-            Integer treeSize = (Integer) ((JavaNode) node.getChild(i)).jjtAccept(this, data);
+-            numNodes += treeSize;
+-        }
++        int numNodes = IntStream.range(0, node.getNumChildren())
++                .mapToObj(node::getChild)
++                .mapToInt(child -> (Integer) child.jjtAccept(this, data))
++                .sum();
+ 
+         if (nodeClass.isInstance(node)) {
+             DataPoint point = new DataPoint();
+diff '--color=auto' -ur ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/design/TooManyFieldsRule.java ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/design/TooManyFieldsRule.java
+--- ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/design/TooManyFieldsRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/design/TooManyFieldsRule.java	2026-07-04 23:56:28.074055588 +0100
+@@ -34,16 +34,10 @@
+     @Override
+     public Object visit(ASTClassOrInterfaceDeclaration node, Object data) {
+         final int maxFields = getProperty(MAX_FIELDS_DESCRIPTOR);
+-        int counter = 0;
+-
+         final List<ASTFieldDeclaration> l = node.findDescendantsOfType(ASTFieldDeclaration.class);
+-
+-        for (ASTFieldDeclaration fd : l) {
+-            if (fd.isFinal() && fd.isStatic()) {
+-                continue;
+-            }
+-            counter++;
+-        }
++        int counter = (int) l.stream()
++                .filter(fd -> !fd.isFinal() || !fd.isStatic())
++                .count();
+ 
+         if (counter > maxFields) {
+             addViolation(data, node);
+diff '--color=auto' -ur ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/documentation/CommentRequiredRule.java ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/documentation/CommentRequiredRule.java
+--- ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/documentation/CommentRequiredRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/documentation/CommentRequiredRule.java	2026-07-04 23:56:28.074212666 +0100
+@@ -179,12 +179,10 @@
+ 
+     private boolean isAnnotatedOverride(ASTMethodDeclaration decl) {
+         List<ASTMarkerAnnotation> annotations = decl.getParent().findDescendantsOfType(ASTMarkerAnnotation.class);
+-        for (ASTMarkerAnnotation ann : annotations) { // TODO consider making a method to get the annotations of a method
+-            if ("Override".equals(ann.getFirstChildOfType(ASTName.class).getImage())) {
+-                return true;
+-            }
+-        }
+-        return false;
++        // TODO consider making a method to get the annotations of a method
++        return annotations.stream()
++                .map(a -> a.getFirstChildOfType(ASTName.class).getImage())
++                .anyMatch("Override"::equals);
+     }
+ 
+ 
+diff '--color=auto' -ur ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/errorprone/DataflowAnomalyAnalysisRule.java ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/errorprone/DataflowAnomalyAnalysisRule.java
+--- ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/errorprone/DataflowAnomalyAnalysisRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/rule/errorprone/DataflowAnomalyAnalysisRule.java	2026-07-04 23:56:28.074414418 +0100
+@@ -11,6 +11,7 @@
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
++import java.util.stream.StreamSupport;
+ 
+ import net.sourceforge.pmd.RuleContext;
+ import net.sourceforge.pmd.lang.ast.Node;
+@@ -105,24 +106,22 @@
+ 
+         Map<String, Usage> usagesByVarName = new HashMap<>();
+ 
+-        for (DataFlowNode inode : path) {
+-            if (inode.getVariableAccess() != null) {
+-                // iterate all variables of this node
+-                for (VariableAccess va : inode.getVariableAccess()) {
+-
+-                    // get the last usage of the current variable
+-                    Usage lastUsage = usagesByVarName.get(va.getVariableName());
+-                    if (lastUsage != null) {
+-                        // there was a usage to this variable before
+-                        checkVariableAccess(inode, va, lastUsage);
+-                    }
+-
+-                    Usage newUsage = new Usage(va.getAccessType(), inode);
+-                    // put the new usage for the variable
+-                    usagesByVarName.put(va.getVariableName(), newUsage);
+-                }
+-            }
+-        }
++        StreamSupport.stream(path.spliterator(), false)
++                .filter(inode -> inode.getVariableAccess() != null)
++                .forEach(inode -> {
++                    inode.getVariableAccess().stream().forEach(va -> {
++                        // get the last usage of the current variable
++                        Usage lastUsage = usagesByVarName.get(va.getVariableName());
++                        if (lastUsage != null) {
++                            // there was a usage to this variable before
++                            checkVariableAccess(inode, va, lastUsage);
++                        }
++
++                        Usage newUsage = new Usage(va.getAccessType(), inode);
++                        // put the new usage for the variable
++                        usagesByVarName.put(va.getVariableName(), newUsage);
++                    });
++                });
+     }
+ 
+     private void checkVariableAccess(DataFlowNode inode, VariableAccess va, final Usage u) {
+diff '--color=auto' -ur ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/typeresolution/ClassTypeResolver.java ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/typeresolution/ClassTypeResolver.java
+--- ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/typeresolution/ClassTypeResolver.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/typeresolution/ClassTypeResolver.java	2026-07-04 23:56:28.074677337 +0100
+@@ -19,8 +19,10 @@
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
++import java.util.OptionalInt;
+ import java.util.logging.Level;
+ import java.util.logging.Logger;
++import java.util.stream.IntStream;
+ 
+ import org.apache.commons.lang3.StringUtils;
+ 
+@@ -1520,7 +1522,7 @@
+ 
+     private ASTTypeParameter getTypeParameterDeclaration(Node startNode, String image) {
+         for (Node parent = startNode.getParent(); parent != null; parent = parent.getParent()) {
+-            ASTTypeParameters typeParameters = null;
++            final ASTTypeParameters typeParameters;
+ 
+             if (parent instanceof ASTTypeParameters) { // if type parameter defined in the same < >
+                 typeParameters = (ASTTypeParameters) parent;
+@@ -1528,14 +1530,20 @@
+                     || parent instanceof ASTMethodDeclaration
+                     || parent instanceof ASTClassOrInterfaceDeclaration) {
+                 typeParameters = parent.getFirstChildOfType(ASTTypeParameters.class);
++            } else {
++                typeParameters = null;
+             }
+ 
+             if (typeParameters != null) {
+-                for (int index = 0; index < typeParameters.getNumChildren(); ++index) {
+-                    String imageToCompareTo = typeParameters.getChild(index).getImage();
+-                    if (imageToCompareTo != null && imageToCompareTo.equals(image)) {
+-                        return (ASTTypeParameter) typeParameters.getChild(index);
+-                    }
++                OptionalInt targetIndex = IntStream.range(0, typeParameters.getNumChildren())
++                        .filter(index -> {
++                            String imageToCompareTo = typeParameters.getChild(index).getImage();
++                            return imageToCompareTo != null && imageToCompareTo.equals(image);
++                        })
++                        .findFirst();
++
++                if (targetIndex.isPresent()) {
++                    return (ASTTypeParameter) typeParameters.getChild(targetIndex.getAsInt());
+                 }
+             }
+         }
+diff '--color=auto' -ur ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/types/TypeTestUtil.java ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/types/TypeTestUtil.java
+--- ./pmd-java/src/main/java/net/sourceforge/pmd/lang/java/types/TypeTestUtil.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-java/src/main/java/net/sourceforge/pmd/lang/java/types/TypeTestUtil.java	2026-07-04 23:56:28.075043133 +0100
+@@ -6,6 +6,7 @@
+ 
+ import java.lang.reflect.Modifier;
+ import java.util.List;
++import java.util.Optional;
+ 
+ import net.sourceforge.pmd.internal.util.AssertionUtil;
+ import net.sourceforge.pmd.lang.java.ast.ASTAnnotation;
+@@ -223,25 +224,30 @@
+     }
+ 
+     private static boolean fallbackIsA(TypeNode n, String canonicalName, boolean considerSubtype) {
++        final TypeNode target;
+         if (n instanceof ASTAnnotation) {
+             // the annotation node has no image itself
+-            n = n.getFirstDescendantOfType(ASTName.class);
+-            assert n != null;
++            target = n.getFirstDescendantOfType(ASTName.class);
++            assert target != null;
++        } else {
++            target = n;
+         }
+ 
+-        if (n.getImage() != null && !n.getImage().contains(".") && canonicalName.contains(".")) {
++        if (target.getImage() != null && !target.getImage().contains(".") && canonicalName.contains(".")) {
+             // simple name detected, check the imports to get the full name and use that for fallback
+-            List<ASTImportDeclaration> imports = n.getRoot().findChildrenOfType(ASTImportDeclaration.class);
+-            for (ASTImportDeclaration importDecl : imports) {
+-                if (n.hasImageEqualTo(importDecl.getImportedSimpleName())) {
+-                    // found the import, compare the full names
+-                    return canonicalName.equals(importDecl.getImportedName());
+-                }
++            List<ASTImportDeclaration> imports = target.getRoot().findChildrenOfType(ASTImportDeclaration.class);
++            Optional<Boolean> fallbackIsA = imports.stream()
++                    .filter(importDecl -> target.hasImageEqualTo(importDecl.getImportedSimpleName()))
++                    .findFirst()
++                    .map(importDecl -> canonicalName.equals(importDecl.getImportedName()));
++
++            if (fallbackIsA.isPresent()) {
++                return fallbackIsA.get();
+             }
+         }
+ 
+-        if (n instanceof ASTAnyTypeDeclaration) {
+-            ASTAnyTypeDeclaration decl = (ASTAnyTypeDeclaration) n;
++        if (target instanceof ASTAnyTypeDeclaration) {
++            ASTAnyTypeDeclaration decl = (ASTAnyTypeDeclaration) target;
+             if (decl.getBinaryName().equals(canonicalName)) {
+                 return true;
+             } else if (!considerSubtype) { // otherwise fallthrough
+@@ -252,7 +258,7 @@
+         }
+ 
+         // fall back on using the simple name of the class only
+-        return canonicalName.equals(n.getImage()) || canonicalName.endsWith("." + n.getImage());
++        return canonicalName.equals(target.getImage()) || canonicalName.endsWith("." + target.getImage());
+     }
+ 
+     private static boolean isStrictSuperType(ASTAnyTypeDeclaration n, String binaryName) {
+diff '--color=auto' -ur ./pmd-java8/src/test/java/net/sourceforge/pmd/typeresolution/ClassTypeResolverJava8Test.java ../build/pmd-java8/src/test/java/net/sourceforge/pmd/typeresolution/ClassTypeResolverJava8Test.java
+--- ./pmd-java8/src/test/java/net/sourceforge/pmd/typeresolution/ClassTypeResolverJava8Test.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-java8/src/test/java/net/sourceforge/pmd/typeresolution/ClassTypeResolverJava8Test.java	2026-07-04 23:56:28.075244477 +0100
+@@ -83,9 +83,9 @@
+ 
+     private static <T> List<T> convertList(List<Node> nodes, Class<T> target) {
+         List<T> converted = new ArrayList<>();
+-        for (Node n : nodes) {
++        nodes.stream().forEach(n -> {
+             converted.add(target.cast(n));
+-        }
++        });
+         return converted;
+     }
+ 
+diff '--color=auto' -ur ./pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/ast/DumpFacade.java ../build/pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/ast/DumpFacade.java
+--- ./pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/ast/DumpFacade.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/ast/DumpFacade.java	2026-07-04 23:56:28.075455186 +0100
+@@ -198,11 +198,11 @@
+             if (image != null) {
+                 writer.print(image);
+             }
+-            for (String extra : extras) {
++            extras.stream().forEach(extra -> {
+                 writer.print('(');
+                 writer.print(extra);
+                 writer.print(')');
+-            }
++            });
+         }
+ 
+         writer.println();
+diff '--color=auto' -ur ./pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/ast/EcmascriptParser.java ../build/pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/ast/EcmascriptParser.java
+--- ./pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/ast/EcmascriptParser.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/ast/EcmascriptParser.java	2026-07-04 23:56:28.075620088 +0100
+@@ -71,14 +71,14 @@
+ 
+             suppressMap = new HashMap<>();
+             if (astRoot.getComments() != null) {
+-                for (Comment comment : astRoot.getComments()) {
++                astRoot.getComments().stream().forEach(comment -> {
+                     int nopmd = comment.getValue().indexOf(suppressMarker);
+                     if (nopmd > -1) {
+                         String suppression = comment.getValue().substring(nopmd + suppressMarker.length());
+                         EcmascriptNode<Comment> node = treeBuilder.build(comment);
+                         suppressMap.put(node.getBeginLine(), suppression);
+                     }
+-                }
++                });
+             }
+             return tree;
+         } catch (IOException e) {
+diff '--color=auto' -ur ./pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/ast/EcmascriptTreeBuilder.java ../build/pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/ast/EcmascriptTreeBuilder.java
+--- ./pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/ast/EcmascriptTreeBuilder.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/ast/EcmascriptTreeBuilder.java	2026-07-04 23:56:28.075775803 +0100
+@@ -255,7 +255,7 @@
+             // See https://github.com/pmd/pmd/issues/384
+             String trailingCommaLocalizedMessage = ScriptRuntime.getMessage0("msg.extra.trailing.comma");
+ 
+-            for (ParseProblem parseProblem : parseProblems) {
++            parseProblems.stream().forEach(parseProblem -> {
+ 
+                 // The node overlaps the comma (i.e. end of the problem)?
+                 int problemStart = parseProblem.getFileOffset();
+@@ -270,7 +270,7 @@
+                         }
+                     }
+                 }
+-            }
++            });
+         }
+     }
+ 
+diff '--color=auto' -ur ./pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/rule/AbstractEcmascriptRule.java ../build/pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/rule/AbstractEcmascriptRule.java
+--- ./pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/rule/AbstractEcmascriptRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-javascript/src/main/java/net/sourceforge/pmd/lang/ecmascript/rule/AbstractEcmascriptRule.java	2026-07-04 23:56:28.075980659 +0100
+@@ -95,11 +95,11 @@
+     }
+ 
+     protected void visitAll(List<? extends Node> nodes, RuleContext ctx) {
+-        for (Object element : nodes) {
++        nodes.stream().forEach((Object element) -> {
+             if (element instanceof EcmascriptNode<?>) {
+                 ((EcmascriptNode<?>) element).jjtAccept(this, ctx);
+             }
+-        }
++        });
+     }
+ 
+     //
+diff '--color=auto' -ur ./pmd-javascript/src/test/java/net/sourceforge/pmd/lang/ecmascript/DummyJsRule.java ../build/pmd-javascript/src/test/java/net/sourceforge/pmd/lang/ecmascript/DummyJsRule.java
+--- ./pmd-javascript/src/test/java/net/sourceforge/pmd/lang/ecmascript/DummyJsRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-javascript/src/test/java/net/sourceforge/pmd/lang/ecmascript/DummyJsRule.java	2026-07-04 23:56:28.076165951 +0100
+@@ -17,9 +17,9 @@
+ 
+     @Override
+     public void apply(List<? extends Node> nodes, RuleContext ctx) {
+-        for (Node node : nodes) {
++        nodes.stream().forEach((Node node) -> {
+             apply(node, ctx);
+-        }
++        });
+     }
+ 
+     public void apply(Node node, RuleContext ctx) {
+diff '--color=auto' -ur ./pmd-test/src/main/java/net/sourceforge/pmd/AbstractRuleSetFactoryTest.java ../build/pmd-test/src/main/java/net/sourceforge/pmd/AbstractRuleSetFactoryTest.java
+--- ./pmd-test/src/main/java/net/sourceforge/pmd/AbstractRuleSetFactoryTest.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-test/src/main/java/net/sourceforge/pmd/AbstractRuleSetFactoryTest.java	2026-07-04 23:56:28.076348182 +0100
+@@ -381,11 +381,10 @@
+     private String readFullyToString(InputStream inputStream) throws IOException {
+         StringBuilder buf = new StringBuilder(64 * 1024);
+         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+-            String line;
+-            while ((line = reader.readLine()) != null) {
++            reader.lines().forEach(line -> {
+                 buf.append(line);
+                 buf.append(PMD.EOL);
+-            }
++            });
+             return buf.toString();
+         }
+     }
+diff '--color=auto' -ur ./pmd-test/src/main/java/net/sourceforge/pmd/test/lang/DummyLanguageModule.java ../build/pmd-test/src/main/java/net/sourceforge/pmd/test/lang/DummyLanguageModule.java
+--- ./pmd-test/src/main/java/net/sourceforge/pmd/test/lang/DummyLanguageModule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-test/src/main/java/net/sourceforge/pmd/test/lang/DummyLanguageModule.java	2026-07-04 23:56:28.076546826 +0100
+@@ -68,14 +68,14 @@
+ 
+         @Override
+         protected void indexNodes(List<Node> nodes, RuleContext ctx) {
+-            for (Node n : nodes) {
++            nodes.stream().forEach(n -> {
+                 indexNode(n);
+                 List<Node> childs = new ArrayList<>();
+                 for (int i = 0; i < n.getNumChildren(); i++) {
+                     childs.add(n.getChild(i));
+                 }
+                 indexNodes(childs, ctx);
+-            }
++            });
+         }
+     }
+ 
+diff '--color=auto' -ur ./pmd-test/src/main/java/net/sourceforge/pmd/testframework/PMDTestRunner.java ../build/pmd-test/src/main/java/net/sourceforge/pmd/testframework/PMDTestRunner.java
+--- ./pmd-test/src/main/java/net/sourceforge/pmd/testframework/PMDTestRunner.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-test/src/main/java/net/sourceforge/pmd/testframework/PMDTestRunner.java	2026-07-04 23:56:28.076704370 +0100
+@@ -94,9 +94,9 @@
+ 
+     private Description createChildrenDescriptions(Runner runner, String suiteName) {
+         Description suite = Description.createSuiteDescription(suiteName);
+-        for (Description child : runner.getDescription().getChildren()) {
++        runner.getDescription().getChildren().stream().forEach(child -> {
+             suite.addChild(child);
+-        }
++        });
+         return suite;
+     }
+ 
+diff '--color=auto' -ur ./pmd-test/src/main/java/net/sourceforge/pmd/testframework/RuleTestRunner.java ../build/pmd-test/src/main/java/net/sourceforge/pmd/testframework/RuleTestRunner.java
+--- ./pmd-test/src/main/java/net/sourceforge/pmd/testframework/RuleTestRunner.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-test/src/main/java/net/sourceforge/pmd/testframework/RuleTestRunner.java	2026-07-04 23:56:28.076882781 +0100
+@@ -67,17 +67,17 @@
+         rules.sort(Comparator.comparing(Rule::getName));
+ 
+         List<TestDescriptor> tests = new ArrayList<>();
+-        for (Rule r : rules) {
++        rules.stream().forEach(r -> {
+             RuleTestCollection ruleTests = instance.parseTestCollection(r);
+             RuleTestDescriptor focused = ruleTests.getFocusedTestOrNull();
+-            for (RuleTestDescriptor t : ruleTests.getTests()) {
++            ruleTests.getTests().stream().forEach(t -> {
+                 TestDescriptor td = new TestDescriptor(t);
+                 if (focused != null && !focused.equals(t)) {
+                     td.setRegressionTest(false); // disable it
+                 }
+                 tests.add(td);
+-            }
+-        }
++            });
++        });
+ 
+         return tests;
+     }
+diff '--color=auto' -ur ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ApexClassPropertyTypes.java ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ApexClassPropertyTypes.java
+--- ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ApexClassPropertyTypes.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ApexClassPropertyTypes.java	2026-07-04 23:56:28.077073180 +0100
+@@ -13,7 +13,6 @@
+ import java.util.logging.Logger;
+ 
+ import org.apache.commons.lang3.exception.ContextedRuntimeException;
+-import org.apache.commons.lang3.tuple.Pair;
+ 
+ import net.sourceforge.pmd.lang.LanguageRegistry;
+ import net.sourceforge.pmd.lang.LanguageVersion;
+@@ -49,9 +48,9 @@
+                         Node node = parser.parse(apexFilePath.toString(), reader);
+                         ApexClassPropertyTypesVisitor visitor = new ApexClassPropertyTypesVisitor();
+                         visitor.visit((ApexNode<?>) node, null);
+-                        for (Pair<String, String> variable : visitor.getVariables()) {
++                        visitor.getVariables().stream().forEach(variable -> {
+                             putDataType(variable.getKey(), DataType.fromTypeName(variable.getValue()));
+-                        }
++                        });
+                     } catch (IOException e) {
+                         throw new ContextedRuntimeException(e)
+                                 .addContextValue("expression", expression)
+diff '--color=auto' -ur ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ApexClassPropertyTypesVisitor.java ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ApexClassPropertyTypesVisitor.java
+--- ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ApexClassPropertyTypesVisitor.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ApexClassPropertyTypesVisitor.java	2026-07-04 23:56:28.077224372 +0100
+@@ -59,9 +59,9 @@
+             StringBuilder sb = new StringBuilder();
+             List<ASTUserClass> parents = node.getParentsOfType(ASTUserClass.class);
+             Collections.reverse(parents);
+-            for (ASTUserClass parent : parents) {
++            parents.stream().forEach(parent -> {
+                 sb.append(parent.getImage()).append(".");
+-            }
++            });
+             String name = node.getImage();
+             for (String prefix : new String[]{BEAN_GETTER_PREFIX, PROPERTY_PREFIX_ACCESSOR}) {
+                 if (name.startsWith(prefix)) {
+diff '--color=auto' -ur ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ast/DumpFacade.java ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ast/DumpFacade.java
+--- ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ast/DumpFacade.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ast/DumpFacade.java	2026-07-04 23:56:28.077374403 +0100
+@@ -92,11 +92,11 @@
+             if (image != null) {
+                 writer.print(image);
+             }
+-            for (String extra : extras) {
++            extras.stream().forEach(extra -> {
+                 writer.print('(');
+                 writer.print(extra);
+                 writer.print(')');
+-            }
++            });
+         }
+ 
+         writer.println();
+diff '--color=auto' -ur ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ObjectFieldTypes.java ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ObjectFieldTypes.java
+--- ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ObjectFieldTypes.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/ObjectFieldTypes.java	2026-07-04 23:56:28.077519276 +0100
+@@ -224,9 +224,9 @@
+      * visualforce page.
+      */
+     private void addStandardFields(String customObjectName) {
+-        for (Map.Entry<String, DataType> entry : STANDARD_FIELD_TYPES.entrySet()) {
++        STANDARD_FIELD_TYPES.entrySet().stream().forEach(entry -> {
+             putDataType(customObjectName + "." + entry.getKey(), entry.getValue());
+-        }
++        });
+     }
+ 
+     /**
+diff '--color=auto' -ur ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/rule/AbstractVfRule.java ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/rule/AbstractVfRule.java
+--- ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/rule/AbstractVfRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/rule/AbstractVfRule.java	2026-07-04 23:56:28.077684109 +0100
+@@ -45,11 +45,11 @@
+     }
+ 
+     protected void visitAll(List<? extends Node> nodes, RuleContext ctx) {
+-        for (Object element : nodes) {
++        nodes.stream().forEach((Object element) -> {
+             if (element instanceof VfNode) {
+                 ((VfNode) element).jjtAccept(this, ctx);
+             }
+-        }
++        });
+     }
+ 
+     //
+diff '--color=auto' -ur ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/rule/security/internal/ElEscapeDetector.java ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/rule/security/internal/ElEscapeDetector.java
+--- ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/rule/security/internal/ElEscapeDetector.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/rule/security/internal/ElEscapeDetector.java	2026-07-04 23:56:28.077905127 +0100
+@@ -136,13 +136,8 @@
+         // Just because there's nothing immediately wrong with this node doesn't mean its children are guaranteed to be
+         // fine. Iterate over all of the children and make a recursive call. If any of those calls return false, we need
+         // to relay that back up the chain.
+-        for (ASTExpression e : relevantChildren) {
+-            if (!expressionRecursivelyValid(e, escapes)) {
+-                return false;
+-            }
+-        }
+         // If we didn't find a reason to return false, we're good. Return true.
+-        return true;
++        return relevantChildren.stream().allMatch(e -> expressionRecursivelyValid(e, escapes));
+     }
+ 
+     /**
+@@ -155,12 +150,7 @@
+         // If one of the escapes we were passed is ANY, then we should replace the provided set with one that contains
+         // all possible escapes.
+         EnumSet<Escaping> handledEscapes = escapes.contains(Escaping.ANY) ? EnumSet.allOf(Escaping.class) : escapes;
+-        for (Escaping e : handledEscapes) {
+-            if (functionName.equalsIgnoreCase(e.toString())) {
+-                return true;
+-            }
+-        }
+-        return false;
++        return handledEscapes.stream().anyMatch(e -> functionName.equalsIgnoreCase(e.toString()));
+     }
+ 
+     /**
+@@ -222,12 +212,12 @@
+ 
+             // Add each of the targeted arguments to the return array if they represent an Expression node. (They always
+             // should, but better safe than sorry.)
+-            for (int i : indicesToCheck) {
++            indicesToCheck.stream().mapToInt(Integer::intValue).forEach(i -> {
+                 VfNode ithArg = arguments.getChild(i);
+                 if (ithArg instanceof ASTExpression) {
+                     exprs.add((ASTExpression) ithArg);
+                 }
+-            }
++            });
+         }
+         return exprs;
+     }
+@@ -366,13 +356,7 @@
+      */
+     private static boolean expressionContainsSafeDataNodes(ASTExpression expression) {
+         try {
+-            for (VfTypedNode node : expression.getDataNodes().keySet()) {
+-                if (!typedNodeIsSafe(node)) {
+-                    return false;
+-                }
+-            }
+-
+-            return true;
++            return expression.getDataNodes().keySet().stream().allMatch(node -> typedNodeIsSafe(node));
+         } catch (ASTExpression.DataNodeStateException e) {
+             return false;
+         }
+diff '--color=auto' -ur ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/rule/security/VfUnescapeElRule.java ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/rule/security/VfUnescapeElRule.java
+--- ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/rule/security/VfUnescapeElRule.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/rule/security/VfUnescapeElRule.java	2026-07-04 23:56:28.078120473 +0100
+@@ -153,9 +153,9 @@
+         }
+ 
+         if (isEL) {
+-            for (ASTElExpression expr : toReport) {
++            toReport.stream().forEach(expr -> {
+                 addViolation(data, expr);
+-            }
++            });
+         }
+ 
+     }
+@@ -186,9 +186,9 @@
+         }
+ 
+         if (isEL) {
+-            for (ASTElExpression expr : toReport) {
++            toReport.stream().forEach(expr -> {
+                 addViolation(data, expr);
+-            }
++            });
+         }
+ 
+     }
+@@ -262,15 +262,15 @@
+         }
+ 
+         if (hasPlaceholders && isUnescaped) {
+-            for (ASTElExpression expr : hasELInInnerElements(node)) {
++            hasELInInnerElements(node).stream().forEach(expr -> {
+                 addViolation(data, expr);
+-            }
++            });
+         }
+ 
+         if (isEL && isUnescaped) {
+-            for (ASTElExpression expr : toReport) {
++            toReport.stream().forEach(expr -> {
+                 addViolation(data, expr);
+-            }
++            });
+         }
+     }
+ 
+diff '--color=auto' -ur ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/SalesforceFieldTypes.java ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/SalesforceFieldTypes.java
+--- ./pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/SalesforceFieldTypes.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-visualforce/src/main/java/net/sourceforge/pmd/lang/vf/SalesforceFieldTypes.java	2026-07-04 23:56:28.078300295 +0100
+@@ -55,13 +55,13 @@
+         } else {
+             Path vfFilePath = Paths.get(vfFileName);
+             List<Path> resolvedPaths = new ArrayList<>();
+-            for (String metadataDirectory : metadataDirectories) {
++            metadataDirectories.stream().forEach(metadataDirectory -> {
+                 if (Paths.get(metadataDirectory).isAbsolute()) {
+                     resolvedPaths.add(Paths.get(metadataDirectory));
+                 } else {
+                     resolvedPaths.add(vfFilePath.getParent().resolve(metadataDirectory));
+                 }
+-            }
++            });
+ 
+             findDataType(expression, resolvedPaths);
+             variableNameProcessed.add(lowerExpression);
+diff '--color=auto' -ur ./pmd-visualforce/src/test/java/net/sourceforge/pmd/lang/vf/ApexClassPropertyTypesVisitorTest.java ../build/pmd-visualforce/src/test/java/net/sourceforge/pmd/lang/vf/ApexClassPropertyTypesVisitorTest.java
+--- ./pmd-visualforce/src/test/java/net/sourceforge/pmd/lang/vf/ApexClassPropertyTypesVisitorTest.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-visualforce/src/test/java/net/sourceforge/pmd/lang/vf/ApexClassPropertyTypesVisitorTest.java	2026-07-04 23:56:28.078473663 +0100
+@@ -48,11 +48,11 @@
+         List<Pair<String, String>> variables = visitor.getVariables();
+         assertEquals(7, variables.size());
+         Map<String, String> variableNameToVariableType = new Hashtable<>();
+-        for (Pair<String, String> variable : variables) {
++        variables.stream().forEach(variable -> {
+             // Map the values and ensure there were no duplicates
+             String previous = variableNameToVariableType.put(variable.getKey(), variable.getValue());
+             assertNull(variable.getKey(), previous);
+-        }
++        });
+ 
+         assertTrue("ID".equalsIgnoreCase(variableNameToVariableType.get("ApexController.AccountIdProp")));
+         assertTrue("ID".equalsIgnoreCase(variableNameToVariableType.get("ApexController.AccountId")));
+diff '--color=auto' -ur ./pmd-visualforce/src/test/java/net/sourceforge/pmd/lang/vf/VfExpressionTypeVisitorTest.java ../build/pmd-visualforce/src/test/java/net/sourceforge/pmd/lang/vf/VfExpressionTypeVisitorTest.java
+--- ./pmd-visualforce/src/test/java/net/sourceforge/pmd/lang/vf/VfExpressionTypeVisitorTest.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-visualforce/src/test/java/net/sourceforge/pmd/lang/vf/VfExpressionTypeVisitorTest.java	2026-07-04 23:56:28.078637789 +0100
+@@ -61,18 +61,18 @@
+     public void testXpathQueryForCustomFieldIdentifiers() throws FileNotFoundException {
+         Node rootNode = compile("StandardAccount.page");
+ 
+-        for (Map.Entry<String, DataType> entry : EXPECTED_CUSTOM_FIELD_DATA_TYPES.entrySet()) {
++        EXPECTED_CUSTOM_FIELD_DATA_TYPES.entrySet().stream().forEach(entry -> {
+             String xpath = String.format("//Identifier[@Image='%s' and @DataType='%s']", entry.getKey(), entry.getValue().name());
+             List<Node> nodes = VFTestUtils.findNodes(rootNode, xpath);
+             // Each string appears twice, it is set on a "value" attribute and inline
+             assertEquals(entry.getKey(), 2, nodes.size());
+-            for (Node node : nodes) {
++            nodes.stream().forEach(node -> {
+                 assertEquals(entry.getKey(), node.getImage());
+                 assertTrue(node.getClass().getSimpleName(), node instanceof ASTIdentifier);
+                 ASTIdentifier identifier = (ASTIdentifier) node;
+                 assertEquals(entry.getKey(), entry.getValue(), identifier.getDataType());
+-            }
+-        }
++            });
++        });
+     }
+ 
+     /**
+@@ -83,19 +83,19 @@
+     public void testXpathQueryForCustomFieldLiteralsHaveNullDataType() throws FileNotFoundException {
+         Node rootNode = compile("StandardAccount.page");
+ 
+-        for (Map.Entry<String, DataType> entry : EXPECTED_CUSTOM_FIELD_DATA_TYPES.entrySet()) {
++        EXPECTED_CUSTOM_FIELD_DATA_TYPES.entrySet().stream().forEach(entry -> {
+             // Literals are surrounded by apostrophes
+             String xpath = String.format("//Literal[@Image=\"'%s'\" and @DataType='']", entry.getKey());
+             List<Node> nodes = VFTestUtils.findNodes(rootNode, xpath);
+             // Each string appears twice, it is set on a "value" attribute and inline
+             assertEquals(entry.getKey(), 2, nodes.size());
+-            for (Node node : nodes) {
++            nodes.stream().forEach(node -> {
+                 assertEquals(String.format("'%s'", entry.getKey()), node.getImage());
+                 assertTrue(node.getClass().getSimpleName(), node instanceof ASTLiteral);
+                 ASTLiteral literal = (ASTLiteral) node;
+                 assertEquals(entry.getKey(), null, literal.getDataType());
+-            }
+-        }
++            });
++        });
+     }
+ 
+     /**
+@@ -109,11 +109,11 @@
+             List<Node> nodes = VFTestUtils.findNodes(rootNode, xpath);
+             // Each string appears twice, it is set on a "value" attribute and inline
+             assertEquals(2, nodes.size());
+-            for (Node node : nodes) {
++            nodes.stream().forEach(node -> {
+                 assertTrue(node.getClass().getSimpleName(), node instanceof VfTypedNode);
+                 VfTypedNode dataNode = (VfTypedNode) node;
+                 assertNull(dataNode.getDataType());
+-            }
++            });
+         }
+     }
+ 
+@@ -124,18 +124,18 @@
+     public void testXpathQueryForProperties() throws FileNotFoundException {
+         Node rootNode = compile("ApexController.page");
+ 
+-        for (Map.Entry<String, DataType> entry : EXPECTED_APEX_DATA_TYPES.entrySet()) {
++        EXPECTED_APEX_DATA_TYPES.entrySet().stream().forEach(entry -> {
+             String xpath = String.format("//Identifier[@Image='%s' and @DataType='%s']", entry.getKey(), entry.getValue().name());
+             List<Node> nodes = VFTestUtils.findNodes(rootNode, xpath);
+             // Each string appears twice, it is set on a "value" attribute and inline
+             assertEquals(entry.getKey(), 2, nodes.size());
+-            for (Node node : nodes) {
++            nodes.stream().forEach(node -> {
+                 assertEquals(entry.getKey(), node.getImage());
+                 assertTrue(node.getClass().getSimpleName(), node instanceof ASTIdentifier);
+                 ASTIdentifier identifier = (ASTIdentifier) node;
+                 assertEquals(entry.getKey(), entry.getValue(), identifier.getDataType());
+-            }
+-        }
++            });
++        });
+     }
+ 
+     /**
+@@ -149,11 +149,11 @@
+         List<Node> nodes = VFTestUtils.findNodes(rootNode, xpath);
+         // Each string appears twice, it is set on a "value" attribute and inline
+         assertEquals(2, nodes.size());
+-        for (Node node : nodes) {
++        nodes.stream().forEach(node -> {
+             assertTrue(node.getClass().getSimpleName(), node instanceof VfTypedNode);
+             VfTypedNode dataNode = (VfTypedNode) node;
+             assertNull(dataNode.getDataType());
+-        }
++        });
+     }
+ 
+     private Node compile(String pageName) throws FileNotFoundException {
+diff '--color=auto' -ur ./pmd-visualforce/src/test/java/net/sourceforge/pmd/lang/vf/VFTestUtils.java ../build/pmd-visualforce/src/test/java/net/sourceforge/pmd/lang/vf/VFTestUtils.java
+--- ./pmd-visualforce/src/test/java/net/sourceforge/pmd/lang/vf/VFTestUtils.java	2026-06-19 15:03:27.000000000 +0100
++++ ../build/pmd-visualforce/src/test/java/net/sourceforge/pmd/lang/vf/VFTestUtils.java	2026-07-04 23:56:28.078822174 +0100
+@@ -88,10 +88,10 @@
+                                          Path vfPagePath, List<String> paths) {
+         String vfFileName = vfPagePath.toString();
+ 
+-        for (Map.Entry<String, DataType> entry : expectedDataTypes.entrySet()) {
++        expectedDataTypes.entrySet().stream().forEach(entry -> {
+             assertEquals(entry.getKey(), entry.getValue(),
+                     fieldTypes.getDataType(entry.getKey(), vfFileName, paths));
+-        }
++        });
+     }
+ 
+     private static SaxonXPathRuleQuery createQuery(String xpath) {
+diff '--color=auto' -ur ./pom.xml ../build/pom.xml
+--- ./pom.xml	2026-06-19 15:03:28.000000000 +0100
++++ ../build/pom.xml	2026-07-04 23:56:28.079017633 +0100
+@@ -83,7 +83,7 @@
+     <properties>
+         <project.build.outputTimestamp>2023-02-25T10:38:58Z</project.build.outputTimestamp>
+ 
+-        <java.version>7</java.version>
++        <java.version>8</java.version>
+ 
+         <maven.compiler.test.source>1.8</maven.compiler.test.source>
+         <maven.compiler.test.target>1.8</maven.compiler.test.target>
