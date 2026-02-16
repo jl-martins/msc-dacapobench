@@ -1,19 +1,555 @@
+diff '--color=auto' -ur ycsb-0.17.0/accumulo1.6/src/main/java/site/ycsb/db/accumulo/AccumuloClient.java ../build/ycsb-0.17.0/accumulo1.6/src/main/java/site/ycsb/db/accumulo/AccumuloClient.java
+--- ycsb-0.17.0/accumulo1.6/src/main/java/site/ycsb/db/accumulo/AccumuloClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/accumulo1.6/src/main/java/site/ycsb/db/accumulo/AccumuloClient.java	2026-02-16 21:16:44.204065774 +0000
+@@ -183,9 +183,9 @@
+     Scanner scanner = connector.createScanner(table, Authorizations.EMPTY);
+     scanner.setRange(new Range(row));
+     if (fields != null) {
+-      for (String field : fields) {
++      fields.forEach(field -> {
+         scanner.fetchColumn(colFam, new Text(field));
+-      }
++      });
+     }
+     return scanner;
+   }
+@@ -253,10 +253,10 @@
+         result.add(rowData);
+         // Parse the data in the row, avoid unnecessary Text object creation
+         final Text cq = new Text();
+-        for (Entry<Key, Value> rowEntry : row.entrySet()) {
++        row.entrySet().forEach(rowEntry -> {
+           rowEntry.getKey().getColumnQualifier(cq);
+           rowData.put(cq.toString(), new ByteArrayByteIterator(rowEntry.getValue().get()));
+-        }
++        });
+         if (count++ == recordcount) { // Done reading the last row.
+           break;
+         }
+@@ -291,9 +291,9 @@
+     }
+ 
+     Mutation mutInsert = new Mutation(key.getBytes(UTF_8));
+-    for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach(entry -> {
+       mutInsert.put(colFamBytes, entry.getKey().getBytes(UTF_8), entry.getValue().toArray());
+-    }
++    });
+ 
+     try {
+       bw.addMutation(mutInsert);
+diff '--color=auto' -ur ycsb-0.17.0/accumulo1.6/src/test/java/site/ycsb/db/accumulo/AccumuloTest.java ../build/ycsb-0.17.0/accumulo1.6/src/test/java/site/ycsb/db/accumulo/AccumuloTest.java
+--- ycsb-0.17.0/accumulo1.6/src/test/java/site/ycsb/db/accumulo/AccumuloTest.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/accumulo1.6/src/test/java/site/ycsb/db/accumulo/AccumuloTest.java	2026-02-16 21:16:44.204289792 +0000
+@@ -123,9 +123,9 @@
+     workloadProps = new Properties();
+     workloadProps.load(getClass().getResourceAsStream("/workloads/" + test.getMethodName()));
+ 
+-    for (String prop : properties.stringPropertyNames()) {
++    properties.stringPropertyNames().forEach(prop -> {
+       workloadProps.setProperty(prop, properties.getProperty(prop));
+-    }
++    });
+ 
+     // TODO we need a better test rig for 'run this ycsb workload'
+     LOG.debug("initializing measurements and workload");
+diff '--color=auto' -ur ycsb-0.17.0/accumulo1.7/src/main/java/site/ycsb/db/accumulo/AccumuloClient.java ../build/ycsb-0.17.0/accumulo1.7/src/main/java/site/ycsb/db/accumulo/AccumuloClient.java
+--- ycsb-0.17.0/accumulo1.7/src/main/java/site/ycsb/db/accumulo/AccumuloClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/accumulo1.7/src/main/java/site/ycsb/db/accumulo/AccumuloClient.java	2026-02-16 21:16:44.204472210 +0000
+@@ -184,9 +184,9 @@
+     Scanner scanner = connector.createScanner(table, Authorizations.EMPTY);
+     scanner.setRange(new Range(row));
+     if (fields != null) {
+-      for (String field : fields) {
++      fields.forEach(field -> {
+         scanner.fetchColumn(colFam, new Text(field));
+-      }
++      });
+     }
+     return scanner;
+   }
+@@ -254,10 +254,10 @@
+         result.add(rowData);
+         // Parse the data in the row, avoid unnecessary Text object creation
+         final Text cq = new Text();
+-        for (Entry<Key, Value> rowEntry : row.entrySet()) {
++        row.entrySet().forEach(rowEntry -> {
+           rowEntry.getKey().getColumnQualifier(cq);
+           rowData.put(cq.toString(), new ByteArrayByteIterator(rowEntry.getValue().get()));
+-        }
++        });
+         if (count++ == recordcount) { // Done reading the last row.
+           break;
+         }
+@@ -292,9 +292,9 @@
+     }
+ 
+     Mutation mutInsert = new Mutation(key.getBytes(UTF_8));
+-    for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach(entry -> {
+       mutInsert.put(colFamBytes, entry.getKey().getBytes(UTF_8), entry.getValue().toArray());
+-    }
++    });
+ 
+     try {
+       bw.addMutation(mutInsert);
+diff '--color=auto' -ur ycsb-0.17.0/accumulo1.7/src/test/java/site/ycsb/db/accumulo/AccumuloTest.java ../build/ycsb-0.17.0/accumulo1.7/src/test/java/site/ycsb/db/accumulo/AccumuloTest.java
+--- ycsb-0.17.0/accumulo1.7/src/test/java/site/ycsb/db/accumulo/AccumuloTest.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/accumulo1.7/src/test/java/site/ycsb/db/accumulo/AccumuloTest.java	2026-02-16 21:16:44.204673945 +0000
+@@ -123,9 +123,9 @@
+     workloadProps = new Properties();
+     workloadProps.load(getClass().getResourceAsStream("/workloads/" + test.getMethodName()));
+ 
+-    for (String prop : properties.stringPropertyNames()) {
++    properties.stringPropertyNames().forEach(prop -> {
+       workloadProps.setProperty(prop, properties.getProperty(prop));
+-    }
++    });
+ 
+     // TODO we need a better test rig for 'run this ycsb workload'
+     LOG.debug("initializing measurements and workload");
+diff '--color=auto' -ur ycsb-0.17.0/accumulo1.8/src/main/java/site/ycsb/db/accumulo/AccumuloClient.java ../build/ycsb-0.17.0/accumulo1.8/src/main/java/site/ycsb/db/accumulo/AccumuloClient.java
+--- ycsb-0.17.0/accumulo1.8/src/main/java/site/ycsb/db/accumulo/AccumuloClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/accumulo1.8/src/main/java/site/ycsb/db/accumulo/AccumuloClient.java	2026-02-16 21:16:44.204869098 +0000
+@@ -184,9 +184,9 @@
+     Scanner scanner = connector.createScanner(table, Authorizations.EMPTY);
+     scanner.setRange(new Range(row));
+     if (fields != null) {
+-      for (String field : fields) {
++      fields.forEach(field -> {
+         scanner.fetchColumn(colFam, new Text(field));
+-      }
++      });
+     }
+     return scanner;
+   }
+@@ -254,10 +254,10 @@
+         result.add(rowData);
+         // Parse the data in the row, avoid unnecessary Text object creation
+         final Text cq = new Text();
+-        for (Entry<Key, Value> rowEntry : row.entrySet()) {
++        row.entrySet().forEach(rowEntry -> {
+           rowEntry.getKey().getColumnQualifier(cq);
+           rowData.put(cq.toString(), new ByteArrayByteIterator(rowEntry.getValue().get()));
+-        }
++        });
+         if (count++ == recordcount) { // Done reading the last row.
+           break;
+         }
+@@ -292,9 +292,9 @@
+     }
+ 
+     Mutation mutInsert = new Mutation(key.getBytes(UTF_8));
+-    for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach(entry -> {
+       mutInsert.put(colFamBytes, entry.getKey().getBytes(UTF_8), entry.getValue().toArray());
+-    }
++    });
+ 
+     try {
+       bw.addMutation(mutInsert);
+diff '--color=auto' -ur ycsb-0.17.0/accumulo1.8/src/test/java/site/ycsb/db/accumulo/AccumuloTest.java ../build/ycsb-0.17.0/accumulo1.8/src/test/java/site/ycsb/db/accumulo/AccumuloTest.java
+--- ycsb-0.17.0/accumulo1.8/src/test/java/site/ycsb/db/accumulo/AccumuloTest.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/accumulo1.8/src/test/java/site/ycsb/db/accumulo/AccumuloTest.java	2026-02-16 21:16:44.205063558 +0000
+@@ -123,9 +123,9 @@
+     workloadProps = new Properties();
+     workloadProps.load(getClass().getResourceAsStream("/workloads/" + test.getMethodName()));
+ 
+-    for (String prop : properties.stringPropertyNames()) {
++    properties.stringPropertyNames().forEach(prop -> {
+       workloadProps.setProperty(prop, properties.getProperty(prop));
+-    }
++    });
+ 
+     // TODO we need a better test rig for 'run this ycsb workload'
+     LOG.debug("initializing measurements and workload");
+diff '--color=auto' -ur ycsb-0.17.0/aerospike/src/main/java/site/ycsb/db/AerospikeClient.java ../build/ycsb-0.17.0/aerospike/src/main/java/site/ycsb/db/AerospikeClient.java
+--- ycsb-0.17.0/aerospike/src/main/java/site/ycsb/db/AerospikeClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/aerospike/src/main/java/site/ycsb/db/AerospikeClient.java	2026-02-16 21:16:44.205256689 +0000
+@@ -114,10 +114,10 @@
+         return Status.ERROR;
+       }
+ 
+-      for (Map.Entry<String, Object> entry: record.bins.entrySet()) {
++      record.bins.entrySet().forEach(entry -> {
+         result.put(entry.getKey(),
+             new ByteArrayByteIterator((byte[])entry.getValue()));
+-      }
++      });
+ 
+       return Status.OK;
+     } catch (AerospikeException e) {
+diff '--color=auto' -ur ycsb-0.17.0/arangodb/src/main/java/site/ycsb/db/arangodb/ArangoDBClient.java ../build/ycsb-0.17.0/arangodb/src/main/java/site/ycsb/db/arangodb/ArangoDBClient.java
+--- ycsb-0.17.0/arangodb/src/main/java/site/ycsb/db/arangodb/ArangoDBClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/arangodb/src/main/java/site/ycsb/db/arangodb/ArangoDBClient.java	2026-02-16 21:16:44.205439500 +0000
+@@ -183,9 +183,9 @@
+   public Status insert(String table, String key, Map<String, ByteIterator> values) {
+     try {
+       BaseDocument toInsert = new BaseDocument(key);
+-      for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++      values.entrySet().forEach(entry -> {
+         toInsert.addAttribute(entry.getKey(), byteIteratorToString(entry.getValue()));
+-      }
++      });
+       DocumentCreateOptions options = new DocumentCreateOptions().waitForSync(waitForSync);
+       arangoDB.db(databaseName).collection(table).insertDocument(toInsert, options);
+       return Status.OK;
+@@ -242,9 +242,9 @@
+     try {
+       if (!transactionUpdate) {
+         BaseDocument updateDoc = new BaseDocument();
+-        for (Entry<String, ByteIterator> field : values.entrySet()) {
++        values.entrySet().forEach(field -> {
+           updateDoc.addAttribute(field.getKey(), byteIteratorToString(field.getValue()));
+-        }
++        });
+         arangoDB.db(databaseName).collection(table).updateDocument(key, updateDoc);
+         return Status.OK;
+       } else {
+@@ -357,9 +357,9 @@
+     String resultDes = targetName;
+     if (fields != null && fields.size() != 0) {
+       StringBuilder builder = new StringBuilder("{");
+-      for (String field : fields) {
++      fields.forEach(field -> {
+         builder.append(String.format("\n\"%s\" : %s.%s,", field, targetName, field));
+-      }
++      });
+       //Replace last ',' to newline.
+       builder.setCharAt(builder.length() - 1, '\n');
+       builder.append("}");
+@@ -421,9 +421,9 @@
+   
+   private String mapToJson(Map<String, ByteIterator> values) {
+     VPackBuilder builder = new VPackBuilder().add(ValueType.OBJECT);
+-    for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach(entry -> {
+       builder.add(entry.getKey(), byteIteratorToString(entry.getValue()));
+-    }
++    });
+     builder.close();
+     return arangoDB.util().deserialize(builder.slice(), String.class);
+   }
+diff '--color=auto' -ur ycsb-0.17.0/asynchbase/src/main/java/site/ycsb/db/AsyncHBaseClient.java ../build/ycsb-0.17.0/asynchbase/src/main/java/site/ycsb/db/AsyncHBaseClient.java
+--- ycsb-0.17.0/asynchbase/src/main/java/site/ycsb/db/AsyncHBaseClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/asynchbase/src/main/java/site/ycsb/db/AsyncHBaseClient.java	2026-02-16 21:16:44.205664702 +0000
+@@ -120,7 +120,7 @@
+     
+     final boolean prefetchMeta = getProperties()
+         .getProperty(PREFETCH_META_PROPERTY, "false")
+-        .toLowerCase().equals("true") ? true : false;
++        .toLowerCase().equals("true");
+     try {
+       synchronized (MUTEX) {
+         ++threadCount;
+@@ -219,7 +219,7 @@
+       }
+       
+       // got something so populate the results
+-      for (final KeyValue column : row) {
++      row.forEach((final KeyValue column) -> {
+         result.put(new String(column.qualifier()), 
+             // TODO - do we need to clone this array? YCSB may keep it in memory
+             // for a while which would mean the entire KV would hang out and won't
+@@ -231,7 +231,7 @@
+               "Result for field: " + Bytes.pretty(column.qualifier())
+                   + " is: " + Bytes.pretty(column.value()));
+         }
+-      }
++      });
+       return Status.OK;
+     } catch (InterruptedException e) {
+       System.err.println("Thread interrupted");
+@@ -265,7 +265,7 @@
+         for (final ArrayList<KeyValue> row : rows) {
+           final HashMap<String, ByteIterator> rowResult =
+               new HashMap<String, ByteIterator>(row.size());
+-          for (final KeyValue column : row) {
++          row.forEach((final KeyValue column) -> {
+             rowResult.put(new String(column.qualifier()), 
+                 // TODO - do we need to clone this array? YCSB may keep it in memory
+                 // for a while which would mean the entire KV would hang out and won't
+@@ -275,7 +275,7 @@
+               System.out.println("Got scan result for key: " + 
+                   Bytes.pretty(column.key()));
+             }
+-          }
++          });
+           result.add(rowResult);
+           numResults++;
+ 
+diff '--color=auto' -ur ycsb-0.17.0/asynchbase/src/test/java/site/ycsb/db/AsyncHBaseTest.java ../build/ycsb-0.17.0/asynchbase/src/test/java/site/ycsb/db/AsyncHBaseTest.java
+--- ycsb-0.17.0/asynchbase/src/test/java/site/ycsb/db/AsyncHBaseTest.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/asynchbase/src/test/java/site/ycsb/db/AsyncHBaseTest.java	2026-02-16 21:16:44.205890752 +0000
+@@ -198,11 +198,11 @@
+     final Result result = this.table.get(get);
+     assertFalse(result.isEmpty());
+     assertEquals(2, result.size());
+-    for(final java.util.Map.Entry<String, String> entry : input.entrySet()) {
++    input.entrySet().forEach((final java.util.Map.Entry<String, String> entry) -> {
+       assertEquals(entry.getValue(),
+           new String(result.getValue(Bytes.toBytes(COLUMN_FAMILY),
+             Bytes.toBytes(entry.getKey()))));
+-    }
++    });
+   }
+ 
+   @Test
+diff '--color=auto' -ur ycsb-0.17.0/azurecosmos/src/main/java/site/ycsb/db/AzureCosmosClient.java ../build/ycsb-0.17.0/azurecosmos/src/main/java/site/ycsb/db/AzureCosmosClient.java
+--- ycsb-0.17.0/azurecosmos/src/main/java/site/ycsb/db/AzureCosmosClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/azurecosmos/src/main/java/site/ycsb/db/AzureCosmosClient.java	2026-02-16 21:16:44.206086798 +0000
+@@ -250,9 +250,9 @@
+     }
+ 
+     if (documents != null) {
+-      for (Document document : documents) {
++      documents.forEach(document -> {
+         result.add(this.extractResult(document));
+-      }
++      });
+     }
+ 
+     return Status.OK;
+@@ -362,9 +362,9 @@
+     }
+     HashMap<String, ByteIterator> rItems = new HashMap<>(item.getHashMap().size());
+ 
+-    for (Entry<String, Object> attr : item.getHashMap().entrySet()) {
++    item.getHashMap().entrySet().forEach(attr -> {
+       rItems.put(attr.getKey(), new StringByteIterator(attr.getValue().toString()));
+-    }
++    });
+     return rItems;
+   }
+ 
+@@ -395,9 +395,9 @@
+   private Document getDocumentDefinition(String key, Map<String, ByteIterator> values) {
+     Document document = new Document();
+     document.set("id", key);
+-    for (Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach(entry -> {
+       document.set(entry.getKey(), entry.getValue().toString());
+-    }
++    });
+     return document;
+   }
+ }
+diff '--color=auto' -ur ycsb-0.17.0/azuretablestorage/src/main/java/site/ycsb/db/azuretablestorage/AzureClient.java ../build/ycsb-0.17.0/azuretablestorage/src/main/java/site/ycsb/db/azuretablestorage/AzureClient.java
+--- ycsb-0.17.0/azuretablestorage/src/main/java/site/ycsb/db/azuretablestorage/AzureClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/azuretablestorage/src/main/java/site/ycsb/db/azuretablestorage/AzureClient.java	2026-02-16 21:16:44.206324380 +0000
+@@ -36,7 +36,6 @@
+ import java.util.Date;
+ import java.util.HashMap;
+ import java.util.Map;
+-import java.util.Map.Entry;
+ import java.util.Properties;
+ import java.util.Set;
+ import java.util.Vector;
+@@ -127,13 +126,13 @@
+       for (DynamicTableEntity entity : cloudTable.execute(scanQuery)) {
+         HashMap<String, EntityProperty> properties = entity.getProperties();
+         HashMap<String, ByteIterator> cur = new HashMap<String, ByteIterator>();
+-        for (Entry<String, EntityProperty> entry : properties.entrySet()) {
++        properties.entrySet().forEach(entry -> {
+           String fieldName = entry.getKey();
+           ByteIterator fieldVal = new ByteArrayByteIterator(entry.getValue().getValueAsByteArray());
+           if (fields == null || fields.contains(fieldName)) {
+             cur.put(fieldName, fieldVal);
+           }
+-        }
++        });
+         result.add(cur);
+         if (++cnt == recordcount) {
+           break;
+@@ -199,21 +198,21 @@
+           public HashMap<String, ByteIterator> resolve(String partitionkey, String rowKey, 
+               Date timeStamp, HashMap<String, EntityProperty> properties, String etag) {
+             HashMap<String, ByteIterator> tmp = new HashMap<String, ByteIterator>();
+-            for (Entry<String, EntityProperty> entry : properties.entrySet()) {
++            properties.entrySet().forEach(entry -> {
+               String key = entry.getKey();
+               ByteIterator val = new ByteArrayByteIterator(entry.getValue().getValueAsByteArray());
+               tmp.put(key, val);
+-            }
++            });
+             return tmp;
+-      }
+-    };
++          }
++        };
+     try {
+       for (HashMap<String, ByteIterator> tmp : cloudTable.execute(projectionQuery, resolver)) {
+-        for (Entry<String, ByteIterator> entry : tmp.entrySet()){
++        tmp.entrySet().forEach(entry -> {
+           String fieldName = entry.getKey();
+           ByteIterator fieldVal = entry.getValue();
+           result.put(fieldName, fieldVal);
+-        }
++        });
+       }
+       return Status.OK;
+     } catch (Exception e) {
+@@ -228,11 +227,11 @@
+           TableOperation.retrieve(partitionKey, key, DynamicTableEntity.class);
+       DynamicTableEntity entity = cloudTable.execute(retrieveOp).getResultAsType();
+       HashMap<String, EntityProperty> properties = entity.getProperties();
+-      for (Entry<String, EntityProperty> entry: properties.entrySet()) {
++      properties.entrySet().forEach(entry -> {
+         String fieldName = entry.getKey();
+         ByteIterator fieldVal = new ByteArrayByteIterator(entry.getValue().getValueAsByteArray());
+         result.put(fieldName, fieldVal);
+-      }
++      });
+       return Status.OK;
+     } catch (Exception e) {
+       return Status.ERROR;
+@@ -241,11 +240,11 @@
+ 
+   private Status insertBatch(String key, Map<String, ByteIterator> values) {
+     HashMap<String, EntityProperty> properties = new HashMap<String, EntityProperty>();
+-    for (Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach(entry -> {
+       String fieldName = entry.getKey();
+       byte[] fieldVal = entry.getValue().toArray();
+       properties.put(fieldName, new EntityProperty(fieldVal));
+-    }
++    });
+     DynamicTableEntity entity = new DynamicTableEntity(partitionKey, key, properties);
+     BATCH_OPERATION.insertOrReplace(entity);    
+     if (++curIdx == batchSize) {
+@@ -262,11 +261,11 @@
+   
+   private Status insertOrUpdate(String key, Map<String, ByteIterator> values) {
+     HashMap<String, EntityProperty> properties = new HashMap<String, EntityProperty>();
+-    for (Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach(entry -> {
+       String fieldName = entry.getKey();
+       byte[] fieldVal = entry.getValue().toArray();
+       properties.put(fieldName, new EntityProperty(fieldVal));
+-    }
++    });
+     DynamicTableEntity entity = new DynamicTableEntity(partitionKey, key, properties);
+     TableOperation insertOrReplace = TableOperation.insertOrReplace(entity);
+     try {
 diff '--color=auto' -ur ycsb-0.17.0/cassandra/pom.xml ../build/ycsb-0.17.0/cassandra/pom.xml
---- ycsb-0.17.0/cassandra/pom.xml	2023-08-10 10:35:49.000000000 +0000
-+++ ../build/ycsb-0.17.0/cassandra/pom.xml	2023-09-05 10:30:06.176383385 +0000
+--- ycsb-0.17.0/cassandra/pom.xml	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/cassandra/pom.xml	2026-02-16 21:16:44.206507448 +0000
 @@ -97,7 +97,7 @@
  		<repository>
  			<id>central2</id>
  			<name>sigar Repository</name>
 -			<url>http://repository.jboss.org/nexus/content/groups/public-jboss/</url>
-+			<url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
++ 			<url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
  			<layout>default</layout>
  			<snapshots>
  				<enabled>false</enabled>
 diff '--color=auto' -ur ycsb-0.17.0/cassandra/src/main/java/site/ycsb/db/CassandraCQLClient.java ../build/ycsb-0.17.0/cassandra/src/main/java/site/ycsb/db/CassandraCQLClient.java
---- ycsb-0.17.0/cassandra/src/main/java/site/ycsb/db/CassandraCQLClient.java	2023-08-10 10:35:49.000000000 +0000
-+++ ../build/ycsb-0.17.0/cassandra/src/main/java/site/ycsb/db/CassandraCQLClient.java	2023-09-05 10:26:01.460886299 +0000
-@@ -587,7 +587,8 @@
+--- ycsb-0.17.0/cassandra/src/main/java/site/ycsb/db/CassandraCQLClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/cassandra/src/main/java/site/ycsb/db/CassandraCQLClient.java	2026-02-16 21:20:37.353550718 +0000
+@@ -20,7 +20,6 @@
+ import com.datastax.driver.core.Cluster;
+ import com.datastax.driver.core.ColumnDefinitions;
+ import com.datastax.driver.core.ConsistencyLevel;
+-import com.datastax.driver.core.Host;
+ import com.datastax.driver.core.HostDistance;
+ import com.datastax.driver.core.Metadata;
+ import com.datastax.driver.core.ResultSet;
+@@ -223,11 +222,11 @@
+         logger.info("Connected to cluster: {}\n",
+             metadata.getClusterName());
+ 
+-        for (Host discoveredHost : metadata.getAllHosts()) {
+-          logger.info("Datacenter: {}; Host: {}; Rack: {}\n",
+-              discoveredHost.getDatacenter(), discoveredHost.getAddress(),
+-              discoveredHost.getRack());
+-        }
++        metadata.getAllHosts().forEach(discoveredHost -> {
++            logger.info("Datacenter: {}; Host: {}; Rack: {}\n",
++                discoveredHost.getDatacenter(), discoveredHost.getAddress(),
++                discoveredHost.getRack());
++          });
+ 
+         session = cluster.connect(keyspace);
+ 
+@@ -294,9 +293,9 @@
+           selectBuilder = QueryBuilder.select().all();
+         } else {
+           selectBuilder = QueryBuilder.select();
+-          for (String col : fields) {
+-            ((Select.Selection) selectBuilder).column(col);
+-          }
++          fields.forEach(col -> {
++              ((Select.Selection) selectBuilder).column(col);
++            });
+         }
+ 
+         stmt = session.prepare(selectBuilder.from(table)
+@@ -381,9 +380,9 @@
+           selectBuilder = QueryBuilder.select().all();
+         } else {
+           selectBuilder = QueryBuilder.select();
+-          for (String col : fields) {
+-            ((Select.Selection) selectBuilder).column(col);
+-          }
++          fields.forEach(col -> {
++              ((Select.Selection) selectBuilder).column(col);
++            });
+         }
+ 
+         Select selectStmt = selectBuilder.from(table);
+@@ -475,9 +474,9 @@
+         Update updateStmt = QueryBuilder.update(table);
+ 
+         // Add fields
+-        for (String field : fields) {
+-          updateStmt.with(QueryBuilder.set(field, QueryBuilder.bindMarker()));
+-        }
++        fields.forEach(field -> {
++            updateStmt.with(QueryBuilder.set(field, QueryBuilder.bindMarker()));
++          });
+ 
+         // Add key
+         updateStmt.where(QueryBuilder.eq(YCSB_KEY, QueryBuilder.bindMarker()));
+@@ -497,9 +496,9 @@
+       if (logger.isDebugEnabled()) {
+         logger.debug(stmt.getQueryString());
+         logger.debug("key = {}", key);
+-        for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
+-          logger.debug("{} = {}", entry.getKey(), entry.getValue());
+-        }
++        values.entrySet().forEach(entry -> {
++            logger.debug("{} = {}", entry.getKey(), entry.getValue());
++          });
+       }
+ 
+       // Add fields
+@@ -550,9 +549,9 @@
+         insertStmt.value(YCSB_KEY, QueryBuilder.bindMarker());
+ 
+         // Add fields
+-        for (String field : fields) {
+-          insertStmt.value(field, QueryBuilder.bindMarker());
+-        }
++        fields.forEach(field -> {
++            insertStmt.value(field, QueryBuilder.bindMarker());
++          });
+ 
+         stmt = session.prepare(insertStmt);
+         stmt.setConsistencyLevel(writeConsistencyLevel);
+@@ -569,9 +568,9 @@
+       if (logger.isDebugEnabled()) {
+         logger.debug(stmt.getQueryString());
+         logger.debug("key = {}", key);
+-        for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
+-          logger.debug("{} = {}", entry.getKey(), entry.getValue());
+-        }
++        values.entrySet().forEach(entry -> {
++            logger.debug("{} = {}", entry.getKey(), entry.getValue());
++          });
+       }
+ 
+       // Add key
+@@ -587,7 +586,8 @@
  
        return Status.OK;
      } catch (Exception e) {
@@ -24,8 +560,8 @@ diff '--color=auto' -ur ycsb-0.17.0/cassandra/src/main/java/site/ycsb/db/Cassand
  
      return Status.ERROR;
 diff '--color=auto' -ur ycsb-0.17.0/cassandra/src/test/java/site/ycsb/db/CassandraCQLClientTest.java ../build/ycsb-0.17.0/cassandra/src/test/java/site/ycsb/db/CassandraCQLClientTest.java
---- ycsb-0.17.0/cassandra/src/test/java/site/ycsb/db/CassandraCQLClientTest.java	2023-08-10 10:35:49.000000000 +0000
-+++ ../build/ycsb-0.17.0/cassandra/src/test/java/site/ycsb/db/CassandraCQLClientTest.java	2023-09-05 10:26:01.460886299 +0000
+--- ycsb-0.17.0/cassandra/src/test/java/site/ycsb/db/CassandraCQLClientTest.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/cassandra/src/test/java/site/ycsb/db/CassandraCQLClientTest.java	2026-02-16 21:16:44.206944902 +0000
 @@ -56,7 +56,7 @@
   */
  public class CassandraCQLClientTest {
@@ -35,9 +571,168 @@ diff '--color=auto' -ur ycsb-0.17.0/cassandra/src/test/java/site/ycsb/db/Cassand
  
    private final static String TABLE = "usertable";
    private final static String HOST = "localhost";
+@@ -133,11 +133,11 @@
+     assertThat(result, hasEntry("field2", null));
+ 
+     final HashMap<String, String> strResult = new HashMap<String, String>();
+-    for (final Map.Entry<String, ByteIterator> e : result.entrySet()) {
++    result.entrySet().forEach((final Map.Entry<String, ByteIterator> e) -> {
+       if (e.getValue() != null) {
+         strResult.put(e.getKey(), e.getValue().toString());
+       }
+-    }
++    });
+     assertThat(strResult, hasEntry(CassandraCQLClient.YCSB_KEY, DEFAULT_ROW_KEY));
+     assertThat(strResult, hasEntry("field0", "value1"));
+     assertThat(strResult, hasEntry("field1", "value2"));
+diff '--color=auto' -ur ycsb-0.17.0/cloudspanner/src/main/java/site/ycsb/db/cloudspanner/CloudSpannerClient.java ../build/ycsb-0.17.0/cloudspanner/src/main/java/site/ycsb/db/cloudspanner/CloudSpannerClient.java
+--- ycsb-0.17.0/cloudspanner/src/main/java/site/ycsb/db/cloudspanner/CloudSpannerClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/cloudspanner/src/main/java/site/ycsb/db/cloudspanner/CloudSpannerClient.java	2026-02-16 21:16:44.207159308 +0000
+@@ -329,9 +329,9 @@
+   public Status update(String table, String key, Map<String, ByteIterator> values) {
+     Mutation.WriteBuilder m = Mutation.newInsertOrUpdateBuilder(table);
+     m.set(PRIMARY_KEY_COLUMN).to(key);
+-    for (Map.Entry<String, ByteIterator> e : values.entrySet()) {
++    values.entrySet().forEach(e -> {
+       m.set(e.getKey()).to(e.getValue().toString());
+-    }
++    });
+     try {
+       dbClient.writeAtLeastOnce(Arrays.asList(m.build()));
+     } catch (Exception e) {
+@@ -346,9 +346,9 @@
+     if (bufferedMutations.size() < batchInserts) {
+       Mutation.WriteBuilder m = Mutation.newInsertOrUpdateBuilder(table);
+       m.set(PRIMARY_KEY_COLUMN).to(key);
+-      for (Map.Entry<String, ByteIterator> e : values.entrySet()) {
++      values.entrySet().forEach(e -> {
+         m.set(e.getKey()).to(e.getValue().toString());
+-      }
++      });
+       bufferedMutations.add(m.build());
+     } else {
+       LOGGER.log(Level.INFO, "Limit of cached mutations reached. The given mutation with key " + key +
+diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/BasicDB.java ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/BasicDB.java
+--- ycsb-0.17.0/core/src/main/java/site/ycsb/BasicDB.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/BasicDB.java	2026-02-16 21:16:44.207389369 +0000
+@@ -140,9 +140,9 @@
+       StringBuilder sb = getStringBuilder();
+       sb.append("READ ").append(table).append(" ").append(key).append(" [ ");
+       if (fields != null) {
+-        for (String f : fields) {
+-          sb.append(f).append(" ");
+-        }
++        fields.forEach(f -> {
++            sb.append(f).append(" ");
++          });
+       } else {
+         sb.append("<all fields>");
+       }
+@@ -177,9 +177,9 @@
+       StringBuilder sb = getStringBuilder();
+       sb.append("SCAN ").append(table).append(" ").append(startkey).append(" ").append(recordcount).append(" [ ");
+       if (fields != null) {
+-        for (String f : fields) {
+-          sb.append(f).append(" ");
+-        }
++        fields.forEach(f -> {
++            sb.append(f).append(" ");
++          });
+       } else {
+         sb.append("<all fields>");
+       }
+@@ -211,9 +211,9 @@
+       StringBuilder sb = getStringBuilder();
+       sb.append("UPDATE ").append(table).append(" ").append(key).append(" [ ");
+       if (values != null) {
+-        for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
+-          sb.append(entry.getKey()).append("=").append(entry.getValue()).append(" ");
+-        }
++        values.entrySet().forEach(entry -> {
++            sb.append(entry.getKey()).append("=").append(entry.getValue()).append(" ");
++          });
+       }
+       sb.append("]");
+       System.out.println(sb);
+@@ -242,9 +242,9 @@
+       StringBuilder sb = getStringBuilder();
+       sb.append("INSERT ").append(table).append(" ").append(key).append(" [ ");
+       if (values != null) {
+-        for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
+-          sb.append(entry.getKey()).append("=").append(entry.getValue()).append(" ");
+-        }
++        values.entrySet().forEach(entry -> {
++            sb.append(entry.getKey()).append("=").append(entry.getValue()).append(" ");
++          });
+       }
+ 
+       sb.append("]");
+@@ -331,9 +331,9 @@
+     StringBuilder buf = getStringBuilder().append(table).append(key);
+     List<String> sorted = new ArrayList<String>(fields);
+     Collections.sort(sorted);
+-    for (final String field : sorted) {
+-      buf.append(field);
+-    }
++    sorted.forEach((final String field) -> {
++        buf.append(field);
++      });
+     return buf.toString().hashCode();
+   }
+   
+@@ -355,11 +355,11 @@
+         new TreeMap<String, ByteIterator>(values);
+     
+     StringBuilder buf = getStringBuilder().append(table).append(key);
+-    for (final Entry<String, ByteIterator> entry : sorted.entrySet()) {
+-      entry.getValue().reset();
+-      buf.append(entry.getKey())
+-         .append(entry.getValue().toString());
+-    }
++    sorted.entrySet().forEach((final Entry<String, ByteIterator> entry) -> {
++        entry.getValue().reset();
++        buf.append(entry.getKey())
++            .append(entry.getValue().toString());
++      });
+     return buf.toString().hashCode();
+   }
+   
+diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/BasicTSDB.java ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/BasicTSDB.java
+--- ycsb-0.17.0/core/src/main/java/site/ycsb/BasicTSDB.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/BasicTSDB.java	2026-02-16 21:16:44.207606670 +0000
+@@ -75,9 +75,9 @@
+       StringBuilder sb = getStringBuilder();
+       sb.append("READ ").append(table).append(" ").append(key).append(" [ ");
+       if (fields != null) {
+-        for (String f : fields) {
+-          sb.append(f).append(" ");
+-        }
++        fields.forEach(f -> {
++            sb.append(f).append(" ");
++          });
+       } else {
+         sb.append("<all fields>");
+       }
+@@ -262,11 +262,11 @@
+     // yeah it's ugly but gives us a unique hash without having to add hashers
+     // to all of the ByteIterators.
+     StringBuilder buf = new StringBuilder().append(table).append(key);
+-    for (final Entry<String, ByteIterator> entry : sorted.entrySet()) {
+-      entry.getValue().reset();
+-      buf.append(entry.getKey())
+-         .append(entry.getValue().toString());
+-    }
++    sorted.entrySet().forEach((final Entry<String, ByteIterator> entry) -> {
++        entry.getValue().reset();
++        buf.append(entry.getKey())
++            .append(entry.getValue().toString());
++      });
+     return buf.toString().hashCode();
+   }
+   
 diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/Client.java ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/Client.java
---- ycsb-0.17.0/core/src/main/java/site/ycsb/Client.java	2023-08-10 10:35:49.000000000 +0000
-+++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/Client.java	2023-09-05 10:26:01.460886299 +0000
+--- ycsb-0.17.0/core/src/main/java/site/ycsb/Client.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/Client.java	2026-02-16 21:16:44.207814507 +0000
 @@ -33,6 +33,9 @@
  import java.util.concurrent.CountDownLatch;
  import java.util.concurrent.TimeUnit;
@@ -78,15 +773,39 @@ diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/Client.java ../
      final CountDownLatch completeLatch = new CountDownLatch(threadcount);
  
      final List<ClientThread> clients = initDb(dbname, props, threadcount, targetperthreadperms,
-@@ -337,7 +339,6 @@
-       }
+@@ -329,18 +331,17 @@
+     long en;
+     int opsDone;
+ 
+-    try (final TraceScope span = tracer.newScope(CLIENT_WORKLOAD_SPAN)) {
++    try (TraceScope span = tracer.newScope(CLIENT_WORKLOAD_SPAN)) {
+ 
+       final Map<Thread, ClientThread> threads = new HashMap<>(threadcount);
+-      for (ClientThread client : clients) {
+-        threads.put(new Thread(tracer.wrap(client, "ClientThread")), client);
+-      }
++      clients.forEach(client -> {
++          threads.put(new Thread(tracer.wrap(client, "ClientThread")), client);
++        });
  
        st = System.currentTimeMillis();
 -
-       for (Thread t : threads.keySet()) {
-         t.start();
-       }
-@@ -367,7 +368,6 @@
+-      for (Thread t : threads.keySet()) {
+-        t.start();
+-      }
++      threads.keySet().forEach(t -> {
++          t.start();
++        });
+ 
+       if (maxExecutionTime > 0) {
+         terminator = new TerminatorThread(maxExecutionTime, threads.keySet(), workload);
+@@ -362,12 +363,11 @@
+     }
+ 
+     try {
+-      try (final TraceScope span = tracer.newScope(CLIENT_CLEANUP_SPAN)) {
++      try (TraceScope span = tracer.newScope(CLIENT_CLEANUP_SPAN)) {
+ 
          if (terminator != null && !terminator.isInterrupted()) {
            terminator.interrupt();
          }
@@ -106,13 +825,21 @@ diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/Client.java ../
          workload.cleanup();
        }
      } catch (WorkloadException e) {
+@@ -388,7 +391,7 @@
+     }
+ 
+     try {
+-      try (final TraceScope span = tracer.newScope(CLIENT_EXPORT_MEASUREMENTS_SPAN)) {
++      try (TraceScope span = tracer.newScope(CLIENT_EXPORT_MEASUREMENTS_SPAN)) {
+         exportMeasurements(props, opsDone, en - st);
+       }
+     } catch (IOException e) {
 @@ -396,8 +399,78 @@
        e.printStackTrace();
        System.exit(-1);
      }
 +  }
- 
--    System.exit(0);
++
 +  private static int transactions;
 +  private static Method dacapoInitializeLR;
 +  private static Method dacapoRequestsStarting;
@@ -163,7 +890,8 @@ diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/Client.java ../
 +      System.err.println("Failed to invoke DaCapo LatencyReporter.requestsFinished(): "+e); e.printStackTrace();
 +    }
 +  }
-+
+ 
+-    System.exit(0);
 +  public static boolean dacapoRequestStart(int threadID) {
 +    try {
 +      return ((Integer) dacapoRequestStart.invoke(null, threadID) < transactions);
@@ -186,9 +914,12 @@ diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/Client.java ../
    }
  
    private static List<ClientThread> initDb(String dbname, Properties props, int threadcount,
-@@ -409,19 +482,25 @@
+@@ -407,21 +480,27 @@
+     boolean dotransactions = Boolean.valueOf(props.getProperty(DO_TRANSACTIONS_PROPERTY, String.valueOf(true)));
+ 
      final List<ClientThread> clients = new ArrayList<>(threadcount);
-     try (final TraceScope span = tracer.newScope(CLIENT_INIT_SPAN)) {
+-    try (final TraceScope span = tracer.newScope(CLIENT_INIT_SPAN)) {
++    try (TraceScope span = tracer.newScope(CLIENT_INIT_SPAN)) {
        int opcount;
 +
        if (dotransactions) {
@@ -212,6 +943,32 @@ diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/Client.java ../
        for (int threadid = 0; threadid < threadcount; threadid++) {
          DB db;
          try {
+@@ -462,7 +541,7 @@
+ 
+   private static void initWorkload(Properties props, Thread warningthread, Workload workload, Tracer tracer) {
+     try {
+-      try (final TraceScope span = tracer.newScope(CLIENT_WORKLOAD_INIT_SPAN)) {
++      try (TraceScope span = tracer.newScope(CLIENT_WORKLOAD_INIT_SPAN)) {
+         workload.init(props);
+         warningthread.interrupt();
+       }
+@@ -475,11 +554,11 @@
+ 
+   private static HTraceConfiguration getHTraceConfiguration(Properties props) {
+     final Map<String, String> filteredProperties = new HashMap<>();
+-    for (String key : props.stringPropertyNames()) {
+-      if (key.startsWith(HTRACE_KEY_PREFIX)) {
+-        filteredProperties.put(key.substring(HTRACE_KEY_PREFIX.length()), props.getProperty(key));
+-      }
+-    }
++    props.stringPropertyNames().forEach(key -> {
++        if (key.startsWith(HTRACE_KEY_PREFIX)) {
++          filteredProperties.put(key.substring(HTRACE_KEY_PREFIX.length()), props.getProperty(key));
++        }
++      });
+     return HTraceConfiguration.fromMap(filteredProperties);
+   }
+ 
 @@ -506,13 +585,13 @@
      try {
        Properties projectProp = new Properties();
@@ -255,8 +1012,8 @@ diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/Client.java ../
          argindex++;
        } else if (args[argindex].compareTo("-t") == 0) {
 diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/ClientThread.java ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/ClientThread.java
---- ycsb-0.17.0/core/src/main/java/site/ycsb/ClientThread.java	2023-08-10 10:35:49.000000000 +0000
-+++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/ClientThread.java	2023-09-05 10:26:01.460886299 +0000
+--- ycsb-0.17.0/core/src/main/java/site/ycsb/ClientThread.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/ClientThread.java	2026-02-16 21:16:44.208103718 +0000
 @@ -44,6 +44,7 @@
    private Properties props;
    private long targetOpsTickNs;
@@ -329,9 +1086,47 @@ diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/ClientThread.ja
    private static void sleepUntil(long deadline) {
      while (System.nanoTime() < deadline) {
        if (!spinSleep) {
+diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/CommandLine.java ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/CommandLine.java
+--- ycsb-0.17.0/core/src/main/java/site/ycsb/CommandLine.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/CommandLine.java	2026-02-16 21:16:44.208266850 +0000
+@@ -305,9 +305,9 @@
+       }
+       for (Map<String, ByteIterator> result : results) {
+         System.out.println("Record " + (record++));
+-        for (Map.Entry<String, ByteIterator> ent : result.entrySet()) {
+-          System.out.println(ent.getKey() + "=" + ent.getValue());
+-        }
++        result.entrySet().forEach(ent -> {
++            System.out.println(ent.getKey() + "=" + ent.getValue());
++          });
+         System.out.println("--------------------------------");
+       }
+     }
+@@ -328,9 +328,9 @@
+       HashMap<String, ByteIterator> result = new HashMap<>();
+       Status ret = db.read(table, tokens[1], fields, result);
+       System.out.println("Return code: " + ret.getName());
+-      for (Map.Entry<String, ByteIterator> ent : result.entrySet()) {
+-        System.out.println(ent.getKey() + "=" + ent.getValue());
+-      }
++      result.entrySet().forEach(ent -> {
++          System.out.println(ent.getKey() + "=" + ent.getValue());
++        });
+     }
+   }
+ 
 diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/DBWrapper.java ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/DBWrapper.java
---- ycsb-0.17.0/core/src/main/java/site/ycsb/DBWrapper.java	2023-08-10 10:35:49.000000000 +0000
-+++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/DBWrapper.java	2023-09-05 10:26:01.460886299 +0000
+--- ycsb-0.17.0/core/src/main/java/site/ycsb/DBWrapper.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/DBWrapper.java	2026-02-16 21:16:44.208439277 +0000
+@@ -82,7 +82,7 @@
+    * Called once per DB instance; there is one DB instance per client thread.
+    */
+   public void init() throws DBException {
+-    try (final TraceScope span = tracer.newScope(scopeStringInit)) {
++    try (TraceScope span = tracer.newScope(scopeStringInit)) {
+       db.init();
+ 
+       this.reportLatencyForEachError = Boolean.parseBoolean(getProperties().
 @@ -97,9 +97,11 @@
          }
        }
@@ -347,9 +1142,231 @@ diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/DBWrapper.java 
      }
    }
  
+@@ -108,7 +110,7 @@
+    * Called once per DB instance; there is one DB instance per client thread.
+    */
+   public void cleanup() throws DBException {
+-    try (final TraceScope span = tracer.newScope(scopeStringCleanup)) {
++    try (TraceScope span = tracer.newScope(scopeStringCleanup)) {
+       long ist = measurements.getIntendedtartTimeNs();
+       long st = System.nanoTime();
+       db.cleanup();
+@@ -129,7 +131,7 @@
+    */
+   public Status read(String table, String key, Set<String> fields,
+                      Map<String, ByteIterator> result) {
+-    try (final TraceScope span = tracer.newScope(scopeStringRead)) {
++    try (TraceScope span = tracer.newScope(scopeStringRead)) {
+       long ist = measurements.getIntendedtartTimeNs();
+       long st = System.nanoTime();
+       Status res = db.read(table, key, fields, result);
+@@ -153,7 +155,7 @@
+    */
+   public Status scan(String table, String startkey, int recordcount,
+                      Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
+-    try (final TraceScope span = tracer.newScope(scopeStringScan)) {
++    try (TraceScope span = tracer.newScope(scopeStringScan)) {
+       long ist = measurements.getIntendedtartTimeNs();
+       long st = System.nanoTime();
+       Status res = db.scan(table, startkey, recordcount, fields, result);
+@@ -192,7 +194,7 @@
+    */
+   public Status update(String table, String key,
+                        Map<String, ByteIterator> values) {
+-    try (final TraceScope span = tracer.newScope(scopeStringUpdate)) {
++    try (TraceScope span = tracer.newScope(scopeStringUpdate)) {
+       long ist = measurements.getIntendedtartTimeNs();
+       long st = System.nanoTime();
+       Status res = db.update(table, key, values);
+@@ -215,7 +217,7 @@
+    */
+   public Status insert(String table, String key,
+                        Map<String, ByteIterator> values) {
+-    try (final TraceScope span = tracer.newScope(scopeStringInsert)) {
++    try (TraceScope span = tracer.newScope(scopeStringInsert)) {
+       long ist = measurements.getIntendedtartTimeNs();
+       long st = System.nanoTime();
+       Status res = db.insert(table, key, values);
+@@ -234,7 +236,7 @@
+    * @return The result of the operation.
+    */
+   public Status delete(String table, String key) {
+-    try (final TraceScope span = tracer.newScope(scopeStringDelete)) {
++    try (TraceScope span = tracer.newScope(scopeStringDelete)) {
+       long ist = measurements.getIntendedtartTimeNs();
+       long st = System.nanoTime();
+       Status res = db.delete(table, key);
+diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/StringByteIterator.java ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/StringByteIterator.java
+--- ycsb-0.17.0/core/src/main/java/site/ycsb/StringByteIterator.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/StringByteIterator.java	2026-02-16 21:16:44.208662260 +0000
+@@ -32,9 +32,9 @@
+    * String values into ByteIterators.
+    */
+   public static void putAllAsByteIterators(Map<String, ByteIterator> out, Map<String, String> in) {
+-    for (Map.Entry<String, String> entry : in.entrySet()) {
+-      out.put(entry.getKey(), new StringByteIterator(entry.getValue()));
+-    }
++    in.entrySet().forEach(entry -> {
++        out.put(entry.getKey(), new StringByteIterator(entry.getValue()));
++      });
+   }
+ 
+   /**
+@@ -42,9 +42,9 @@
+    * ByteIterator values into Strings.
+    */
+   public static void putAllAsStrings(Map<String, String> out, Map<String, ByteIterator> in) {
+-    for (Map.Entry<String, ByteIterator> entry : in.entrySet()) {
+-      out.put(entry.getKey(), entry.getValue().toString());
+-    }
++    in.entrySet().forEach(entry -> {
++        out.put(entry.getKey(), entry.getValue().toString());
++      });
+   }
+ 
+   /**
+@@ -55,9 +55,9 @@
+     HashMap<String, ByteIterator> ret =
+         new HashMap<String, ByteIterator>();
+ 
+-    for (Map.Entry<String, String> entry : m.entrySet()) {
+-      ret.put(entry.getKey(), new StringByteIterator(entry.getValue()));
+-    }
++    m.entrySet().forEach(entry -> {
++        ret.put(entry.getKey(), new StringByteIterator(entry.getValue()));
++      });
+     return ret;
+   }
+ 
+@@ -68,9 +68,9 @@
+   public static Map<String, String> getStringMap(Map<String, ByteIterator> m) {
+     HashMap<String, String> ret = new HashMap<String, String>();
+ 
+-    for (Map.Entry<String, ByteIterator> entry : m.entrySet()) {
+-      ret.put(entry.getKey(), entry.getValue().toString());
+-    }
++    m.entrySet().forEach(entry -> {
++        ret.put(entry.getKey(), entry.getValue().toString());
++      });
+     return ret;
+   }
+ 
+diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/TerminatorThread.java ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/TerminatorThread.java
+--- ycsb-0.17.0/core/src/main/java/site/ycsb/TerminatorThread.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/TerminatorThread.java	2026-02-16 21:16:44.208847183 +0000
+@@ -51,18 +51,18 @@
+     System.err.println("Maximum time elapsed. Requesting stop for the workload.");
+     workload.requestStop();
+     System.err.println("Stop requested for workload. Now Joining!");
+-    for (Thread t : threads) {
+-      while (t.isAlive()) {
+-        try {
+-          t.join(waitTimeOutInMS);
+-          if (t.isAlive()) {
+-            System.out.println("Still waiting for thread " + t.getName() + " to complete. " +
+-                "Workload status: " + workload.isStopRequested());
++    threads.forEach((Thread t) -> {
++        while (t.isAlive()) {
++          try {
++            t.join(waitTimeOutInMS);
++            if (t.isAlive()) {
++              System.out.println("Still waiting for thread " + t.getName() + " to complete. " +
++                  "Workload status: " + workload.isStopRequested());
++            }
++          } catch (InterruptedException e) {
++            // Do nothing. Don't know why I was interrupted.
+           }
+-        } catch (InterruptedException e) {
+-          // Do nothing. Don't know why I was interrupted.
+         }
+-      }
+-    }
++      });
+   }
+ }
+diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/Utils.java ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/Utils.java
+--- ycsb-0.17.0/core/src/main/java/site/ycsb/Utils.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/Utils.java	2026-02-16 21:16:44.209016696 +0000
+@@ -220,7 +220,7 @@
+    * @param array The array to randomly shuffle.
+    * @return The shuffled array.
+    */
+-  public static <T> T [] shuffleArray(final T[] array) {
++  public static <T> T[] shuffleArray(final T[] array) {
+     for (int i = array.length -1; i > 0; i--) {
+       final int idx = ThreadLocalRandom.current().nextInt(i + 1);
+       final T temp = array[idx];
+diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/measurements/OneMeasurementRaw.java ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/measurements/OneMeasurementRaw.java
+--- ycsb-0.17.0/core/src/main/java/site/ycsb/measurements/OneMeasurementRaw.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/measurements/OneMeasurementRaw.java	2026-02-16 21:16:44.209173274 +0000
+@@ -42,7 +42,7 @@
+     private final long timestamp;
+     private final int value;
+ 
+-    public RawDataPoint(int value) {
++    RawDataPoint(int value) {
+       this.timestamp = System.currentTimeMillis();
+       this.value = value;
+     }
+@@ -146,11 +146,11 @@
+ 
+     outputStream.println(getName() +
+         " latency raw data: op, timestamp(ms), latency(us)");
+-    for (RawDataPoint point : measurements) {
+-      outputStream.println(
+-          String.format("%s,%d,%d", getName(), point.timeStamp(),
+-              point.value()));
+-    }
++    measurements.forEach(point -> {
++        outputStream.println(
++            String.format("%s,%d,%d", getName(), point.timeStamp(),
++                point.value()));
++      });
+     if (outputStream != System.out) {
+       outputStream.close();
+     }
+diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/measurements/OneMeasurementTimeSeries.java ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/measurements/OneMeasurementTimeSeries.java
+--- ycsb-0.17.0/core/src/main/java/site/ycsb/measurements/OneMeasurementTimeSeries.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/measurements/OneMeasurementTimeSeries.java	2026-02-16 21:16:44.209320011 +0000
+@@ -29,7 +29,7 @@
+    * @param time
+    * @param average
+    */
+-  public SeriesUnit(long time, double average) {
++  SeriesUnit(long time, double average) {
+     this.time = time;
+     this.average = average;
+   }
 diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/CoreWorkload.java ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/CoreWorkload.java
---- ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/CoreWorkload.java	2023-08-10 10:35:49.000000000 +0000
-+++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/CoreWorkload.java	2023-09-05 10:26:01.460886299 +0000
+--- ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/CoreWorkload.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/CoreWorkload.java	2026-02-16 21:16:44.209495899 +0000
+@@ -552,16 +552,16 @@
+   private HashMap<String, ByteIterator> buildValues(String key) {
+     HashMap<String, ByteIterator> values = new HashMap<>();
+ 
+-    for (String fieldkey : fieldnames) {
+-      ByteIterator data;
+-      if (dataintegrity) {
+-        data = new StringByteIterator(buildDeterministicValue(key, fieldkey));
+-      } else {
+-        // fill with random data
+-        data = new RandomByteIterator(fieldlengthgenerator.nextValue().longValue());
+-      }
+-      values.put(fieldkey, data);
+-    }
++    fieldnames.forEach(fieldkey -> {
++        ByteIterator data;
++        if (dataintegrity) {
++          data = new StringByteIterator(buildDeterministicValue(key, fieldkey));
++        } else {
++          // fill with random data
++          data = new RandomByteIterator(fieldlengthgenerator.nextValue().longValue());
++        }
++        values.put(fieldkey, data);
++      });
+     return values;
+   }
+ 
 @@ -617,9 +617,9 @@
  
        } else {
@@ -362,9 +1379,30 @@ diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/CoreW
        }
      } while (true);
  
+diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/RestWorkload.java ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/RestWorkload.java
+--- ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/RestWorkload.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/RestWorkload.java	2026-02-16 21:16:44.209722020 +0000
+@@ -209,7 +209,7 @@
+    * Reads the trace file and returns a URL map.
+    */
+   private static Map<Integer, String> getTrace(String filePath, int recordCount)
+-    throws WorkloadException {
++      throws WorkloadException {
+     Map<Integer, String> urlMap = new HashMap<Integer, String>();
+     int count = 0;
+     String line;
+@@ -225,7 +225,7 @@
+       bufferReader.close();
+     } catch (IOException e) {
+       throw new WorkloadException(
+-        "Error while reading the trace. Please make sure the trace file path is correct. "
++          "Error while reading the trace. Please make sure the trace file path is correct. "
+           + e.getLocalizedMessage());
+     }
+     return urlMap;
 diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/TimeSeriesWorkload.java ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/TimeSeriesWorkload.java
---- ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/TimeSeriesWorkload.java	2023-08-10 10:35:49.000000000 +0000
-+++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/TimeSeriesWorkload.java	2023-09-05 10:26:01.464886290 +0000
+--- ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/TimeSeriesWorkload.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/TimeSeriesWorkload.java	2026-02-16 21:16:44.209928398 +0000
 @@ -309,11 +309,11 @@
    
    /** Name and default value for the timestamp key property. */
@@ -379,6 +1417,50 @@ diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/TimeS
    
    /** Name and default value for the timestamp interval property. */    
    public static final String TIMESTAMP_INTERVAL_PROPERTY = "timestampinterval";    
+@@ -656,7 +656,7 @@
+       }
+       groupBys = new boolean[gbKeys.length];
+       for (int i = 0; i < gbKeys.length; i++) {
+-        groupBys[i] = Integer.parseInt(gbKeys[i].trim()) == 0 ? false : true;
++        groupBys[i] = Integer.parseInt(gbKeys[i].trim()) == 0;
+       }
+       groupBy = true;
+     }
+@@ -859,7 +859,7 @@
+     for (int i = 0; i < tagPairs; ++i) {
+       if (groupBy && groupBys[i]) {
+         buf.append(deleteDelimiter)
+-           .append(tagKeys[i]);
++            .append(tagKeys[i]);
+       } else {
+         buf.append(deleteDelimiter).append(tagKeys[i] + tagPairDelimiter + 
+             tagValues[random.nextInt(tagCardinality[i])]);
+@@ -874,10 +874,10 @@
+         endTimestamp = startTimestamp + queryTimeSpan;
+       }
+       buf.append(deleteDelimiter)
+-         .append(timestampKey + tagPairDelimiter + startTimestamp + queryTimeSpanDelimiter + endTimestamp);
++          .append(timestampKey + tagPairDelimiter + startTimestamp + queryTimeSpanDelimiter + endTimestamp);
+     } else {
+       buf.append(deleteDelimiter)
+-         .append(timestampKey + tagPairDelimiter + startTimestamp);  
++          .append(timestampKey + tagPairDelimiter + startTimestamp);
+     }
+     
+     db.delete(table, buf.toString());
+@@ -933,9 +933,9 @@
+                                     final TreeMap<String, String> tags) {
+     final StringBuilder validationBuffer = new StringBuilder(keys[0].length() + 
+         (tagPairs * tagKeys[0].length()) + (tagPairs * tagCardinality[1]));
+-    for (final Entry<String, String> pair : tags.entrySet()) {
+-      validationBuffer.append(pair.getKey()).append(pair.getValue());
+-    }
++    tags.entrySet().forEach((final Entry<String, String> pair) -> {
++        validationBuffer.append(pair.getKey()).append(pair.getValue());
++      });
+     return (long) validationBuffer.toString().hashCode() ^ timestamp;
+   }
+   
 @@ -1014,7 +1014,7 @@
      }
  
@@ -388,3 +1470,1787 @@ diff '--color=auto' -ur ycsb-0.17.0/core/src/main/java/site/ycsb/workloads/TimeS
      }
      
      for (int i = 0; i < maxCardinality; i++) {
+diff '--color=auto' -ur ycsb-0.17.0/core/src/test/java/site/ycsb/workloads/TestTimeSeriesWorkload.java ../build/ycsb-0.17.0/core/src/test/java/site/ycsb/workloads/TestTimeSeriesWorkload.java
+--- ycsb-0.17.0/core/src/test/java/site/ycsb/workloads/TestTimeSeriesWorkload.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/core/src/test/java/site/ycsb/workloads/TestTimeSeriesWorkload.java	2026-02-16 21:16:44.210214721 +0000
+@@ -420,16 +420,16 @@
+     assertEquals(wl.verifyRow("AAAA", cells), Status.OK);
+     
+     // tweak the last value a bit
+-    for (final ByteIterator it : cells.values()) {
++    cells.values().forEach((final ByteIterator it) -> {
+       it.reset();
+-    }
++    });
+     cells.put(TimeSeriesWorkload.VALUE_KEY_PROPERTY_DEFAULT, new NumericByteIterator(hash + 1));
+     assertEquals(wl.verifyRow("AAAA", cells), Status.UNEXPECTED_STATE);
+     
+     // no value cell, returns an unexpected state
+-    for (final ByteIterator it : cells.values()) {
++    cells.values().forEach((final ByteIterator it) -> {
+       it.reset();
+-    }
++    });
+     cells.remove(TimeSeriesWorkload.VALUE_KEY_PROPERTY_DEFAULT);
+     assertEquals(wl.verifyRow("AAAA", cells), Status.UNEXPECTED_STATE);
+   }
+diff '--color=auto' -ur ycsb-0.17.0/couchbase/src/main/java/site/ycsb/db/CouchbaseClient.java ../build/ycsb-0.17.0/couchbase/src/main/java/site/ycsb/db/CouchbaseClient.java
+--- ycsb-0.17.0/couchbase/src/main/java/site/ycsb/db/CouchbaseClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/couchbase/src/main/java/site/ycsb/db/CouchbaseClient.java	2026-02-16 21:16:44.210431151 +0000
+@@ -322,9 +322,9 @@
+       }
+     } else {
+       Map<String, String> converted = (HashMap<String, String>) source;
+-      for (Map.Entry<String, String> entry : converted.entrySet()) {
++      converted.entrySet().forEach(entry -> {
+         dest.put(entry.getKey(), new StringByteIterator(entry.getValue()));
+-      }
++      });
+     }
+   }
+ 
+@@ -341,9 +341,9 @@
+     }
+ 
+     ObjectNode node = JSON_MAPPER.createObjectNode();
+-    for (Map.Entry<String, String> pair : stringMap.entrySet()) {
++    stringMap.entrySet().forEach(pair -> {
+       node.put(pair.getKey(), pair.getValue());
+-    }
++    });
+     JsonFactory jsonFactory = new JsonFactory();
+     Writer writer = new StringWriter();
+     try {
+diff '--color=auto' -ur ycsb-0.17.0/couchbase2/src/main/java/site/ycsb/db/couchbase2/Couchbase2Client.java ../build/ycsb-0.17.0/couchbase2/src/main/java/site/ycsb/db/couchbase2/Couchbase2Client.java
+--- ycsb-0.17.0/couchbase2/src/main/java/site/ycsb/db/couchbase2/Couchbase2Client.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/couchbase2/src/main/java/site/ycsb/db/couchbase2/Couchbase2Client.java	2026-02-16 21:16:44.210653544 +0000
+@@ -154,7 +154,7 @@
+     runtimeMetricsInterval = Integer.parseInt(props.getProperty("couchbase.runtimeMetricsInterval", "0"));
+     documentExpiry = Integer.parseInt(props.getProperty("couchbase.documentExpiry", "0"));
+     scanAllQuery =  "SELECT RAW meta().id FROM `" + bucketName +
+-      "` WHERE meta().id >= '$1' ORDER BY meta().id LIMIT $2";
++        "` WHERE meta().id >= '$1' ORDER BY meta().id LIMIT $2";
+ 
+     try {
+       synchronized (INIT_COORDINATOR) {
+@@ -264,7 +264,7 @@
+    * @return The result of the operation.
+    */
+   private Status readKv(final String docId, final Set<String> fields, final Map<String, ByteIterator> result)
+-    throws Exception {
++      throws Exception {
+     RawJsonDocument loaded = bucket.get(docId, RawJsonDocument.class);
+     if (loaded == null) {
+       return Status.NOT_FOUND;
+@@ -284,7 +284,7 @@
+    * @return The result of the operation.
+    */
+   private Status readN1ql(final String docId, Set<String> fields, final Map<String, ByteIterator> result)
+-    throws Exception {
++      throws Exception {
+     String readQuery = "SELECT " + joinFields(fields) + " FROM `" + bucketName + "` USE KEYS [$1]";
+     N1qlQueryResult queryResult = bucket.query(N1qlQuery.parameterized(
+         readQuery,
+@@ -363,7 +363,7 @@
+    * @return The result of the operation.
+    */
+   private Status updateN1ql(final String docId, final Map<String, ByteIterator> values)
+-    throws Exception {
++      throws Exception {
+     String fields = encodeN1qlFields(values);
+     String updateQuery = "UPDATE `" + bucketName + "` USE KEYS [$1] SET " + fields;
+ 
+@@ -444,7 +444,7 @@
+    * @return The result of the operation.
+    */
+   private Status insertN1ql(final String docId, final Map<String, ByteIterator> values)
+-    throws Exception {
++      throws Exception {
+     String insertQuery = "INSERT INTO `" + bucketName + "`(KEY,VALUE) VALUES ($1,$2)";
+ 
+     N1qlQueryResult queryResult = bucket.query(N1qlQuery.parameterized(
+@@ -512,7 +512,7 @@
+    * @return The result of the operation.
+    */
+   private Status upsertN1ql(final String docId, final Map<String, ByteIterator> values)
+-    throws Exception {
++      throws Exception {
+     String upsertQuery = "UPSERT INTO `" + bucketName + "`(KEY,VALUE) VALUES ($1,$2)";
+ 
+     N1qlQueryResult queryResult = bucket.query(N1qlQuery.parameterized(
+@@ -745,11 +745,11 @@
+     }
+ 
+     StringBuilder sb = new StringBuilder();
+-    for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach(entry -> {
+       String raw = entry.getValue().toString();
+       String escaped = raw.replace("\"", "\\\"").replace("\'", "\\\'");
+       sb.append(entry.getKey()).append("=\"").append(escaped).append("\" ");
+-    }
++    });
+     String toReturn = sb.toString();
+     return toReturn.substring(0, toReturn.length() - 1);
+   }
+@@ -762,9 +762,9 @@
+    */
+   private static JsonObject valuesToJsonObject(final Map<String, ByteIterator> values) {
+     JsonObject result = JsonObject.create();
+-    for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach(entry -> {
+       result.put(entry.getKey(), entry.getValue().toString());
+-    }
++    });
+     return result;
+   }
+ 
+@@ -779,9 +779,9 @@
+       return "*";
+     }
+     StringBuilder builder = new StringBuilder();
+-    for (String f : fields) {
++    fields.forEach(f -> {
+       builder.append("`").append(f).append("`").append(",");
+-    }
++    });
+     String toReturn = builder.toString();
+     return toReturn.substring(0, toReturn.length() - 1);
+   }
+@@ -882,9 +882,9 @@
+   private String encode(final Map<String, ByteIterator> source) {
+     Map<String, String> stringMap = StringByteIterator.getStringMap(source);
+     ObjectNode node = JacksonTransformers.MAPPER.createObjectNode();
+-    for (Map.Entry<String, String> pair : stringMap.entrySet()) {
++    stringMap.entrySet().forEach(pair -> {
+       node.put(pair.getKey(), pair.getValue());
+-    }
++    });
+     JsonFactory jsonFactory = new JsonFactory();
+     Writer writer = new StringWriter();
+     try {
+diff '--color=auto' -ur ycsb-0.17.0/dynamodb/src/main/java/site/ycsb/db/DynamoDBClient.java ../build/ycsb-0.17.0/dynamodb/src/main/java/site/ycsb/db/DynamoDBClient.java
+--- ycsb-0.17.0/dynamodb/src/main/java/site/ycsb/db/DynamoDBClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/dynamodb/src/main/java/site/ycsb/db/DynamoDBClient.java	2026-02-16 21:16:44.210950594 +0000
+@@ -30,7 +30,6 @@
+ import java.io.File;
+ import java.util.HashMap;
+ import java.util.Map;
+-import java.util.Map.Entry;
+ import java.util.Set;
+ import java.util.Vector;
+ 
+@@ -217,9 +216,9 @@
+       }
+ 
+       count += res.getCount();
+-      for (Map<String, AttributeValue> items : res.getItems()) {
++      res.getItems().forEach(items -> {
+         result.add(extractResult(items));
+-      }
++      });
+       startKey = res.getLastEvaluatedKey();
+ 
+     }
+@@ -234,10 +233,10 @@
+     }
+ 
+     Map<String, AttributeValueUpdate> attributes = new HashMap<>(values.size());
+-    for (Entry<String, ByteIterator> val : values.entrySet()) {
++    values.entrySet().forEach(val -> {
+       AttributeValue v = new AttributeValue(val.getValue().toString());
+       attributes.put(val.getKey(), new AttributeValueUpdate().withValue(v).withAction("PUT"));
+-    }
++    });
+ 
+     UpdateItemRequest req = new UpdateItemRequest(table, createPrimaryKey(key), attributes);
+ 
+@@ -304,9 +303,9 @@
+ 
+   private static Map<String, AttributeValue> createAttributes(Map<String, ByteIterator> values) {
+     Map<String, AttributeValue> attributes = new HashMap<>(values.size() + 1);
+-    for (Entry<String, ByteIterator> val : values.entrySet()) {
++    values.entrySet().forEach(val -> {
+       attributes.put(val.getKey(), new AttributeValue(val.getValue().toString()));
+-    }
++    });
+     return attributes;
+   }
+ 
+@@ -316,12 +315,12 @@
+     }
+     HashMap<String, ByteIterator> rItems = new HashMap<>(item.size());
+ 
+-    for (Entry<String, AttributeValue> attr : item.entrySet()) {
++    item.entrySet().forEach(attr -> {
+       if (LOGGER.isDebugEnabled()) {
+         LOGGER.debug(String.format("Result- key: %s, value: %s", attr.getKey(), attr.getValue()));
+       }
+       rItems.put(attr.getKey(), new StringByteIterator(attr.getValue().getS()));
+-    }
++    });
+     return rItems;
+   }
+ 
+diff '--color=auto' -ur ycsb-0.17.0/elasticsearch/src/main/java/site/ycsb/db/ElasticsearchClient.java ../build/ycsb-0.17.0/elasticsearch/src/main/java/site/ycsb/db/ElasticsearchClient.java
+--- ycsb-0.17.0/elasticsearch/src/main/java/site/ycsb/db/ElasticsearchClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/elasticsearch/src/main/java/site/ycsb/db/ElasticsearchClient.java	2026-02-16 21:16:44.211177290 +0000
+@@ -261,15 +261,15 @@
+ 
+       if (response.isExists()) {
+         if (fields != null) {
+-          for (String field : fields) {
++          fields.forEach(field -> {
+             result.put(field, new StringByteIterator(
+                 (String) response.getSource().get(field)));
+-          }
++          });
+         } else {
+-          for (String field : response.getSource().keySet()) {
++          response.getSource().keySet().forEach(field -> {
+             result.put(field, new StringByteIterator(
+                 (String) response.getSource().get(field)));
+-          }
++          });
+         }
+         return Status.OK;
+       } else {
+@@ -301,9 +301,9 @@
+       final GetResponse response = client.prepareGet(indexKey, table, key).execute().actionGet();
+ 
+       if (response.isExists()) {
+-        for (Entry<String, String> entry : StringByteIterator.getStringMap(values).entrySet()) {
++        StringByteIterator.getStringMap(values).entrySet().forEach(entry -> {
+           response.getSource().put(entry.getKey(), entry.getValue());
+-        }
++        });
+ 
+         client.prepareIndex(indexKey, table, key).setSource(response.getSource()).execute().actionGet();
+ 
+diff '--color=auto' -ur ycsb-0.17.0/elasticsearch5/src/main/java/site/ycsb/db/elasticsearch5/ElasticsearchClient.java ../build/ycsb-0.17.0/elasticsearch5/src/main/java/site/ycsb/db/elasticsearch5/ElasticsearchClient.java
+--- ycsb-0.17.0/elasticsearch5/src/main/java/site/ycsb/db/elasticsearch5/ElasticsearchClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/elasticsearch5/src/main/java/site/ycsb/db/elasticsearch5/ElasticsearchClient.java	2026-02-16 21:16:44.211380678 +0000
+@@ -85,14 +85,14 @@
+ 
+     // if properties file contains elasticsearch user defined properties
+     // add it to the settings file (will overwrite the defaults).
+-    for (final Entry<Object, Object> e : props.entrySet()) {
++    props.entrySet().forEach((final Entry<Object, Object> e) -> {
+       if (e.getKey() instanceof String) {
+         final String key = (String) e.getKey();
+         if (key.startsWith("es.setting.")) {
+           settings.put(key.substring("es.setting.".length()), e.getValue());
+         }
+       }
+-    }
++    });
+ 
+     settings.put("client.transport.sniff", true)
+             .put("client.transport.ignore_cluster_name", false)
+@@ -219,9 +219,9 @@
+ 
+       final SearchHit hit = searchResponse.getHits().getAt(0);
+       if (fields != null) {
+-        for (final String field : fields) {
++        fields.forEach((final String field) -> {
+           result.put(field, new StringByteIterator((String) hit.getSource().get(field)));
+-        }
++        });
+       } else {
+         for (final Map.Entry<String, Object> e : hit.getSource().entrySet()) {
+           if (KEY.equals(e.getKey())) {
+@@ -247,9 +247,9 @@
+       }
+ 
+       final SearchHit hit = response.getHits().getAt(0);
+-      for (final Entry<String, String> entry : StringByteIterator.getStringMap(values).entrySet()) {
++      StringByteIterator.getStringMap(values).entrySet().forEach((final Entry<String, String> entry) -> {
+         hit.getSource().put(entry.getKey(), entry.getValue());
+-      }
++      });
+ 
+       final IndexResponse indexResponse =
+               client.prepareIndex(indexKey, table, hit.getId()).setSource(hit.getSource()).get();
+@@ -287,9 +287,9 @@
+         final HashMap<String, ByteIterator> entry;
+         if (fields != null) {
+           entry = new HashMap<>(fields.size());
+-          for (final String field : fields) {
++          fields.forEach((final String field) -> {
+             entry.put(field, new StringByteIterator((String) hit.getSource().get(field)));
+-          }
++          });
+         } else {
+           entry = new HashMap<>(hit.getSource().size());
+           for (final Map.Entry<String, Object> field : hit.getSource().entrySet()) {
+diff '--color=auto' -ur ycsb-0.17.0/elasticsearch5/src/main/java/site/ycsb/db/elasticsearch5/ElasticsearchRestClient.java ../build/ycsb-0.17.0/elasticsearch5/src/main/java/site/ycsb/db/elasticsearch5/ElasticsearchRestClient.java
+--- ycsb-0.17.0/elasticsearch5/src/main/java/site/ycsb/db/elasticsearch5/ElasticsearchRestClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/elasticsearch5/src/main/java/site/ycsb/db/elasticsearch5/ElasticsearchRestClient.java	2026-02-16 21:16:44.211566463 +0000
+@@ -277,9 +277,9 @@
+               (Map<String, Object>)((List<Object>)hits.get("hits")).get(0);
+       @SuppressWarnings("unchecked") final Map<String, Object> source = (Map<String, Object>)hit.get("_source");
+       if (fields != null) {
+-        for (final String field : fields) {
++        fields.forEach((final String field) -> {
+           result.put(field, new StringByteIterator((String) source.get(field)));
+-        }
++        });
+       } else {
+         for (final Map.Entry<String, Object> e : source.entrySet()) {
+           if (KEY.equals(e.getKey())) {
+@@ -316,9 +316,9 @@
+       @SuppressWarnings("unchecked") final Map<String, Object> hit =
+               (Map<String, Object>) ((List<Object>) hits.get("hits")).get(0);
+       @SuppressWarnings("unchecked") final Map<String, Object> source = (Map<String, Object>) hit.get("_source");
+-      for (final Map.Entry<String, String> entry : StringByteIterator.getStringMap(values).entrySet()) {
++      StringByteIterator.getStringMap(values).entrySet().forEach((final Map.Entry<String, String> entry) -> {
+         source.put(entry.getKey(), entry.getValue());
+-      }
++      });
+       final Map<String, String> params = emptyMap();
+       final Response response = restClient.performRequest(
+               "PUT",
+@@ -373,9 +373,9 @@
+           final HashMap<String, ByteIterator> entry;
+           if (fields != null) {
+             entry = new HashMap<>(fields.size());
+-            for (final String field : fields) {
++            fields.forEach((final String field) -> {
+               entry.put(field, new StringByteIterator((String) source.get(field)));
+-            }
++            });
+           } else {
+             entry = new HashMap<>(hit.size());
+             for (final Map.Entry<String, Object> field : source.entrySet()) {
+diff '--color=auto' -ur ycsb-0.17.0/foundationdb/src/main/java/site/ycsb/db/foundationdb/FoundationDBClient.java ../build/ycsb-0.17.0/foundationdb/src/main/java/site/ycsb/db/foundationdb/FoundationDBClient.java
+--- ycsb-0.17.0/foundationdb/src/main/java/site/ycsb/db/foundationdb/FoundationDBClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/foundationdb/src/main/java/site/ycsb/db/foundationdb/FoundationDBClient.java	2026-02-16 21:16:44.211826621 +0000
+@@ -128,18 +128,18 @@
+   private void batchInsert() {
+     try {
+       db.run(tr -> {
+-          for (int i = 0; i < batchCount; ++i) {
+-            Tuple t = new Tuple();
+-            for (Map.Entry<String, String> entry : StringByteIterator.getStringMap(batchValues.get(i)).entrySet()) {
+-              Tuple v = new Tuple();
+-              v = v.add(entry.getKey());
+-              v = v.add(entry.getValue());
+-              t = t.add(v);
+-            }
+-            tr.set(Tuple.from(batchKeys.get(i)).pack(), t.pack());
++        for (int i = 0; i < batchCount; ++i) {
++          Tuple t = new Tuple();
++          for (Map.Entry<String, String> entry : StringByteIterator.getStringMap(batchValues.get(i)).entrySet()) {
++            Tuple v = new Tuple();
++            v = v.add(entry.getKey());
++            v = v.add(entry.getValue());
++            t = t.add(v);
+           }
+-          return null;
+-        });
++          tr.set(Tuple.from(batchKeys.get(i)).pack(), t.pack());
++        }
++        return null;
++      });
+     } catch (FDBException e) {
+       for (int i = 0; i < batchCount; ++i) {
+         logger.error(MessageFormatter.format("Error batch inserting key {}", batchKeys.get(i)).getMessage(), e);
+@@ -182,9 +182,9 @@
+     logger.debug("delete key = {}", rowKey);
+     try {
+       db.run(tr -> {
+-          tr.clear(Tuple.from(rowKey).pack());
+-          return null;
+-        });
++        tr.clear(Tuple.from(rowKey).pack());
++        return null;
++      });
+       return Status.OK;
+     } catch (FDBException e) {
+       logger.error(MessageFormatter.format("Error deleting key: {}", rowKey).getMessage(), e);
+@@ -202,9 +202,9 @@
+     logger.debug("read key = {}", rowKey);
+     try {
+       byte[] row = db.run(tr -> {
+-          byte[] r = tr.get(Tuple.from(rowKey).pack()).join();
+-          return r;
+-        });
++        byte[] r = tr.get(Tuple.from(rowKey).pack()).join();
++        return r;
++      });
+       Tuple t = Tuple.fromBytes(row);
+       if (t.size() == 0) {
+         logger.debug("key not fount: {}", rowKey);
+@@ -227,34 +227,34 @@
+     logger.debug("update key = {}", rowKey);
+     try {
+       Status s = db.run(tr -> {
+-          byte[] row = tr.get(Tuple.from(rowKey).pack()).join();
+-          Tuple o = Tuple.fromBytes(row);
+-          if (o.size() == 0) {
+-            logger.debug("key not fount: {}", rowKey);
++        byte[] row = tr.get(Tuple.from(rowKey).pack()).join();
++        Tuple o = Tuple.fromBytes(row);
++        if (o.size() == 0) {
++          logger.debug("key not fount: {}", rowKey);
++          return Status.NOT_FOUND;
++        }
++        HashMap<String, ByteIterator> result = new HashMap<>();
++        if (convTupleToMap(o, null, result) != Status.OK) {
++          return Status.ERROR;
++        }
++        for (String k : values.keySet()) {
++          if (result.containsKey(k)) {
++            result.put(k, values.get(k));
++          } else {
++            logger.debug("field not fount: {}", k);
+             return Status.NOT_FOUND;
+           }
+-          HashMap<String, ByteIterator> result = new HashMap<>();
+-          if (convTupleToMap(o, null, result) != Status.OK) {
+-            return Status.ERROR;
+-          }
+-          for (String k : values.keySet()) {
+-            if (result.containsKey(k)) {
+-              result.put(k, values.get(k));
+-            } else {
+-              logger.debug("field not fount: {}", k);
+-              return Status.NOT_FOUND;
+-            }
+-          }
+-          Tuple t = new Tuple();
+-          for (Map.Entry<String, String> entry : StringByteIterator.getStringMap(result).entrySet()) {
+-            Tuple v = new Tuple();
+-            v = v.add(entry.getKey());
+-            v = v.add(entry.getValue());
+-            t = t.add(v);
+-          }
+-          tr.set(Tuple.from(rowKey).pack(), t.pack());
+-          return Status.OK;
+-        });
++        }
++        Tuple t = new Tuple();
++        for (Map.Entry<String, String> entry : StringByteIterator.getStringMap(result).entrySet()) {
++          Tuple v = new Tuple();
++          v = v.add(entry.getKey());
++          v = v.add(entry.getValue());
++          t = t.add(v);
++        }
++        tr.set(Tuple.from(rowKey).pack(), t.pack());
++        return Status.OK;
++      });
+       return s;
+     } catch (FDBException e) {
+       logger.error(MessageFormatter.format("Error updating key: {}", rowKey).getMessage(), e);
+diff '--color=auto' -ur ycsb-0.17.0/geode/src/main/java/site/ycsb/db/GeodeClient.java ../build/ycsb-0.17.0/geode/src/main/java/site/ycsb/db/GeodeClient.java
+--- ycsb-0.17.0/geode/src/main/java/site/ycsb/db/GeodeClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/geode/src/main/java/site/ycsb/db/GeodeClient.java	2026-02-16 21:16:44.212033140 +0000
+@@ -168,13 +168,13 @@
+     PdxInstance val = r.get(key);
+     if (val != null) {
+       if (fields == null) {
+-        for (String fieldName : val.getFieldNames()) {
++        val.getFieldNames().forEach(fieldName -> {
+           result.put(fieldName, new ByteArrayByteIterator((byte[]) val.getField(fieldName)));
+-        }
++        });
+       } else {
+-        for (String field : fields) {
++        fields.forEach(field -> {
+           result.put(field, new ByteArrayByteIterator((byte[]) val.getField(field)));
+-        }
++        });
+       }
+       return Status.OK;
+     }
+@@ -209,9 +209,9 @@
+   private PdxInstance convertToBytearrayMap(Map<String, ByteIterator> values) {
+     PdxInstanceFactory pdxInstanceFactory = cache.createPdxInstanceFactory(JSONFormatter.JSON_CLASSNAME);
+ 
+-    for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach(entry -> {
+       pdxInstanceFactory.writeByteArray(entry.getKey(), entry.getValue().toArray());
+-    }
++    });
+     return pdxInstanceFactory.create();
+   }
+ 
+diff '--color=auto' -ur ycsb-0.17.0/googlebigtable/src/main/java/site/ycsb/db/GoogleBigtableClient.java ../build/ycsb-0.17.0/googlebigtable/src/main/java/site/ycsb/db/GoogleBigtableClient.java
+--- ycsb-0.17.0/googlebigtable/src/main/java/site/ycsb/db/GoogleBigtableClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/googlebigtable/src/main/java/site/ycsb/db/GoogleBigtableClient.java	2026-02-16 21:16:44.212218343 +0000
+@@ -235,10 +235,10 @@
+       if (rows == null || rows.isEmpty()) {
+         return Status.NOT_FOUND;
+       }
+-      for (final Row row : rows) {
+-        for (final Family family : row.getFamiliesList()) {
++      rows.forEach((final Row row) -> {
++        row.getFamiliesList().forEach((final Family family) -> {
+           if (Arrays.equals(family.getNameBytes().toByteArray(), columnFamilyBytes)) {
+-            for (final Column column : family.getColumnsList()) {
++            family.getColumnsList().forEach((final Column column) -> {
+               // we should only have a single cell per column
+               result.put(column.getQualifier().toString(UTF8_CHARSET), 
+                   new ByteArrayByteIterator(column.getCells(0).getValue().toByteArray()));
+@@ -247,10 +247,10 @@
+                     "Result for field: " + column.getQualifier().toString(UTF8_CHARSET)
+                         + " is: " + column.getCells(0).getValue().toString(UTF8_CHARSET));
+               }
+-            }
++            });
+           }
+-        }
+-      }
++        });
++      });
+       
+       return Status.OK;
+     } catch (InterruptedException e) {
+@@ -317,9 +317,9 @@
+         final HashMap<String, ByteIterator> rowResult =
+             new HashMap<String, ByteIterator>(fields != null ? fields.size() : 10);
+         
+-        for (final Family family : row.getFamiliesList()) {
++        row.getFamiliesList().forEach((final Family family) -> {
+           if (Arrays.equals(family.getNameBytes().toByteArray(), columnFamilyBytes)) {
+-            for (final Column column : family.getColumnsList()) {
++            family.getColumnsList().forEach((final Column column) -> {
+               // we should only have a single cell per column
+               rowResult.put(column.getQualifier().toString(UTF8_CHARSET), 
+                   new ByteArrayByteIterator(column.getCells(0).getValue().toByteArray()));
+@@ -328,9 +328,9 @@
+                     "Result for field: " + column.getQualifier().toString(UTF8_CHARSET)
+                         + " is: " + column.getCells(0).getValue().toString(UTF8_CHARSET));
+               }
+-            }
++            });
+           }
+-        }
++        });
+         
+         result.add(rowResult);
+         
+@@ -363,7 +363,7 @@
+     rowMutation.setRowKey(ByteString.copyFromUtf8(key));
+     rowMutation.setTableNameBytes(ByteStringer.wrap(lastTableBytes));
+     
+-    for (final Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach((final Entry<String, ByteIterator> entry) -> {
+       final Mutation.Builder mutationBuilder = rowMutation.addMutationsBuilder();
+       final SetCell.Builder setCellBuilder = mutationBuilder.getSetCellBuilder();
+       
+@@ -373,7 +373,7 @@
+ 
+       // Bigtable uses a 1ms granularity
+       setCellBuilder.setTimestampMicros(System.currentTimeMillis() * 1000);
+-    }
++    });
+     
+     try {
+       if (clientSideBuffering) {
+diff '--color=auto' -ur ycsb-0.17.0/googledatastore/src/main/java/site/ycsb/db/GoogleDatastoreClient.java ../build/ycsb-0.17.0/googledatastore/src/main/java/site/ycsb/db/GoogleDatastoreClient.java
+--- ycsb-0.17.0/googledatastore/src/main/java/site/ycsb/db/GoogleDatastoreClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/googledatastore/src/main/java/site/ycsb/db/GoogleDatastoreClient.java	2026-02-16 21:16:44.212433622 +0000
+@@ -41,7 +41,6 @@
+ import java.security.GeneralSecurityException;
+ import java.util.HashMap;
+ import java.util.Map;
+-import java.util.Map.Entry;
+ import java.util.Set;
+ import java.util.Vector;
+ 
+@@ -229,12 +228,12 @@
+     Set<String> propertiesToReturn =
+         (fields == null ? properties.keySet() : fields);
+ 
+-    for (String name : propertiesToReturn) {
++    propertiesToReturn.forEach(name -> {
+       if (properties.containsKey(name)) {
+         result.put(name, new StringByteIterator(properties.get(name)
+             .getStringValue()));
+       }
+-    }
++    });
+ 
+     return Status.OK;
+   }
+@@ -301,13 +300,13 @@
+       // If this is not for delete, build the entity.
+       Entity.Builder entityBuilder = Entity.newBuilder();
+       entityBuilder.setKey(datastoreKey);
+-      for (Entry<String, ByteIterator> val : values.entrySet()) {
++      values.entrySet().forEach(val -> {
+         entityBuilder.getMutableProperties()
+             .put(val.getKey(),
+                 Value.newBuilder()
+                 .setStringValue(val.getValue().toString())
+                 .setExcludeFromIndexes(skipIndex).build());
+-      }
++      });
+       Entity entity = entityBuilder.build();
+       logger.debug("entity built as: " + entity.toString());
+ 
+diff '--color=auto' -ur ycsb-0.17.0/griddb/src/test/java/site/ycsb/db/griddb/GridDBClientTest.java ../build/ycsb-0.17.0/griddb/src/test/java/site/ycsb/db/griddb/GridDBClientTest.java
+--- ycsb-0.17.0/griddb/src/test/java/site/ycsb/db/griddb/GridDBClientTest.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/griddb/src/test/java/site/ycsb/db/griddb/GridDBClientTest.java	2026-02-16 21:16:44.212635129 +0000
+@@ -179,13 +179,13 @@
+         assertEquals(readStatus, Status.OK);
+         assertNotEquals(result.entrySet(), 0);
+ 
+-        for (String key : fields) {
++        fields.forEach(key -> {
+             ByteIterator iter = result.get(key);
+             byte[] byteArray1 = iter.toArray();
+ 
+             String value = new String(byteArray1);
+             assertEquals(value, "value1");
+-        }
++        });
+     }
+ 
+     @Test
+diff '--color=auto' -ur ycsb-0.17.0/hbase098/src/main/java/site/ycsb/db/HBaseClient.java ../build/ycsb-0.17.0/hbase098/src/main/java/site/ycsb/db/HBaseClient.java
+--- ycsb-0.17.0/hbase098/src/main/java/site/ycsb/db/HBaseClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/hbase098/src/main/java/site/ycsb/db/HBaseClient.java	2026-02-16 21:16:44.212817901 +0000
+@@ -191,9 +191,9 @@
+       if (fields == null) {
+         g.addFamily(columnFamilyBytes);
+       } else {
+-        for (String field : fields) {
++        fields.forEach(field -> {
+           g.addColumn(columnFamilyBytes, Bytes.toBytes(field));
+-        }
++        });
+       }
+       r = hTable.get(g);
+     } catch (IOException e) {
+@@ -254,9 +254,9 @@
+     if (fields == null) {
+       s.addFamily(columnFamilyBytes);
+     } else {
+-      for (String field : fields) {
++      fields.forEach(field -> {
+         s.addColumn(columnFamilyBytes, Bytes.toBytes(field));
+-      }
++      });
+     }
+ 
+     //get results
+@@ -325,14 +325,14 @@
+       System.out.println("Setting up put for key: " + key);
+     }
+     Put p = new Put(Bytes.toBytes(key));
+-    for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach(entry -> {
+       byte[] value = entry.getValue().toArray();
+       if (debug) {
+         System.out.println("Adding field/value " + entry.getKey() + "/" +
+             Bytes.toStringBinary(value) + " to put request");
+       }
+       p.add(columnFamilyBytes, Bytes.toBytes(entry.getKey()), value);
+-    }
++    });
+ 
+     try {
+       hTable.put(p);
+@@ -463,18 +463,18 @@
+     }
+ 
+     long st = System.currentTimeMillis();
+-    for (Thread t : allthreads) {
++    allthreads.forEach(t -> {
+       t.start();
+-    }
++    });
+ 
+-    for (Thread t : allthreads) {
++    allthreads.forEach(t -> {
+       try {
+         t.join();
+       } catch (InterruptedException ignored) {
+         System.err.println("interrupted");
+         Thread.currentThread().interrupt();
+       }
+-    }
++    });
+     long en = System.currentTimeMillis();
+ 
+     System.out.println("Throughput: " + ((1000.0) * (((double) (opcount * threadcount)) / ((double) (en - st))))
+diff '--color=auto' -ur ycsb-0.17.0/hbase10/src/main/java/site/ycsb/db/HBaseClient10.java ../build/ycsb-0.17.0/hbase10/src/main/java/site/ycsb/db/HBaseClient10.java
+--- ycsb-0.17.0/hbase10/src/main/java/site/ycsb/db/HBaseClient10.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/hbase10/src/main/java/site/ycsb/db/HBaseClient10.java	2026-02-16 21:16:44.213027422 +0000
+@@ -267,9 +267,9 @@
+       if (fields == null) {
+         g.addFamily(columnFamilyBytes);
+       } else {
+-        for (String field : fields) {
++        fields.forEach(field -> {
+           g.addColumn(columnFamilyBytes, Bytes.toBytes(field));
+-        }
++        });
+       }
+       r = currentTable.get(g);
+     } catch (IOException e) {
+@@ -344,9 +344,9 @@
+     if (fields == null) {
+       s.addFamily(columnFamilyBytes);
+     } else {
+-      for (String field : fields) {
++      fields.forEach(field -> {
+         s.addColumn(columnFamilyBytes, Bytes.toBytes(field));
+-      }
++      });
+     }
+ 
+     // get results
+@@ -429,14 +429,14 @@
+     }
+     Put p = new Put(Bytes.toBytes(key));
+     p.setDurability(durability);
+-    for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach(entry -> {
+       byte[] value = entry.getValue().toArray();
+       if (debug) {
+         System.out.println("Adding field/value " + entry.getKey() + "/"
+             + Bytes.toStringBinary(value) + " to put request");
+       }
+       p.addColumn(columnFamilyBytes, Bytes.toBytes(entry.getKey()), value);
+-    }
++    });
+ 
+     try {
+       if (clientSideBuffering) {
+diff '--color=auto' -ur ycsb-0.17.0/hbase10/src/test/java/site/ycsb/db/HBaseClient10Test.java ../build/ycsb-0.17.0/hbase10/src/test/java/site/ycsb/db/HBaseClient10Test.java
+--- ycsb-0.17.0/hbase10/src/test/java/site/ycsb/db/HBaseClient10Test.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/hbase10/src/test/java/site/ycsb/db/HBaseClient10Test.java	2026-02-16 21:16:44.213220694 +0000
+@@ -198,11 +198,11 @@
+     final Result result = this.table.get(get);
+     assertFalse(result.isEmpty());
+     assertEquals(2, result.size());
+-    for(final java.util.Map.Entry<String, String> entry : input.entrySet()) {
++    input.entrySet().forEach((final java.util.Map.Entry<String, String> entry) -> {
+       assertEquals(entry.getValue(),
+           new String(result.getValue(Bytes.toBytes(COLUMN_FAMILY),
+             Bytes.toBytes(entry.getKey()))));
+-    }
++    });
+   }
+ 
+   @Test
+diff '--color=auto' -ur ycsb-0.17.0/hypertable/pom.xml ../build/ycsb-0.17.0/hypertable/pom.xml
+--- ycsb-0.17.0/hypertable/pom.xml	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/hypertable/pom.xml	2026-02-16 21:16:44.213375714 +0000
+@@ -52,7 +52,7 @@
+   <repositories>
+     <repository>
+       <id>clojars.org</id>
+-      <url>http://clojars.org/repo</url>
++      <url>https://clojars.org/repo</url>
+     </repository>
+   </repositories>
+ </project>
+diff '--color=auto' -ur ycsb-0.17.0/hypertable/src/main/java/site/ycsb/db/HypertableClient.java ../build/ycsb-0.17.0/hypertable/src/main/java/site/ycsb/db/HypertableClient.java
+--- ycsb-0.17.0/hypertable/src/main/java/site/ycsb/db/HypertableClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/hypertable/src/main/java/site/ycsb/db/HypertableClient.java	2026-02-16 21:16:44.213518924 +0000
+@@ -189,9 +189,9 @@
+     elem.setStart_row(startkey);
+     spec.addToRow_intervals(elem);
+     if (null != fields) {
+-      for (String field : fields) {
++      fields.forEach(field -> {
+         spec.addToColumns(columnFamily + ":" + field);
+-      }
++      });
+     }
+     spec.setVersions(1);
+     spec.setRow_limit(recordcount);
+@@ -283,11 +283,11 @@
+       long mutator = connection.mutator_open(ns, table, 0, 0);
+       SerializedCellsWriter writer =
+           new SerializedCellsWriter(BUFFER_SIZE * values.size(), true);
+-      for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++      values.entrySet().forEach(entry -> {
+         writer.add(key, columnFamily, entry.getKey(),
+             SerializedCellsFlag.AUTO_ASSIGN,
+             ByteBuffer.wrap(entry.getValue().toArray()));
+-      }
++      });
+       connection.mutator_set_cells_serialized(mutator, writer.buffer(), true);
+       connection.mutator_close(mutator);
+     } catch (ClientException e) {
+diff '--color=auto' -ur ycsb-0.17.0/ignite/src/main/java/site/ycsb/db/ignite/IgniteClient.java ../build/ycsb-0.17.0/ignite/src/main/java/site/ycsb/db/ignite/IgniteClient.java
+--- ycsb-0.17.0/ignite/src/main/java/site/ycsb/db/ignite/IgniteClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/ignite/src/main/java/site/ycsb/db/ignite/IgniteClient.java	2026-02-16 21:16:44.213706900 +0000
+@@ -145,13 +145,13 @@
+     try {
+       BinaryObjectBuilder bob = cluster.binary().builder("CustomType");
+ 
+-      for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++      values.entrySet().forEach(entry -> {
+         bob.setField(entry.getKey(), entry.getValue().toString());
+ 
+         if (debug) {
+           log.info(entry.getKey() + ":" + entry.getValue());
+         }
+-      }
++      });
+ 
+       BinaryObject bo = bob.build();
+ 
+diff '--color=auto' -ur ycsb-0.17.0/ignite/src/test/java/site/ycsb/db/ignite/IgniteClientTest.java ../build/ycsb-0.17.0/ignite/src/test/java/site/ycsb/db/ignite/IgniteClientTest.java
+--- ycsb-0.17.0/ignite/src/test/java/site/ycsb/db/ignite/IgniteClientTest.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/ignite/src/test/java/site/ycsb/db/ignite/IgniteClientTest.java	2026-02-16 21:16:44.213861850 +0000
+@@ -146,11 +146,11 @@
+     assertThat(sGet, is(Status.OK));
+ 
+     final HashMap<String, String> strResult = new HashMap<String, String>();
+-    for (final Map.Entry<String, ByteIterator> e : result.entrySet()) {
++    result.entrySet().forEach((final Map.Entry<String, ByteIterator> e) -> {
+       if (e.getValue() != null) {
+         strResult.put(e.getKey(), e.getValue().toString());
+       }
+-    }
++    });
+     assertThat(strResult, hasEntry("field0", "value1"));
+     assertThat(strResult, hasEntry("field1", "value2A"));
+   }
+@@ -174,11 +174,11 @@
+     assertThat(sGet, is(Status.OK));
+ 
+     final HashMap<String, String> strResult = new HashMap<String, String>();
+-    for (final Map.Entry<String, ByteIterator> e : result1.entrySet()) {
++    result1.entrySet().forEach((final Map.Entry<String, ByteIterator> e) -> {
+       if (e.getValue() != null) {
+         strResult.put(e.getKey(), e.getValue().toString());
+       }
+-    }
++    });
+     assertThat(strResult, hasEntry("field0", "value1"));
+     assertThat(strResult, hasEntry("field1", "value2A"));
+   }
+diff '--color=auto' -ur ycsb-0.17.0/ignite/src/test/java/site/ycsb/db/ignite/IgniteSqlClientTest.java ../build/ycsb-0.17.0/ignite/src/test/java/site/ycsb/db/ignite/IgniteSqlClientTest.java
+--- ycsb-0.17.0/ignite/src/test/java/site/ycsb/db/ignite/IgniteSqlClientTest.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/ignite/src/test/java/site/ycsb/db/ignite/IgniteSqlClientTest.java	2026-02-16 21:16:44.214030696 +0000
+@@ -172,11 +172,11 @@
+     assertThat(sGet, is(Status.OK));
+ 
+     final HashMap<String, String> strResult = new HashMap<String, String>();
+-    for (final Map.Entry<String, ByteIterator> e : result.entrySet()) {
++    result.entrySet().forEach((final Map.Entry<String, ByteIterator> e) -> {
+       if (e.getValue() != null) {
+         strResult.put(e.getKey(), e.getValue().toString());
+       }
+-    }
++    });
+     assertThat(strResult, hasEntry("field0", "value1"));
+     assertThat(strResult, hasEntry("field1", "value2A"));
+   }
+@@ -208,11 +208,11 @@
+     assertThat(sGet, is(Status.OK));
+ 
+     final HashMap<String, String> strResult = new HashMap<String, String>();
+-    for (final Map.Entry<String, ByteIterator> e : result.entrySet()) {
++    result.entrySet().forEach((final Map.Entry<String, ByteIterator> e) -> {
+       if (e.getValue() != null) {
+         strResult.put(e.getKey(), e.getValue().toString());
+       }
+-    }
++    });
+     assertThat(strResult, hasEntry("field0", "value1"));
+     assertThat(strResult, hasEntry("field1", "value2B"));
+     assertThat(strResult, hasEntry("field4", "value4A"));
+@@ -280,11 +280,11 @@
+     assertThat(sGet, is(Status.OK));
+ 
+     final HashMap<String, String> strResult = new HashMap<String, String>();
+-    for (final Map.Entry<String, ByteIterator> e : result1.entrySet()) {
++    result1.entrySet().forEach((final Map.Entry<String, ByteIterator> e) -> {
+       if (e.getValue() != null) {
+         strResult.put(e.getKey(), e.getValue().toString());
+       }
+-    }
++    });
+     assertThat(strResult, hasEntry("field0", "value1"));
+     assertThat(strResult, hasEntry("field1", "value2A"));
+   }
+diff '--color=auto' -ur ycsb-0.17.0/infinispan/src/main/java/site/ycsb/db/InfinispanClient.java ../build/ycsb-0.17.0/infinispan/src/main/java/site/ycsb/db/InfinispanClient.java
+--- ycsb-0.17.0/infinispan/src/main/java/site/ycsb/db/InfinispanClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/infinispan/src/main/java/site/ycsb/db/InfinispanClient.java	2026-02-16 21:16:44.214213151 +0000
+@@ -79,9 +79,9 @@
+         if (fields == null || fields.isEmpty()) {
+           StringByteIterator.putAllAsByteIterators(result, row);
+         } else {
+-          for (String field : fields) {
++          fields.forEach(field -> {
+             result.put(field, new StringByteIterator(row.get(field)));
+-          }
++          });
+         }
+       }
+       return Status.OK;
+diff '--color=auto' -ur ycsb-0.17.0/infinispan/src/main/java/site/ycsb/db/InfinispanRemoteClient.java ../build/ycsb-0.17.0/infinispan/src/main/java/site/ycsb/db/InfinispanRemoteClient.java
+--- ycsb-0.17.0/infinispan/src/main/java/site/ycsb/db/InfinispanRemoteClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/infinispan/src/main/java/site/ycsb/db/InfinispanRemoteClient.java	2026-02-16 21:16:44.214369061 +0000
+@@ -77,12 +77,12 @@
+       if (fields == null) { //get all field/value pairs
+         StringByteIterator.putAllAsByteIterators(result, values);
+       } else {
+-        for (String field : fields) {
++        fields.forEach(field -> {
+           String value = values.get(field);
+           if (value != null) {
+             result.put(field, new StringByteIterator(value));
+           }
+-        }
++        });
+       }
+ 
+       return Status.OK;
+diff '--color=auto' -ur ycsb-0.17.0/jdbc/src/main/java/site/ycsb/db/StatementType.java ../build/ycsb-0.17.0/jdbc/src/main/java/site/ycsb/db/StatementType.java
+--- ycsb-0.17.0/jdbc/src/main/java/site/ycsb/db/StatementType.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/jdbc/src/main/java/site/ycsb/db/StatementType.java	2026-02-16 21:16:44.214523209 +0000
+@@ -26,7 +26,7 @@
+ 
+     private final int internalType;
+ 
+-    private Type(int type) {
++    Type(int type) {
+       internalType = type;
+     }
+ 
+diff '--color=auto' -ur ycsb-0.17.0/maprdb/pom.xml ../build/ycsb-0.17.0/maprdb/pom.xml
+--- ycsb-0.17.0/maprdb/pom.xml	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/maprdb/pom.xml	2026-02-16 21:16:44.214685831 +0000
+@@ -25,7 +25,7 @@
+ 	<repositories>
+ 		<repository>
+ 			<id>mapr-releases</id>
+-			<url>http://repository.mapr.com/maven/</url>
++			<url>https://repository.mapr.com/maven/</url>
+ 			<snapshots>
+ 				<enabled>false</enabled>
+ 			</snapshots>
+diff '--color=auto' -ur ycsb-0.17.0/maprjsondb/pom.xml ../build/ycsb-0.17.0/maprjsondb/pom.xml
+--- ycsb-0.17.0/maprjsondb/pom.xml	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/maprjsondb/pom.xml	2026-02-16 21:16:44.214816879 +0000
+@@ -25,7 +25,7 @@
+ 	<repositories>
+ 		<repository>
+ 			<id>mapr-releases</id>
+-			<url>http://repository.mapr.com/maven/</url>
++			<url>https://repository.mapr.com/maven/</url>
+ 			<snapshots>
+ 				<enabled>false</enabled>
+ 			</snapshots>
+diff '--color=auto' -ur ycsb-0.17.0/maprjsondb/src/main/java/site/ycsb/db/mapr/MapRJSONDBClient.java ../build/ycsb-0.17.0/maprjsondb/src/main/java/site/ycsb/db/mapr/MapRJSONDBClient.java
+--- ycsb-0.17.0/maprjsondb/src/main/java/site/ycsb/db/mapr/MapRJSONDBClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/maprjsondb/src/main/java/site/ycsb/db/mapr/MapRJSONDBClient.java	2026-02-16 21:16:44.214960139 +0000
+@@ -159,9 +159,9 @@
+    */
+   private Document newDocument(Map<String, ByteIterator> values) {
+     Document document = driver.newDocument();
+-    for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach(entry -> {
+       document.set(entry.getKey(), entry.getValue().toArray());
+-    }
++    });
+     return document;
+   }
+ 
+@@ -172,10 +172,10 @@
+    */
+   private DocumentMutation newMutation(Map<String, ByteIterator> values) {
+     DocumentMutation mutation = driver.newMutation();
+-    for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++    values.entrySet().forEach(entry -> {
+       mutation.setOrReplace(entry.getKey(),
+           ByteBuffer.wrap(entry.getValue().toArray()));
+-    }
++    });
+     return mutation;
+   }
+   
+diff '--color=auto' -ur ycsb-0.17.0/memcached/src/main/java/site/ycsb/db/MemcachedClient.java ../build/ycsb-0.17.0/memcached/src/main/java/site/ycsb/db/MemcachedClient.java
+--- ycsb-0.17.0/memcached/src/main/java/site/ycsb/db/MemcachedClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/memcached/src/main/java/site/ycsb/db/MemcachedClient.java	2026-02-16 21:16:44.215141668 +0000
+@@ -291,9 +291,9 @@
+       throws IOException {
+     ObjectNode node = MAPPER.createObjectNode();
+     Map<String, String> stringMap = StringByteIterator.getStringMap(values);
+-    for (Map.Entry<String, String> pair : stringMap.entrySet()) {
++    stringMap.entrySet().forEach(pair -> {
+       node.put(pair.getKey(), pair.getValue());
+-    }
++    });
+     JsonFactory jsonFactory = new JsonFactory();
+     Writer writer = new StringWriter();
+     JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
+diff '--color=auto' -ur ycsb-0.17.0/mongodb/pom.xml ../build/ycsb-0.17.0/mongodb/pom.xml
+--- ycsb-0.17.0/mongodb/pom.xml	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/mongodb/pom.xml	2026-02-16 21:16:44.215296717 +0000
+@@ -82,7 +82,7 @@
+       </snapshots>
+       <id>allanbank</id>
+       <name>Allanbank Releases</name>
+-      <url>http://www.allanbank.com/repo/</url>
++      <url>https://www.allanbank.com/repo/</url>
+       <layout>default</layout>
+     </repository>
+   </repositories>
+diff '--color=auto' -ur ycsb-0.17.0/mongodb/src/main/java/site/ycsb/db/AsyncMongoDbClient.java ../build/ycsb-0.17.0/mongodb/src/main/java/site/ycsb/db/AsyncMongoDbClient.java
+--- ycsb-0.17.0/mongodb/src/main/java/site/ycsb/db/AsyncMongoDbClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/mongodb/src/main/java/site/ycsb/db/AsyncMongoDbClient.java	2026-02-16 21:16:44.215456059 +0000
+@@ -257,9 +257,9 @@
+       final DocumentBuilder toInsert =
+           DOCUMENT_BUILDER.get().reset().add("_id", key);
+       final Document query = toInsert.build();
+-      for (final Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++      values.entrySet().forEach((final Map.Entry<String, ByteIterator> entry) -> {
+         toInsert.add(entry.getKey(), entry.getValue().toArray());
+-      }
++      });
+ 
+       // Do an upsert.
+       if (batchSize <= 1) {
+@@ -401,9 +401,9 @@
+ 
+       if (fields != null) {
+         final DocumentBuilder fieldsDoc = BuilderFactory.start();
+-        for (final String field : fields) {
++        fields.forEach((final String field) -> {
+           fieldsDoc.add(field, INCLUDE);
+-        }
++        });
+ 
+         find.projection(fieldsDoc);
+       }
+@@ -457,9 +457,9 @@
+       final DocumentBuilder update = BuilderFactory.start();
+       final DocumentBuilder fieldsToSet = update.push("$set");
+ 
+-      for (final Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++      values.entrySet().forEach((final Map.Entry<String, ByteIterator> entry) -> {
+         fieldsToSet.add(entry.getKey(), entry.getValue().toArray());
+-      }
++      });
+       final long res =
+           collection.update(query, update, false, false, writeConcern);
+       return writeConcern == Durability.NONE || res == 1 ? Status.OK : Status.NOT_FOUND;
+@@ -505,7 +505,7 @@
+      * @param element
+      *          The {@link BinaryElement} to iterate over.
+      */
+-    public BinaryByteArrayIterator(final BinaryElement element) {
++    BinaryByteArrayIterator(final BinaryElement element) {
+       this.binaryElement = element;
+       this.offset = 0;
+     }
+diff '--color=auto' -ur ycsb-0.17.0/mongodb/src/main/java/site/ycsb/db/MongoDbClient.java ../build/ycsb-0.17.0/mongodb/src/main/java/site/ycsb/db/MongoDbClient.java
+--- ycsb-0.17.0/mongodb/src/main/java/site/ycsb/db/MongoDbClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/mongodb/src/main/java/site/ycsb/db/MongoDbClient.java	2026-02-16 21:16:44.215660520 +0000
+@@ -255,9 +255,9 @@
+     try {
+       MongoCollection<Document> collection = database.getCollection(table);
+       Document toInsert = new Document("_id", key);
+-      for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++      values.entrySet().forEach(entry -> {
+         toInsert.put(entry.getKey(), entry.getValue().toArray());
+-      }
++      });
+ 
+       if (batchSize == 1) {
+         if (useUpsert) {
+@@ -275,11 +275,11 @@
+           if (useUpsert) {
+             List<UpdateOneModel<Document>> updates = 
+                 new ArrayList<UpdateOneModel<Document>>(bulkInserts.size());
+-            for (Document doc : bulkInserts) {
++            bulkInserts.forEach(doc -> {
+               updates.add(new UpdateOneModel<Document>(
+                   new Document("_id", doc.get("_id")),
+                   doc, UPDATE_WITH_UPSERT));
+-            }
++            });
+             collection.bulkWrite(updates);
+           } else {
+             collection.insertMany(bulkInserts, INSERT_UNORDERED);
+@@ -324,9 +324,9 @@
+ 
+       if (fields != null) {
+         Document projection = new Document();
+-        for (String field : fields) {
++        fields.forEach(field -> {
+           projection.put(field, INCLUDE);
+-        }
++        });
+         findIterable.projection(projection);
+       }
+ 
+@@ -376,9 +376,9 @@
+ 
+       if (fields != null) {
+         Document projection = new Document();
+-        for (String fieldName : fields) {
++        fields.forEach(fieldName -> {
+           projection.put(fieldName, INCLUDE);
+-        }
++        });
+         findIterable.projection(projection);
+       }
+ 
+@@ -434,9 +434,9 @@
+ 
+       Document query = new Document("_id", key);
+       Document fieldsToSet = new Document();
+-      for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++      values.entrySet().forEach(entry -> {
+         fieldsToSet.put(entry.getKey(), entry.getValue().toArray());
+-      }
++      });
+       Document update = new Document("$set", fieldsToSet);
+ 
+       UpdateResult result = collection.updateOne(query, update);
+@@ -460,11 +460,11 @@
+    *          The object to copy values from.
+    */
+   protected void fillMap(Map<String, ByteIterator> resultMap, Document obj) {
+-    for (Map.Entry<String, Object> entry : obj.entrySet()) {
++    obj.entrySet().forEach(entry -> {
+       if (entry.getValue() instanceof Binary) {
+         resultMap.put(entry.getKey(),
+             new ByteArrayByteIterator(((Binary) entry.getValue()).getData()));
+       }
+-    }
++    });
+   }
+ }
+diff '--color=auto' -ur ycsb-0.17.0/mongodb/src/test/java/site/ycsb/db/AbstractDBTestCases.java ../build/ycsb-0.17.0/mongodb/src/test/java/site/ycsb/db/AbstractDBTestCases.java
+--- ycsb-0.17.0/mongodb/src/test/java/site/ycsb/db/AbstractDBTestCases.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/mongodb/src/test/java/site/ycsb/db/AbstractDBTestCases.java	2026-02-16 21:16:44.215891926 +0000
+@@ -102,7 +102,7 @@
+     Set<String> keys = Collections.singleton("a");
+     result = client.read(table, id, keys, read);
+     assertThat("Read did not return success (0).", result, is(Status.OK));
+-    for (String key : keys) {
++    keys.forEach(key -> {
+       ByteIterator iter = read.get(key);
+ 
+       assertThat("Did not read the inserted field: " + key, iter,
+@@ -116,7 +116,7 @@
+       assertTrue(iter.hasNext());
+       assertThat(iter.nextByte(), is(Byte.valueOf((byte) 4)));
+       assertFalse(iter.hasNext());
+-    }
++    });
+ 
+     result = client.delete(table, id);
+     assertThat("Delete did not return success (0).", result, is(Status.OK));
+@@ -151,7 +151,7 @@
+     Set<String> keys = Collections.singleton("a");
+     result = client.read(table, id, keys, read);
+     assertThat("Read did not return success (0).", result, is(Status.OK));
+-    for (String key : keys) {
++    keys.forEach(key -> {
+       ByteIterator iter = read.get(key);
+ 
+       assertThat("Did not read the inserted field: " + key, iter,
+@@ -165,7 +165,7 @@
+       assertTrue(iter.hasNext());
+       assertThat(iter.nextByte(), is(Byte.valueOf((byte) 4)));
+       assertFalse(iter.hasNext());
+-    }
++    });
+ 
+     HashMap<String, ByteIterator> updated = new HashMap<String, ByteIterator>();
+     updated.put("a", new ByteArrayByteIterator(new byte[] { 5, 6, 7, 8 }));
+@@ -175,7 +175,7 @@
+     read.clear();
+     result = client.read(table, id, null, read);
+     assertThat("Read, after update, did not return success (0).", result, is(Status.OK));
+-    for (String key : keys) {
++    keys.forEach(key -> {
+       ByteIterator iter = read.get(key);
+ 
+       assertThat("Did not read the inserted field: " + key, iter,
+@@ -189,7 +189,7 @@
+       assertTrue(iter.hasNext());
+       assertThat(iter.nextByte(), is(Byte.valueOf((byte) 8)));
+       assertFalse(iter.hasNext());
+-    }
++    });
+   }
+ 
+   /**
+@@ -214,7 +214,7 @@
+     Set<String> keys = Collections.singleton("a");
+     result = client.read(table, id, keys, read);
+     assertThat("Read did not return success (0).", result, is(Status.OK));
+-    for (String key : keys) {
++    keys.forEach(key -> {
+       ByteIterator iter = read.get(key);
+ 
+       assertThat("Did not read the inserted field: " + key, iter,
+@@ -228,7 +228,7 @@
+       assertTrue(iter.hasNext());
+       assertThat(iter.nextByte(), is(Byte.valueOf((byte) 4)));
+       assertFalse(iter.hasNext());
+-    }
++    });
+ 
+     HashMap<String, ByteIterator> updated = new HashMap<String, ByteIterator>();
+     updated.put("a", new ByteArrayByteIterator(new byte[] { 5, 6, 7, 8 }));
+@@ -238,7 +238,7 @@
+     read.clear();
+     result = client.read(table, id, null, read);
+     assertThat("Read, after update, did not return success (0).", result, is(Status.OK));
+-    for (String key : keys) {
++    keys.forEach(key -> {
+       ByteIterator iter = read.get(key);
+ 
+       assertThat("Did not read the inserted field: " + key, iter,
+@@ -252,7 +252,7 @@
+       assertTrue(iter.hasNext());
+       assertThat(iter.nextByte(), is(Byte.valueOf((byte) 8)));
+       assertFalse(iter.hasNext());
+-    }
++    });
+   }
+ 
+   /**
+diff '--color=auto' -ur ycsb-0.17.0/orientdb/src/main/java/site/ycsb/db/OrientDBClient.java ../build/ycsb-0.17.0/orientdb/src/main/java/site/ycsb/db/OrientDBClient.java
+--- ycsb-0.17.0/orientdb/src/main/java/site/ycsb/db/OrientDBClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/orientdb/src/main/java/site/ycsb/db/OrientDBClient.java	2026-02-16 21:16:44.216086545 +0000
+@@ -199,9 +199,9 @@
+     try (ODatabaseDocumentTx db = databasePool.acquire()) {
+       final ODocument document = new ODocument(CLASS);
+ 
+-      for (Map.Entry<String, String> entry : StringByteIterator.getStringMap(values).entrySet()) {
++      StringByteIterator.getStringMap(values).entrySet().forEach(entry -> {
+         document.field(entry.getKey(), entry.getValue());
+-      }
++      });
+ 
+       document.save();
+       final ODictionary<ORecord> dictionary = db.getMetadata().getIndexManager().getDictionary();
+@@ -237,9 +237,9 @@
+       final ODocument document = dictionary.get(key);
+       if (document != null) {
+         if (fields != null) {
+-          for (String field : fields) {
++          fields.forEach(field -> {
+             result.put(field, new StringByteIterator((String) document.field(field)));
+-          }
++          });
+         } else {
+           for (String field : document.fieldNames()) {
+             result.put(field, new StringByteIterator((String) document.field(field)));
+@@ -260,9 +260,9 @@
+         final ODictionary<ORecord> dictionary = db.getMetadata().getIndexManager().getDictionary();
+         final ODocument document = dictionary.get(key);
+         if (document != null) {
+-          for (Map.Entry<String, String> entry : StringByteIterator.getStringMap(values).entrySet()) {
++          StringByteIterator.getStringMap(values).entrySet().forEach(entry -> {
+             document.field(entry.getKey(), entry.getValue());
+-          }
++          });
+ 
+           document.save();
+           return Status.OK;
+@@ -298,9 +298,9 @@
+         result.add(map);
+ 
+         if (fields != null) {
+-          for (String field : fields) {
++          fields.forEach(field -> {
+             map.put(field, new StringByteIterator((String) document.field(field)));
+-          }
++          });
+         } else {
+           for (String field : document.fieldNames()) {
+             map.put(field, new StringByteIterator((String) document.field(field)));
+diff '--color=auto' -ur ycsb-0.17.0/orientdb/src/test/java/site/ycsb/db/OrientDBClientTest.java ../build/ycsb-0.17.0/orientdb/src/test/java/site/ycsb/db/OrientDBClientTest.java
+--- ycsb-0.17.0/orientdb/src/test/java/site/ycsb/db/OrientDBClientTest.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/orientdb/src/test/java/site/ycsb/db/OrientDBClientTest.java	2026-02-16 21:16:44.216283270 +0000
+@@ -126,7 +126,7 @@
+     OPartitionedDatabasePool pool = orientDBClient.getDatabasePool();
+     try(ODatabaseDocumentTx db = pool.acquire()) {
+       // Manually insert three documents
+-      for (String key : Arrays.asList(user0, user1, user2)) {
++      Arrays.asList(user0, user1, user2).forEach(key -> {
+         ODocument doc = new ODocument(CLASS);
+         for (int i = 0; i < NUM_FIELDS; i++) {
+           doc.field(FIELD_PREFIX + i, preupdateString);
+@@ -135,7 +135,7 @@
+ 
+         ODictionary<ORecord> dictionary = db.getDictionary();
+         dictionary.put(key, doc);
+-      }
++      });
+     }
+ 
+     HashMap<String, ByteIterator> updateMap = new HashMap<>();
+diff '--color=auto' -ur ycsb-0.17.0/postgrenosql/src/main/java/site/ycsb/postgrenosql/PostgreNoSQLDBClient.java ../build/ycsb-0.17.0/postgrenosql/src/main/java/site/ycsb/postgrenosql/PostgreNoSQLDBClient.java
+--- ycsb-0.17.0/postgrenosql/src/main/java/site/ycsb/postgrenosql/PostgreNoSQLDBClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/postgrenosql/src/main/java/site/ycsb/postgrenosql/PostgreNoSQLDBClient.java	2026-02-16 21:16:44.216485006 +0000
+@@ -214,9 +214,9 @@
+       }
+ 
+       JSONObject jsonObject = new JSONObject();
+-      for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++      values.entrySet().forEach(entry -> {
+         jsonObject.put(entry.getKey(), entry.getValue().toString());
+-      }
++      });
+ 
+       PGobject object = new PGobject();
+       object.setType("jsonb");
+@@ -246,9 +246,9 @@
+       }
+ 
+       JSONObject jsonObject = new JSONObject();
+-      for (Map.Entry<String, ByteIterator> entry : values.entrySet()) {
++      values.entrySet().forEach(entry -> {
+         jsonObject.put(entry.getKey(), entry.getValue().toString());
+-      }
++      });
+ 
+       PGobject object = new PGobject();
+       object.setType("jsonb");
+@@ -307,9 +307,9 @@
+     if (readType.getFields() == null) {
+       read.append(", (jsonb_each_text(" + COLUMN_NAME + ")).*");
+     } else {
+-      for (String field:readType.getFields()){
++      readType.getFields().forEach(field -> {
+         read.append(", " + COLUMN_NAME + "->>'" + field + "' AS " + field);
+-      }
++      });
+     }
+ 
+     read.append(" FROM " + readType.getTableName());
+@@ -333,9 +333,9 @@
+   private String createScanStatement(StatementType scanType){
+     StringBuilder scan = new StringBuilder("SELECT " + PRIMARY_KEY + " AS " + PRIMARY_KEY);
+     if (scanType.getFields() != null){
+-      for (String field:scanType.getFields()){
++      scanType.getFields().forEach(field -> {
+         scan.append(", " + COLUMN_NAME + "->>'" + field + "' AS " + field);
+-      }
++      });
+     }
+     scan.append(" FROM " + scanType.getTableName());
+     scan.append(" WHERE ");
+diff '--color=auto' -ur ycsb-0.17.0/postgrenosql/src/test/java/site/ycsb/postgrenosql/PostgreNoSQLDBClientTest.java ../build/ycsb-0.17.0/postgrenosql/src/test/java/site/ycsb/postgrenosql/PostgreNoSQLDBClientTest.java
+--- ycsb-0.17.0/postgrenosql/src/test/java/site/ycsb/postgrenosql/PostgreNoSQLDBClientTest.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/postgrenosql/src/test/java/site/ycsb/postgrenosql/PostgreNoSQLDBClientTest.java	2026-02-16 21:16:44.216711949 +0000
+@@ -130,9 +130,9 @@
+       result = postgreNoSQLClient.read(TABLE_NAME, insertKey, fields, readResults);
+       assertThat("Read did not return success (0).", result, is(Status.OK));
+ 
+-      for (Map.Entry<String, ByteIterator> entry : readResults.entrySet()) {
++      readResults.entrySet().forEach(entry -> {
+         assertArrayEquals("Read result does not match wrote entries.", entry.getValue().toArray(), copiedInsertMap.get(entry.getKey()).toArray());
+-      }
++      });
+     } catch (Exception e){
+       LOG.info(e.toString());
+     }
+@@ -163,9 +163,9 @@
+       result = postgreNoSQLClient.read(TABLE_NAME, insertKey, fields, readResults);
+       assertThat("Read did not return success (0).", result, is(Status.OK));
+ 
+-      for (Map.Entry<String, ByteIterator> entry : readResults.entrySet()) {
++      readResults.entrySet().forEach(entry -> {
+         assertArrayEquals("Read result does not match wrote entries.", entry.getValue().toArray(), copiedInsertMap.get(entry.getKey()).toArray());
+-      }
++      });
+ 
+       result = postgreNoSQLClient.delete(TABLE_NAME, insertKey);
+       assertThat("Delete did not return success (0).", result, is(Status.OK));
+diff '--color=auto' -ur ycsb-0.17.0/rados/src/main/java/site/ycsb/db/RadosClient.java ../build/ycsb-0.17.0/rados/src/main/java/site/ycsb/db/RadosClient.java
+--- ycsb-0.17.0/rados/src/main/java/site/ycsb/db/RadosClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/rados/src/main/java/site/ycsb/db/RadosClient.java	2026-02-16 21:16:44.216895110 +0000
+@@ -130,9 +130,9 @@
+     JSONObject json = new JSONObject(new String(buffer, java.nio.charset.StandardCharsets.UTF_8));
+     Set<String> fieldsToReturn = (fields == null ? json.keySet() : fields);
+ 
+-    for (String name : fieldsToReturn) {
++    fieldsToReturn.forEach(name -> {
+       result.put(name, new StringByteIterator(json.getString(name)));
+-    }
++    });
+ 
+     return result.isEmpty() ? Status.ERROR : Status.OK;
+   }
+@@ -140,9 +140,9 @@
+   @Override
+   public Status insert(String table, String key, Map<String, ByteIterator> values) {
+     JSONObject json = new JSONObject();
+-    for (final Entry<String, ByteIterator> e : values.entrySet()) {
++    values.entrySet().forEach((final Entry<String, ByteIterator> e) -> {
+       json.put(e.getKey(), e.getValue().toString());
+-    }
++    });
+ 
+     try {
+       ioctx.write(key, json.toString());
+diff '--color=auto' -ur ycsb-0.17.0/rest/src/main/java/site/ycsb/webservice/rest/RestClient.java ../build/ycsb-0.17.0/rest/src/main/java/site/ycsb/webservice/rest/RestClient.java
+--- ycsb-0.17.0/rest/src/main/java/site/ycsb/webservice/rest/RestClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/rest/src/main/java/site/ycsb/webservice/rest/RestClient.java	2026-02-16 21:16:44.217074763 +0000
+@@ -317,7 +317,7 @@
+     private long timeout;
+     private Criteria timedout;
+ 
+-    public Timer(long timeout, Criteria timedout) {
++    Timer(long timeout, Criteria timedout) {
+       this.timedout = timedout;
+       this.timeout = timeout;
+     }
+@@ -341,7 +341,7 @@
+ 
+     private boolean isSatisfied;
+ 
+-    public Criteria(boolean isSatisfied) {
++    Criteria(boolean isSatisfied) {
+       this.isSatisfied = isSatisfied;
+     }
+ 
+@@ -362,7 +362,7 @@
+ 
+     private static final long serialVersionUID = 1L;
+     
+-    public TimeoutException() {
++    TimeoutException() {
+       super("HTTP Request exceeded execution time limit.");
+     }
+ 
+diff '--color=auto' -ur ycsb-0.17.0/rest/src/test/java/site/ycsb/webservice/rest/Utils.java ../build/ycsb-0.17.0/rest/src/test/java/site/ycsb/webservice/rest/Utils.java
+--- ycsb-0.17.0/rest/src/test/java/site/ycsb/webservice/rest/Utils.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/rest/src/test/java/site/ycsb/webservice/rest/Utils.java	2026-02-16 21:16:44.217255246 +0000
+@@ -66,10 +66,9 @@
+     List<String> list = new ArrayList<String>();
+     try {
+       BufferedReader file = new BufferedReader(new FileReader(filepath));
+-      String line = null;
+-      while ((line = file.readLine()) != null) {
++      file.lines().forEach(line -> {
+         list.add(line.trim());
+-      }
++      });
+       file.close();
+     } catch (IOException e) {
+       e.printStackTrace();
+diff '--color=auto' -ur ycsb-0.17.0/riak/src/main/java/site/ycsb/db/riak/RiakUtils.java ../build/ycsb-0.17.0/riak/src/main/java/site/ycsb/db/riak/RiakUtils.java
+--- ycsb-0.17.0/riak/src/main/java/site/ycsb/db/riak/RiakUtils.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/riak/src/main/java/site/ycsb/db/riak/RiakUtils.java	2026-02-16 21:16:44.217422247 +0000
+@@ -180,9 +180,9 @@
+       }
+     } else {
+       // If, instead, no field is specified, then all those retrieved must be provided as result.
+-      for (String field : deserializedTable.keySet()) {
++      deserializedTable.keySet().forEach(field -> {
+         resultHashMap.put(field, deserializedTable.get(field));
+-      }
++      });
+     }
+   }
+ }
+diff '--color=auto' -ur ycsb-0.17.0/rocksdb/src/main/java/site/ycsb/db/rocksdb/RocksDBClient.java ../build/ycsb-0.17.0/rocksdb/src/main/java/site/ycsb/db/rocksdb/RocksDBClient.java
+--- ycsb-0.17.0/rocksdb/src/main/java/site/ycsb/db/rocksdb/RocksDBClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/rocksdb/src/main/java/site/ycsb/db/rocksdb/RocksDBClient.java	2026-02-16 21:16:44.217622801 +0000
+@@ -89,7 +89,7 @@
+     final List<ColumnFamilyOptions> cfOptionss = new ArrayList<>();
+     final List<ColumnFamilyDescriptor> cfDescriptors = new ArrayList<>();
+ 
+-    for(final String cfName : cfNames) {
++    cfNames.forEach((final String cfName) -> {
+       final ColumnFamilyOptions cfOptions = new ColumnFamilyOptions()
+           .optimizeLevelStyleCompaction();
+       final ColumnFamilyDescriptor cfDescriptor = new ColumnFamilyDescriptor(
+@@ -98,7 +98,7 @@
+       );
+       cfOptionss.add(cfOptions);
+       cfDescriptors.add(cfDescriptor);
+-    }
++    });
+ 
+     final int rocksThreads = Runtime.getRuntime().availableProcessors() * 2;
+ 
+@@ -137,9 +137,9 @@
+     synchronized (RocksDBClient.class) {
+       try {
+         if (references == 1) {
+-          for (final ColumnFamily cf : COLUMN_FAMILIES.values()) {
++          COLUMN_FAMILIES.values().forEach((final ColumnFamily cf) -> {
+             cf.getHandle().close();
+-          }
++          });
+ 
+           rocksDb.close();
+           rocksDb = null;
+@@ -147,9 +147,9 @@
+           dbOptions.close();
+           dbOptions = null;
+ 
+-          for (final ColumnFamily cf : COLUMN_FAMILIES.values()) {
++          COLUMN_FAMILIES.values().forEach((final ColumnFamily cf) -> {
+             cf.getOptions().close();
+-          }
++          });
+           saveColumnFamilyNames();
+           COLUMN_FAMILIES.clear();
+ 
+@@ -194,7 +194,7 @@
+       }
+ 
+       final ColumnFamilyHandle cf = COLUMN_FAMILIES.get(table).getHandle();
+-      try(final RocksIterator iterator = rocksDb.newIterator(cf)) {
++      try(RocksIterator iterator = rocksDb.newIterator(cf)) {
+         int iterations = 0;
+         for (iterator.seek(startkey.getBytes(UTF_8)); iterator.isValid() && iterations < recordcount;
+              iterator.next()) {
+@@ -279,11 +279,11 @@
+ 
+   private void saveColumnFamilyNames() throws IOException {
+     final Path file = rocksDbDir.resolve(COLUMN_FAMILY_NAMES_FILENAME);
+-    try(final PrintWriter writer = new PrintWriter(Files.newBufferedWriter(file, UTF_8))) {
++    try(PrintWriter writer = new PrintWriter(Files.newBufferedWriter(file, UTF_8))) {
+       writer.println(new String(RocksDB.DEFAULT_COLUMN_FAMILY, UTF_8));
+-      for(final String cfName : COLUMN_FAMILIES.keySet()) {
++      COLUMN_FAMILIES.keySet().forEach((final String cfName) -> {
+         writer.println(cfName);
+-      }
++      });
+     }
+   }
+ 
+@@ -291,7 +291,7 @@
+     final List<String> cfNames = new ArrayList<>();
+     final Path file = rocksDbDir.resolve(COLUMN_FAMILY_NAMES_FILENAME);
+     if(Files.exists(file)) {
+-      try (final LineNumberReader reader =
++      try (LineNumberReader reader =
+                new LineNumberReader(Files.newBufferedReader(file, UTF_8))) {
+         String line = null;
+         while ((line = reader.readLine()) != null) {
+@@ -334,7 +334,7 @@
+   }
+ 
+   private byte[] serializeValues(final Map<String, ByteIterator> values) throws IOException {
+-    try(final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
++    try(ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+       final ByteBuffer buf = ByteBuffer.allocate(4);
+ 
+       for(final Map.Entry<String, ByteIterator> value : values.entrySet()) {
+diff '--color=auto' -ur ycsb-0.17.0/s3/src/main/java/site/ycsb/db/S3Client.java ../build/ycsb-0.17.0/s3/src/main/java/site/ycsb/db/S3Client.java
+--- ycsb-0.17.0/s3/src/main/java/site/ycsb/db/S3Client.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/s3/src/main/java/site/ycsb/db/S3Client.java	2026-02-16 21:16:44.217861729 +0000
+@@ -483,10 +483,10 @@
+       listing = s3Client.listNextBatchOfObjects(listing);
+       summaries.addAll(listing.getObjectSummaries());
+     }
+-    for (S3ObjectSummary summary : summaries) {
++    summaries.forEach(summary -> {
+       String summaryKey = summary.getKey();
+       keyList.add(summaryKey);
+-    }
++    });
+     // Sorting the list of files in Alphabetical order
+     Collections.sort(keyList); // sorting the list
+     // Getting the position of the startingfile for the scan
+diff '--color=auto' -ur ycsb-0.17.0/solr/src/main/java/site/ycsb/db/solr/SolrClient.java ../build/ycsb-0.17.0/solr/src/main/java/site/ycsb/db/solr/SolrClient.java
+--- ycsb-0.17.0/solr/src/main/java/site/ycsb/db/solr/SolrClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/solr/src/main/java/site/ycsb/db/solr/SolrClient.java	2026-02-16 21:16:44.218104598 +0000
+@@ -37,7 +37,6 @@
+ 
+ import java.io.IOException;
+ import java.util.*;
+-import java.util.Map.Entry;
+ 
+ /**
+  * Solr client for YCSB framework.
+@@ -121,9 +120,9 @@
+       SolrInputDocument doc = new SolrInputDocument();
+ 
+       doc.addField("id", key);
+-      for (Entry<String, String> entry : StringByteIterator.getStringMap(values).entrySet()) {
++      StringByteIterator.getStringMap(values).entrySet().forEach(entry -> {
+         doc.addField(entry.getKey(), entry.getValue());
+-      }
++      });
+       UpdateResponse response;
+       if (batchMode) {
+         response = client.add(table, doc, commitTime);
+@@ -198,10 +197,10 @@
+       final QueryResponse response = client.query(table, query);
+       SolrDocumentList results = response.getResults();
+       if ((results != null) && (results.getNumFound() > 0)) {
+-        for (String field : results.get(0).getFieldNames()) {
++        results.get(0).getFieldNames().forEach(field -> {
+           result.put(field,
+               new StringByteIterator(String.valueOf(results.get(0).getFirstValue(field))));
+-        }
++        });
+       }
+       return checkStatus(response.getStatus());
+     } catch (IOException | SolrServerException e) {
+@@ -230,9 +229,9 @@
+       SolrInputDocument updatedDoc = new SolrInputDocument();
+       updatedDoc.addField("id", key);
+ 
+-      for (Entry<String, String> entry : StringByteIterator.getStringMap(values).entrySet()) {
++      StringByteIterator.getStringMap(values).entrySet().forEach(entry -> {
+         updatedDoc.addField(entry.getKey(), Collections.singletonMap("set", entry.getValue()));
+-      }
++      });
+ 
+       UpdateResponse writeResponse;
+       if (batchMode) {
+diff '--color=auto' -ur ycsb-0.17.0/solr6/src/main/java/site/ycsb/db/solr6/SolrClient.java ../build/ycsb-0.17.0/solr6/src/main/java/site/ycsb/db/solr6/SolrClient.java
+--- ycsb-0.17.0/solr6/src/main/java/site/ycsb/db/solr6/SolrClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/solr6/src/main/java/site/ycsb/db/solr6/SolrClient.java	2026-02-16 21:16:44.218298211 +0000
+@@ -37,7 +37,6 @@
+ 
+ import java.io.IOException;
+ import java.util.*;
+-import java.util.Map.Entry;
+ 
+ /**
+  * Solr client for YCSB framework.
+@@ -120,9 +119,9 @@
+       SolrInputDocument doc = new SolrInputDocument();
+ 
+       doc.addField("id", key);
+-      for (Entry<String, String> entry : StringByteIterator.getStringMap(values).entrySet()) {
++      StringByteIterator.getStringMap(values).entrySet().forEach(entry -> {
+         doc.addField(entry.getKey(), entry.getValue());
+-      }
++      });
+       UpdateResponse response;
+       if (batchMode) {
+         response = client.add(table, doc, commitTime);
+@@ -197,10 +196,10 @@
+       final QueryResponse response = client.query(table, query);
+       SolrDocumentList results = response.getResults();
+       if ((results != null) && (results.getNumFound() > 0)) {
+-        for (String field : results.get(0).getFieldNames()) {
++        results.get(0).getFieldNames().forEach(field -> {
+           result.put(field,
+               new StringByteIterator(String.valueOf(results.get(0).getFirstValue(field))));
+-        }
++        });
+       }
+       return checkStatus(response.getStatus());
+     } catch (IOException | SolrServerException e) {
+@@ -229,9 +228,9 @@
+       SolrInputDocument updatedDoc = new SolrInputDocument();
+       updatedDoc.addField("id", key);
+ 
+-      for (Entry<String, String> entry : StringByteIterator.getStringMap(values).entrySet()) {
++      StringByteIterator.getStringMap(values).entrySet().forEach(entry -> {
+         updatedDoc.addField(entry.getKey(), Collections.singletonMap("set", entry.getValue()));
+-      }
++      });
+ 
+       UpdateResponse writeResponse;
+       if (batchMode) {
+diff '--color=auto' -ur ycsb-0.17.0/tablestore/src/main/java/site/ycsb/db/tablestore/TableStoreClient.java ../build/ycsb-0.17.0/tablestore/src/main/java/site/ycsb/db/tablestore/TableStoreClient.java
+--- ycsb-0.17.0/tablestore/src/main/java/site/ycsb/db/tablestore/TableStoreClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/tablestore/src/main/java/site/ycsb/db/tablestore/TableStoreClient.java	2026-02-16 21:16:44.218494519 +0000
+@@ -111,9 +111,9 @@
+   private void setResult(Set<String> fields, Map<String, ByteIterator> result, Row row) {
+     if (row != null) {
+       if (fields != null) {
+-        for (String field : fields) {
++        fields.forEach(field -> {
+           result.put(field, new StringByteIterator((row.getColumn(field).toString())));
+-        }
++        });
+       } else {
+         for (Column column : row.getColumns()) {
+           result.put(column.getName(), new StringByteIterator(column.getValue().asString()));
+@@ -187,11 +187,11 @@
+       GetRangeResponse getRangeResponse = client.getRange(getRangeRequest);
+       // set the result
+       List<Row> rows = getRangeResponse.getRows();
+-      for (Row row : rows) {
++      rows.forEach(row -> {
+         HashMap<String, ByteIterator> values = new HashMap<>();
+         setResult(fields, values, row);
+         result.add(values);
+-      }
++      });
+       return Status.OK;
+     } catch (TableStoreException e) {
+       return dealWithTableStoreException(e);
+@@ -210,9 +210,9 @@
+       PrimaryKey primaryKey = new PrimaryKey(primaryKeyColumns);
+       RowUpdateChange rowUpdateChange = new RowUpdateChange(table, primaryKey);
+ 
+-      for (Map.Entry<String, ByteIterator> entry: values.entrySet()) {
++      values.entrySet().forEach(entry -> {
+         rowUpdateChange.put(entry.getKey(), ColumnValue.fromString(entry.getValue().toString()));
+-      }
++      });
+ 
+       UpdateRowRequest updateRowRequest = new UpdateRowRequest();
+       updateRowRequest.setRowChange(rowUpdateChange);
+@@ -235,9 +235,9 @@
+       PrimaryKey primaryKey = new PrimaryKey(primaryKeyColumns);
+       RowPutChange rowPutChange = new RowPutChange(table, primaryKey);
+       // set the columns
+-      for (Map.Entry<String, ByteIterator> entry: values.entrySet()) {
++      values.entrySet().forEach(entry -> {
+         rowPutChange.addColumn(entry.getKey(), ColumnValue.fromString(entry.getValue().toString()));
+-      }
++      });
+       // set the putRow request
+       PutRowRequest putRowRequest = new PutRowRequest();
+       putRowRequest.setRowChange(rowPutChange);
+diff '--color=auto' -ur ycsb-0.17.0/tarantool/src/main/java/site/ycsb/db/TarantoolClient.java ../build/ycsb-0.17.0/tarantool/src/main/java/site/ycsb/db/TarantoolClient.java
+--- ycsb-0.17.0/tarantool/src/main/java/site/ycsb/db/TarantoolClient.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/tarantool/src/main/java/site/ycsb/db/TarantoolClient.java	2026-02-16 21:16:44.218717319 +0000
+@@ -104,12 +104,12 @@
+     } catch (NullPointerException exc) {
+       return Status.ERROR;
+     }
+-    for (List<String> i : response) {
++    response.forEach(i -> {
+       HashMap<String, ByteIterator> temp = tupleConvertFilter(i, fields);
+       if (!temp.isEmpty()) {
+         result.add((HashMap<String, ByteIterator>) temp.clone());
+       }
+-    }
++    });
+     return Status.OK;
+   }
+ 
+diff '--color=auto' -ur ycsb-0.17.0/voltdb/src/main/java/site/ycsb/db/voltdb/VoltClient4.java ../build/ycsb-0.17.0/voltdb/src/main/java/site/ycsb/db/voltdb/VoltClient4.java
+--- ycsb-0.17.0/voltdb/src/main/java/site/ycsb/db/voltdb/VoltClient4.java	2025-03-15 14:34:39.000000000 +0000
++++ ../build/ycsb-0.17.0/voltdb/src/main/java/site/ycsb/db/voltdb/VoltClient4.java	2026-02-16 21:16:44.218890398 +0000
+@@ -227,7 +227,7 @@
+   private byte[] packRowData(Map<String, ByteIterator> columns) {
+     mwriteBuf.clear();
+     mwriteBuf.putInt(columns.size());
+-    for (String key : columns.keySet()) {
++    columns.keySet().forEach(key -> {
+       byte[] k = key.getBytes(UTF8);
+       mwriteBuf.putInt(k.length);
+       mwriteBuf.put(k);
+@@ -237,7 +237,7 @@
+       mwriteBuf.putInt(len);
+       v.nextBuf(mworkingData, mwriteBuf.position());
+       mwriteBuf.position(mwriteBuf.position() + len);
+-    }
++    });
+ 
+     byte[] data = new byte[mwriteBuf.position()];
+     System.arraycopy(mworkingData, 0, data, 0, data.length);
+@@ -295,7 +295,7 @@
+     return result;
+   }
+   
+-  private static class StaticHolder {
++  private static final class StaticHolder {
+     static final YCSBSchemaBuilder INSTANCE = new YCSBSchemaBuilder();
+   }
+   
