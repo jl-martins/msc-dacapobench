@@ -1,6 +1,18 @@
-diff -ur ./build.gradle ../build/build.gradle
---- ./build.gradle	2024-12-19 08:33:22.000000000 +0000
-+++ ../build/build.gradle	2024-12-19 08:42:54.980335527 +0000
+diff '--color=auto' -ur ./.editorconfig ../build/.editorconfig
+--- ./.editorconfig	2025-03-15 14:43:05.000000000 +0000
++++ ../build/.editorconfig	2026-06-16 15:35:10.205232970 +0100
+@@ -19,7 +19,7 @@
+ indent_size = 4
+ 
+ # 2 space indentation
+-[*.{java}]
++[*.java]
+ indent_style = space
+ indent_size = 2
+ 
+diff '--color=auto' -ur ./build.gradle ../build/build.gradle
+--- ./build.gradle	2025-03-15 14:43:06.000000000 +0000
++++ ../build/build.gradle	2026-06-16 15:01:00.154984573 +0100
 @@ -25,7 +25,7 @@
      dependencies {
          classpath 'org.ow2.asm:asm:5.1'
@@ -33,22 +45,6 @@ diff -ur ./build.gradle ../build/build.gradle
  
      // The project which need to be run under CI only
      testNeedsCiProject = [
-@@ -252,11 +252,11 @@
-                 url "https://repository.cloudera.com/artifactory/cloudera-repos/"
-             }
-             maven {
--                url "https://repo.hortonworks.com/content/repositories/releases/"
--            }
--            maven {
--                url "https://repo.hortonworks.com/content/repositories/jetty-hadoop/"
-+	        url "https://search.maven.org/artifact/net"
-             }
-+//            maven {
-+//                url "https://repo.hortonworks.com/content/repositories/jetty-hadoop/"
-+//            }
-             maven {
-                 url "https://repository.mapr.com/maven/"
-             }
 @@ -268,9 +268,9 @@
  
      // Publish artifacts - we should filter subproject in future but now apply publisher plugin
@@ -95,13 +91,9 @@ diff -ur ./build.gradle ../build/build.gradle
  }
  
  // Include support for S3 syncing
-Only in ../build: build.gradle~
-Only in ../build/buildSrc: build
-Only in ../build/buildSrc: .gradle
-Only in ../build: .gradle
-diff -ur ./gradlew ../build/gradlew
---- ./gradlew	2024-12-19 08:33:21.000000000 +0000
-+++ ../build/gradlew	2024-12-19 08:33:34.233033439 +0000
+diff '--color=auto' -ur ./gradlew ../build/gradlew
+--- ./gradlew	2025-03-15 14:43:05.000000000 +0000
++++ ../build/gradlew	2026-06-16 15:01:00.155220980 +0100
 @@ -87,8 +87,10 @@
      if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
          # IBM's JDK on AIX uses strange locations for the executables
@@ -113,9 +105,63 @@ diff -ur ./gradlew ../build/gradlew
      fi
      if [ ! -x "$JAVACMD" ] ; then
          die "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME
-diff -ur ./h2o-algos/build.gradle ../build/h2o-algos/build.gradle
---- ./h2o-algos/build.gradle	2024-12-19 08:33:21.000000000 +0000
-+++ ../build/h2o-algos/build.gradle	2024-12-19 08:33:34.233033439 +0000
+diff '--color=auto' -ur ./h2o-admissibleml/src/main/java/hex/Infogram/Infogram.java ../build/h2o-admissibleml/src/main/java/hex/Infogram/Infogram.java
+--- ./h2o-admissibleml/src/main/java/hex/Infogram/Infogram.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-admissibleml/src/main/java/hex/Infogram/Infogram.java	2026-06-16 15:01:00.155398334 +0100
+@@ -112,8 +112,7 @@
+                                         long[] nObs) {
+     int nFolds = cmiRaw.length;
+     Set<String> allNames = new HashSet<>(); // store all names
+-    for (List<String> oneFold : columns)
+-      allNames.addAll(oneFold);
++    columns.stream().forEach(oneFold -> allNames.addAll(oneFold));
+     List<String> allNamesList = new ArrayList<>(allNames);
+     int nPreds = allNames.size();
+     _cmiCV = new double[nPreds];
+diff '--color=auto' -ur ./h2o-admissibleml/src/main/java/hex/Infogram/InfogramModel.java ../build/h2o-admissibleml/src/main/java/hex/Infogram/InfogramModel.java
+--- ./h2o-admissibleml/src/main/java/hex/Infogram/InfogramModel.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-admissibleml/src/main/java/hex/Infogram/InfogramModel.java	2026-06-16 15:01:00.155598546 +0100
+@@ -112,7 +112,7 @@
+         HashMap<String, String[]> map =
+                 new Gson().fromJson(_algorithm_params, new TypeToken<HashMap<String, String[]>>() {
+                 }.getType());
+-        for (Map.Entry<String, String[]> param : map.entrySet()) {
++        map.entrySet().stream().forEach(param -> {
+           String[] paramVal = param.getValue();
+           String paramName = param.getKey();
+           excludeList.add("_" + paramName);
+@@ -121,7 +121,7 @@
+           } else {
+             p.setProperty(paramName, Arrays.toString(paramVal));
+           }
+-        }
++        });
+       }
+       
+       InfogramV3.InfogramParametersV3.generateModelParams(this, p, excludeList);
+diff '--color=auto' -ur ./h2o-admissibleml/src/main/java/hex/schemas/InfogramV3.java ../build/h2o-admissibleml/src/main/java/hex/schemas/InfogramV3.java
+--- ./h2o-admissibleml/src/main/java/hex/schemas/InfogramV3.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-admissibleml/src/main/java/hex/schemas/InfogramV3.java	2026-06-16 15:01:00.155774116 +0100
+@@ -242,14 +242,14 @@
+       Properties p = new Properties();
+       HashMap<String, String[]> map = new Gson().fromJson(algoParms, new TypeToken<HashMap<String, String[]>>() {
+       }.getType());
+-      for (Map.Entry<String, String[]> param : map.entrySet()) {
++      map.entrySet().stream().forEach(param -> {
+         String[] paramVal = param.getValue();
+         if (paramVal.length == 1) {
+           p.setProperty(param.getKey(), paramVal[0]);
+         } else {
+           p.setProperty(param.getKey(), Arrays.toString(paramVal));
+         }
+-      }
++      });
+       return p;
+     }
+     
+diff '--color=auto' -ur ./h2o-algos/build.gradle ../build/h2o-algos/build.gradle
+--- ./h2o-algos/build.gradle	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-algos/build.gradle	2026-06-16 15:01:00.155935637 +0100
 @@ -53,7 +53,7 @@
    testRuntimeOnly project(":${defaultWebserverModule}")
    testCompileOnly "javax.servlet:javax.servlet-api:${servletApiVersion}"
@@ -125,9 +171,925 @@ diff -ur ./h2o-algos/build.gradle ../build/h2o-algos/build.gradle
  }
  
  apply from: "${rootDir}/gradle/dataCheck.gradle"
-diff -ur ./h2o-core/src/main/java/water/Cleaner.java ../build/h2o-core/src/main/java/water/Cleaner.java
---- ./h2o-core/src/main/java/water/Cleaner.java	2024-12-19 08:33:21.000000000 +0000
-+++ ../build/h2o-core/src/main/java/water/Cleaner.java	2024-12-19 08:33:34.233033439 +0000
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/ensemble/StackedEnsemble.java ../build/h2o-algos/src/main/java/hex/ensemble/StackedEnsemble.java
+--- ./h2o-algos/src/main/java/hex/ensemble/StackedEnsemble.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/ensemble/StackedEnsemble.java	2026-06-16 15:01:00.156153064 +0100
+@@ -708,11 +708,11 @@
+       rowValues.add(_model._output._stacking_strategy.toString());
+       rowHeaders.add("Number of base models (used / total)");
+       rowValues.add(Arrays.stream(_model._parms._base_models).filter(_model::isUsefulBaseModel).count() + "/" + _model._parms._base_models.length);
+-      for (Map.Entry<String, Integer> baseModelType : baseModelTypes.entrySet()) {
++      baseModelTypes.entrySet().stream().forEach(baseModelType -> {
+         rowHeaders.add("# " + baseModelType.getKey() + " base models (used / total)");
+         rowValues.add(((usedBaseModelTypes.containsKey(baseModelType.getKey())) ?
+                 usedBaseModelTypes.get(baseModelType.getKey()) : "0") + "/" + baseModelType.getValue());
+-      }
++      });
+ 
+       // Metalearner
+       rowHeaders.add("Metalearner algorithm");
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/gam/GamSplines/ThinPlateRegressionUtils.java ../build/h2o-algos/src/main/java/hex/gam/GamSplines/ThinPlateRegressionUtils.java
+--- ./h2o-algos/src/main/java/hex/gam/GamSplines/ThinPlateRegressionUtils.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/gam/GamSplines/ThinPlateRegressionUtils.java	2026-06-16 15:01:00.156403186 +0100
+@@ -86,10 +86,10 @@
+   }
+   
+   public static void addPermutationList(List<Integer[]> onePolyBasis, List<List<Integer>> permute1Basis) {
+-    for (List<Integer> onePermute : permute1Basis) {
++    permute1Basis.stream().forEach(onePermute -> {
+       Integer[] oneCombo = onePermute.toArray(new Integer[0]);
+       onePolyBasis.add(oneCombo);
+-    }
++    });
+   }
+   
+   public static void findPermute(int[] freqMap, List<Integer> prefix, int remaining,
+@@ -119,11 +119,11 @@
+   }
+   
+   public static void mergeCombos(ArrayList<int[]> oneCombo, Integer[] basisOrder, int[] polyBasis, List<Integer[]> polyBasisSet) {
+-    for (int[] oneList : oneCombo) {
++    oneCombo.stream().forEach(oneList -> {
+       Arrays.fill(basisOrder, 0);
+       expandCombo(oneList, polyBasis, basisOrder);
+       polyBasisSet.add(basisOrder.clone());
+-    }
++    });
+   }
+ 
+   /**
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/glm/GLMUtils.java ../build/h2o-algos/src/main/java/hex/glm/GLMUtils.java
+--- ./h2o-algos/src/main/java/hex/glm/GLMUtils.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/glm/GLMUtils.java	2026-06-16 15:01:00.156581982 +0100
+@@ -73,8 +73,7 @@
+     List<String> nonPredictors = Arrays.stream(parms.getNonPredictors()).collect(Collectors.toList());
+     String[] colNames = parms.train().names();
+     List<String> removeCols = Arrays.stream(colNames).filter(x -> !nonPredictors.contains(x)).collect(Collectors.toList());
+-    for (String removeC : removeCols)
+-      train.remove(removeC);
++    removeCols.stream().forEach(removeC -> train.remove(removeC));
+   }
+   
+   public static Frame expandedCatCS(Frame beta_constraints, GLMModel.GLMParameters parms) {
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/glrm/GLRMModel.java ../build/h2o-algos/src/main/java/hex/glrm/GLRMModel.java
+--- ./h2o-algos/src/main/java/hex/glrm/GLRMModel.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/glrm/GLRMModel.java	2026-06-16 15:01:00.156767307 +0100
+@@ -245,7 +245,7 @@
+       String[][] loadingFrmDomains = new String[gs._k][];
+       Frame xFrame = gs.outputFrame(_output._x_factor_key, loadingFrmNames, loadingFrmDomains);
+       DKV.put(xFrame);
+-      for (Frame tmp : tmpFrames) Frame.deleteTempFrameAndItsNonSharedVecs(tmp, fr);
++      tmpFrames.stream().forEach(tmp -> Frame.deleteTempFrameAndItsNonSharedVecs(tmp, fr));
+       return xFrame;
+     }
+   }
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/kmeans/KMeansSimplexSolver.java ../build/h2o-algos/src/main/java/hex/kmeans/KMeansSimplexSolver.java
+--- ./h2o-algos/src/main/java/hex/kmeans/KMeansSimplexSolver.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/kmeans/KMeansSimplexSolver.java	2026-06-16 15:01:00.156962937 +0100
+@@ -697,13 +697,13 @@
+     @Override
+     public String toString() {
+         StringBuilder sb = new StringBuilder("NEO: nodes: ");
+-        for (long i: _nodes) {
++        _nodes.stream().mapToLong(Long::longValue).forEach(i -> {
+             sb.append(i+" ");
+-        }
++        });
+         sb.append("edges: ");
+-        for (long i: _edges) {
++        _edges.stream().mapToLong(Long::longValue).forEach(i -> {
+             sb.append(i+" ");
+-        }
++        });
+         sb.deleteCharAt(sb.length()-1);
+         return sb.toString();
+     }
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/modelselection/ModelSelectionUtils.java ../build/h2o-algos/src/main/java/hex/modelselection/ModelSelectionUtils.java
+--- ./h2o-algos/src/main/java/hex/modelselection/ModelSelectionUtils.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/modelselection/ModelSelectionUtils.java	2026-06-16 15:01:00.157224569 +0100
+@@ -307,7 +307,7 @@
+         BitSet tempIndices =  new BitSet(predNum);
+         int predSizes = changedSubset.size();
+         boolean emptyUsedCombo = (usedCombo != null) && (usedCombo.size() == 0);
+-        for (int predIndex : validSubsets) {  // consider valid predictor indices only
++        validSubsets.stream().mapToInt(Integer::intValue).forEach(predIndex -> {  // consider valid predictor indices only
+             predIndices[newPredPos] = predIndex;
+             if (emptyUsedCombo && predSizes > 1) {   // add all indices set into usedCombo
+                 tempIndices.clear();
+@@ -330,7 +330,7 @@
+                 DKV.put(trainFrame);
+                 trainFramesList.add(trainFrame);
+             }
+-        }
++        });
+         return trainFramesList.stream().toArray(Frame[]::new);
+     }
+ 
+@@ -1078,7 +1078,7 @@
+         String numPredMinZ = null;
+         if (numPredNames != null && numPredNames.size() > 0) {
+             List<Double> numZValues = new ArrayList<>();
+-            for (String predName : numPredNames) {
++            numPredNames.stream().forEach(predName -> {
+                 int eleInd = coeffNames.indexOf(predName);
+                 double oneZValue = zValList.get(eleInd);
+                 if (Double.isNaN(oneZValue)) {
+@@ -1087,7 +1087,7 @@
+                 } else {
+                     numZValues.add(oneZValue);
+                 }
+-            }
++            });
+             minNumVal = numZValues.stream().min(Double::compare).get(); // minimum z-value of numerical predictors
+             numPredMinZ = numPredNames.get(numZValues.indexOf(minNumVal));
+         }
+@@ -1154,10 +1154,10 @@
+     public static List<String> extraModelColumnNames(List<String> coefNames, GLMModel bestModel) {
+         List<String> coefUsed = new ArrayList<String>();
+         List<String> modelColumns = new ArrayList<>(Arrays.asList(bestModel.names()));
+-        for (String coefName : modelColumns) {
++        modelColumns.stream().forEach(coefName -> {
+             if (coefNames.contains(coefName)) 
+                 coefUsed.add(coefName);
+-        }
++        });
+         return coefUsed;
+     }
+ 
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/rulefit/Rule.java ../build/h2o-algos/src/main/java/hex/rulefit/Rule.java
+--- ./h2o-algos/src/main/java/hex/rulefit/Rule.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/rulefit/Rule.java	2026-06-16 15:01:00.157493776 +0100
+@@ -125,13 +125,13 @@
+         // filter leaves
+         List<SharedTreeNode> leaves = tree.nodesArray.stream().filter(sharedTreeNode -> sharedTreeNode.isLeaf()).collect(Collectors.toList());
+         // traverse paths
+-        for (SharedTreeNode leaf : leaves) {
++        leaves.stream().forEach(leaf -> {
+             String varName = "M" + modelId + "T" + leaf.getSubgraphNumber() + "N" + leaf.getNodeNumber();
+             if (classString != null) {
+                 varName += classString;
+             }
+             traversePath(leaf, rules, varName, leaf.getPredValue());
+-        }
++        });
+         return rules;
+     }
+     
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/rulefit/RuleFitModel.java ../build/h2o-algos/src/main/java/hex/rulefit/RuleFitModel.java
+--- ./h2o-algos/src/main/java/hex/rulefit/RuleFitModel.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/rulefit/RuleFitModel.java	2026-06-16 15:01:00.157638298 +0100
+@@ -211,11 +211,7 @@
+     }
+     
+     private boolean isLinearVar(String potentialLinVarId, List<String> linVarNames) {
+-        for (String linVarName : linVarNames) {
+-            if (potentialLinVarId.startsWith(linVarName))
+-                return true;
+-        }
+-        return false;
++        return linVarNames.stream().anyMatch(linVarName -> potentialLinVarId.startsWith(linVarName));
+     }
+ 
+     @Override
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/schemas/StackedEnsembleV99.java ../build/h2o-algos/src/main/java/hex/schemas/StackedEnsembleV99.java
+--- ./h2o-algos/src/main/java/hex/schemas/StackedEnsembleV99.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/schemas/StackedEnsembleV99.java	2026-06-16 15:01:00.157800792 +0100
+@@ -151,14 +151,14 @@
+         
+         HashMap<String, String[]> map = new Gson().fromJson(metalearner_params, new TypeToken<HashMap<String, String[]>>() {
+         }.getType());
+-        for (Map.Entry<String, String[]> param : map.entrySet()) {
++        map.entrySet().stream().forEach(param -> {
+           String[] paramVal = param.getValue();
+           if (paramVal.length == 1) {
+             p.setProperty(param.getKey(), paramVal[0]);
+           } else {
+             p.setProperty(param.getKey(), Arrays.toString(paramVal));
+           }
+-        }
++        });
+         
+         Schema paramsSchema = Metalearners.createParametersSchema(metalearner_algorithm.name());
+         Model.Parameters params = Metalearners.createParameters(metalearner_algorithm.name());
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/tree/BranchInteractionConstraints.java ../build/h2o-algos/src/main/java/hex/tree/BranchInteractionConstraints.java
+--- ./h2o-algos/src/main/java/hex/tree/BranchInteractionConstraints.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/tree/BranchInteractionConstraints.java	2026-06-16 15:01:00.157952228 +0100
+@@ -29,11 +29,11 @@
+      */
+     public IcedHashSet<IcedInt> intersection(IcedHashSet<IcedInt> set){
+         IcedHashSet<IcedInt> output = new IcedHashSet<>();
+-        for(IcedInt i: set){
++        set.stream().forEach(i -> {
+             if (allowedInteractionIndices.contains(i)) {
+                 output.add(i);
+             }
+-        }
++        });
+         return output;
+     }
+ 
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/tree/CompressedTree.java ../build/h2o-algos/src/main/java/hex/tree/CompressedTree.java
+--- ./h2o-algos/src/main/java/hex/tree/CompressedTree.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/tree/CompressedTree.java	2026-06-16 15:01:00.158115006 +0100
+@@ -74,11 +74,11 @@
+     Map<Integer, AuxInfo> nodeIdToAuxInfo = SharedTreeMojoModel.readAuxInfos(_bits);
+     List<AuxInfo> auxInfos = new ArrayList<>(nodeIdToAuxInfo.values());
+     auxInfos.sort(Comparator.comparingInt(o -> -o.pid));
+-    for (AuxInfo auxInfo : auxInfos) {
++    auxInfos.stream().forEach(auxInfo -> {
+       auxInfo.weightL = 0;
+       auxInfo.weightR = 0;
+-    }
+-    for (AuxInfo auxInfo : auxInfos) {
++    });
++    auxInfos.stream().forEach(auxInfo -> {
+       auxInfo.weightL += (float) leafNodeWeights[auxInfo.nidL];
+       auxInfo.weightR += (float) leafNodeWeights[auxInfo.nidR];
+       if (auxInfo.pid >= 0) {
+@@ -89,7 +89,7 @@
+         else
+           parentInfo.weightR += nodeWeight;
+       }
+-    }
++    });
+     ByteBuffer bb = ByteBuffer.allocate(_bits.length).order(ByteOrder.nativeOrder());
+     SharedTreeMojoModel.writeUpdatedAuxInfos(_bits, nodeIdToAuxInfo, bb);
+     byte[] bits = bb.array();
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/tree/DHistogram.java ../build/h2o-algos/src/main/java/hex/tree/DHistogram.java
+--- ./h2o-algos/src/main/java/hex/tree/DHistogram.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/tree/DHistogram.java	2026-06-16 16:54:33.124573301 +0100
+@@ -13,6 +13,7 @@
+ 
+ import java.util.Arrays;
+ import java.util.Random;
++import java.util.stream.IntStream;
+ 
+ import static hex.tree.SharedTreeModel.SharedTreeParameters.HistogramType;
+ 
+@@ -610,11 +611,11 @@
+     // Gather all the data for this set of rows, for 1 column and 1 split/NID
+     // Gather min/max, wY and sum-squares.
+ 
+-    for(int r = lo; r< hi; ++r) {
++    IntStream.range(lo, hi).forEach(r -> {
+       final int k = rows[r];
+       final double weight = ws == null ? 1 : ws[k];
+       if (weight == 0)
+-        continue; // Needed for DRF only
++        return; // Needed for DRF only
+       final double col_data = cs[k];
+       if (col_data < _min2) _min2 = col_data;
+       if (col_data > _maxIn) _maxIn = col_data;
+@@ -625,7 +626,7 @@
+       double wy = weight * y;
+       double wyy = wy * y;
+       int b = bin(col_data);
+-      final int binDimStart = _vals_dim*b;
++      final int binDimStart = _vals_dim * b;
+       _vals[binDimStart + 0] += weight;
+       _vals[binDimStart + 1] += wy;
+       _vals[binDimStart + 2] += wyy;
+@@ -644,7 +645,7 @@
+           }
+         }
+       }
+-      if(_useUplift) {
++      if (_useUplift) {
+         // Note: Only for binomial, response should be (0, 1)
+         double t = treatment[k];
+         double rs = resp[k];
+@@ -654,7 +655,7 @@
+         _valsUplift[binDimStartUplift + 2] += (1 - t);       // control number
+         _valsUplift[binDimStartUplift + 3] += (1 - t) * rs;  // control number with response == 1
+       }
+-    }
++    });
+   }
+ 
+   /**
+@@ -732,11 +733,14 @@
+    * Improves reproducibility (drop bits most affected by floating point error).
+    */
+   public void reducePrecision(){
+-    if(_vals == null) return;
+-    for(int i = 0; i < _vals.length; i+=_vals_dim) {
+-      _vals[i+1] = (float)_vals[i+1];
+-      _vals[i+2] = (float)_vals[i+2];
+-    }
++    if (_vals == null) return;
++    final int limit = (_vals.length + _vals_dim - 1) / _vals_dim; // Ceil division
++    IntStream.iterate(0, i -> i + _vals_dim)
++      .limit(limit)
++      .forEach(i -> {
++        _vals[i + 1] = (float) _vals[i + 1];
++        _vals[i + 2] = (float) _vals[i + 2];
++      });
+   }
+ 
+   static double[] makeRandomSplitPoints(int nbin, Random rng) {
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/tree/DTree.java ../build/h2o-algos/src/main/java/hex/tree/DTree.java
+--- ./h2o-algos/src/main/java/hex/tree/DTree.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/tree/DTree.java	2026-06-16 17:10:01.350417142 +0100
+@@ -14,6 +14,7 @@
+ import water.util.*;
+ 
+ import java.util.*;
++import java.util.stream.IntStream;
+ 
+ import static hex.tree.SharedTreeModel.SharedTreeParameters.HistogramType;
+ 
+@@ -614,45 +615,41 @@
+ 
+     // Pick the best column from the given histograms
+     public Split bestCol(UndecidedNode u, DHistogram hs[], Constraints cs) {
+-      DTree.Split best = null;
+       if( hs == null ) return null;
+       final int maxCols = u._scoreCols == null /* all cols */ ? hs.length : u._scoreCols.length;
+       List<FindSplits> findSplits = new ArrayList<>();
+       //total work is to find the best split across sum_over_cols_to_split(nbins)
+-      long nbinsSum = 0;
+-      for( int i=0; i<maxCols; i++ ) {
+-        int col = u._scoreCols == null ? i : u._scoreCols[i];
+-        if( hs[col]==null || hs[col].actNBins() <= 1 )
+-          continue;
+-        nbinsSum += hs[col].actNBins();
+-      }
++      long nbinsSum = IntStream.range(0, maxCols)
++        .map(i -> u._scoreCols == null ? i : u._scoreCols[i])
++        .filter(col -> hs[col] != null && hs[col].actNBins() > 1)
++        .mapToLong(col -> hs[col].actNBins())
++        .sum();
+       // for small work loads, do a serial loop, otherwise, submit work to FJ thread pool
+       final boolean isSmall = (nbinsSum <= 1024); //heuristic - 50 cols with 20 nbins, or 1 column with 1024 bins, etc.
+-      for( int i=0; i<maxCols; i++ ) {
+-        int col = u._scoreCols == null ? i : u._scoreCols[i];
+-        if( hs[col]==null || hs[col].actNBins() <= 1 )
+-          continue;
+-        FindSplits fs = new FindSplits(hs, cs, col, u._nid);
+-        findSplits.add(fs);
+-        if (isSmall) fs.compute();
+-      }
++      IntStream.range(0, maxCols)
++        .map(i -> u._scoreCols == null ? i : u._scoreCols[i])
++        .filter(col -> hs[col] != null && hs[col].actNBins() > 1)
++        .mapToObj(col -> new FindSplits(hs, cs, col, u._nid))
++        .forEach(fs -> {
++          findSplits.add(fs);
++          if (isSmall) fs.compute();
++        });
+       if (!isSmall) jsr166y.ForkJoinTask.invokeAll(findSplits);
+-      for( FindSplits fs : findSplits) {
+-        DTree.Split s = fs._s;
+-        if( s == null ) continue;
+-        if (best == null || s.se() < best.se()) {
++      return findSplits.stream().map(fs -> fs._s).reduce(null, (currentBest, s) -> {
++        if (s == null) return currentBest;
++        if (currentBest == null || s.se() < currentBest.se()) {
+           if (hs[s._col]._checkFloatSplits) {
+             // we evaluate the feasibility of the split only if it brings improvement of SE
+             // same could be done when building the split (findBestSplitPoint) but the lazy
+             // evaluation avoids scanning the bins unnecessarily
+             float splitAt = s.splat(hs);
+             if (Float.isNaN(splitAt))
+-              continue;
++              return currentBest;
+           }
+-          best = s;
++          return s;
+         }
+-      }
+-      return best;
++        return currentBest;
++      });
+     }
+ 
+     public final class FindSplits extends RecursiveAction {
+@@ -997,25 +994,30 @@
+     // Histogram arrays used for splitting, these are either the original bins
+     // (for an ordered predictor), or sorted by the mean response (for an
+     // unordered predictor, i.e. categorical predictor).
+-    double[]   vals =   hs._vals;
++    final double[]   vals;
+     final int vals_dim = hs._vals_dim; 
+-    int idxs[] = null;          // and a reverse index mapping
++    final int idxs[];          // and a reverse index mapping
+ 
+     // For categorical (unordered) predictors, sort the bins by average
+     // prediction then look for an optimal split.
+     if( hs._isInt == 2 && hs._step == 1 ) {
+       // Sort the index by average response
+       idxs = MemoryManager.malloc4(nbins+1); // Reverse index
+-      for( int i=0; i<nbins+1; i++ ) idxs[i] = i; //index in 0..nbins-1
++      IntStream.range(0, nbins + 1).forEach(i ->
++        idxs[i] = i // index in 0..nbins-1
++      );
+       final double[] avgs = MemoryManager.malloc8d(nbins+1);
+-      for( int i=0; i<nbins; i++ ) avgs[i] = hs.w(i)==0 ? -Double.MAX_VALUE /* value doesn't matter - see below for sending empty buckets (unseen levels) into the NA direction */: hs.wY(i) / hs.w(i); // Average response
++      IntStream.range(0, nbins).forEach(i -> avgs[i] = hs.w(i) == 0 ?
++        -Double.MAX_VALUE : /* value doesn't matter - see below for sending empty buckets (unseen levels) into the NA direction */
++        hs.wY(i) / hs.w(i) // Average response 
++      );
+       avgs[nbins] = Double.MAX_VALUE;
+       ArrayUtils.sort(idxs, avgs);
+       // Fill with sorted data.  Makes a copy, so the original data remains in
+       // its original order.
+       vals = MemoryManager.malloc8d(vals_dim*nbins);
+ 
+-      for( int i=0; i<nbins; i++ ) {
++      IntStream.range(0, nbins).forEach(i -> {
+         int id = idxs[i];
+         vals[vals_dim*i+0] = hs._vals[vals_dim*id+0];
+         vals[vals_dim*i+1] = hs._vals[vals_dim*id+1];
+@@ -1029,7 +1031,10 @@
+             vals[vals_dim * i + 6] = hs._vals[vals_dim * id + 6];
+         }
+         if (LOG.isTraceEnabled()) LOG.trace(vals[3*i] + " obs have avg response [" + i + "]=" + avgs[id]);
+-      }
++      });
++    } else {
++      idxs = null;
++      vals = hs._vals;
+     }
+ 
+     // Compute mean/var for cumulative bins from 0 to nbins inclusive.
+@@ -1040,16 +1045,16 @@
+     double pr2lo[] = hasPreds ? MemoryManager.malloc8d(nbins+1) : null;
+     double denlo[] = hasDenom ? MemoryManager.malloc8d(nbins+1) : wlo;
+     double nomlo[] = hasNomin ? MemoryManager.malloc8d(nbins+1) : wYlo;
+-    for( int b=1; b<=nbins; b++ ) {
+-      int id = vals_dim*(b-1);
+-      double n0 =   wlo[b-1], n1 = vals[id+0];
+-      if( n0==0 && n1==0 )
+-        continue;
+-      double m0 =  wYlo[b-1], m1 = vals[id+1];
+-      double s0 = wYYlo[b-1], s1 = vals[id+2];
+-      wlo[b] = n0+n1;
+-      wYlo[b] = m0+m1;
+-      wYYlo[b] = s0+s1;
++    IntStream.rangeClosed(1, nbins).forEach(b -> {
++      int id = vals_dim * (b - 1);
++      double n0 = wlo[b - 1], n1 = vals[id + 0];
++      if (n0 == 0 && n1 == 0)
++        return;
++      double m0 = wYlo[b - 1], m1 = vals[id + 1];
++      double s0 = wYYlo[b - 1], s1 = vals[id + 2];
++      wlo[b] = n0 + n1;
++      wYlo[b] = m0 + m1;
++      wYYlo[b] = s0 + s1;
+       if (hasPreds) {
+         double p10 = pr1lo[b - 1], p11 = vals[id + 3];
+         double p20 = pr2lo[b - 1], p21 = vals[id + 4];
+@@ -1064,7 +1069,7 @@
+           nomlo[b] = d0 + d1;
+         }
+       }
+-    }
++    });
+     final double wNA = hs.wNA();
+     double tot = wlo[nbins] + wNA; //total number of (weighted) rows
+     // Is any split possible with at least min_obs?
+@@ -1094,31 +1099,33 @@
+     double pr2hi[] = hasPreds ? MemoryManager.malloc8d(nbins+1) : null;
+     double denhi[] = hasDenom ? MemoryManager.malloc8d(nbins+1) : whi;
+     double nomhi[] = hasNomin ? MemoryManager.malloc8d(nbins+1) : wYhi;
+-    for( int b=nbins-1; b>=0; b-- ) {
+-      double n0 =   whi[b+1], n1 = vals[vals_dim*b];
+-      if( n0==0 && n1==0 )
+-        continue;
+-      double m0 =  wYhi[b+1], m1 = vals[vals_dim*b+1];
+-      double s0 = wYYhi[b+1], s1 = vals[vals_dim*b+2];
+-      whi[b] = n0+n1;
+-      wYhi[b] = m0+m1;
+-      wYYhi[b] = s0+s1;
+-      if (hasPreds) {
+-        double p10 = pr1hi[b + 1], p11 = vals[vals_dim * b + 3];
+-        double p20 = pr2hi[b + 1], p21 = vals[vals_dim * b + 4];
+-        pr1hi[b] = p10 + p11;
+-        pr2hi[b] = p20 + p21;
+-        if (hasDenom) {
+-          double d0 = denhi[b + 1], d1 = vals[vals_dim * b + 5];
+-          denhi[b] = d0 + d1;
+-        }
+-        if (hasNomin) {
+-          double d0 = nomhi[b + 1], d1 = vals[vals_dim * b + 6];
+-          nomhi[b] = d0 + d1;
++    IntStream.rangeClosed(1, nbins)
++      .map(b -> nbins - b) // iterate in reverse order
++      .forEach(b -> {
++        double n0 = whi[b + 1], n1 = vals[vals_dim * b];
++        if (n0 == 0 && n1 == 0)
++          return;
++        double m0 = wYhi[b + 1], m1 = vals[vals_dim * b + 1];
++        double s0 = wYYhi[b + 1], s1 = vals[vals_dim * b + 2];
++        whi[b] = n0 + n1;
++        wYhi[b] = m0 + m1;
++        wYYhi[b] = s0 + s1;
++        if (hasPreds) {
++          double p10 = pr1hi[b + 1], p11 = vals[vals_dim * b + 3];
++          double p20 = pr2hi[b + 1], p21 = vals[vals_dim * b + 4];
++          pr1hi[b] = p10 + p11;
++          pr2hi[b] = p20 + p21;
++          if (hasDenom) {
++            double d0 = denhi[b + 1], d1 = vals[vals_dim * b + 5];
++            denhi[b] = d0 + d1;
++          }
++          if (hasNomin) {
++            double d0 = nomhi[b + 1], d1 = vals[vals_dim * b + 6];
++            nomhi[b] = d0 + d1;
++          }
+         }
+-      }
+-      assert MathUtils.compare(wlo[b]+ whi[b]+wNA,tot,1e-5,1e-5);
+-    }
++        assert MathUtils.compare(wlo[b] + whi[b] + wNA, tot, 1e-5, 1e-5);
++      });
+ 
+     double best_seL=Double.MAX_VALUE;   // squared error for left side of the best split (so far)
+     double best_seR=Double.MAX_VALUE;   // squared error for right side of the best split (so far)
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/tree/GlobalInteractionConstraints.java ../build/h2o-algos/src/main/java/hex/tree/GlobalInteractionConstraints.java
+--- ./h2o-algos/src/main/java/hex/tree/GlobalInteractionConstraints.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/tree/GlobalInteractionConstraints.java	2026-06-16 15:01:00.158291393 +0100
+@@ -58,7 +58,7 @@
+     }
+ 
+     private void addInteractionsSetToMap(IcedHashSet<IcedInt> interactions){
+-        for (IcedInt index : interactions) {
++        interactions.stream().forEach(index -> {
+             if (!allowedInteractionMap.containsKey(index)) {
+                 allowedInteractionMap.put(index, interactions);
+             } else {
+@@ -67,7 +67,7 @@
+                 set.addAll(interactions);
+                 allowedInteractionMap.put(index, set);
+             }
+-        }
++        });
+     }
+     
+     public IcedHashSet<IcedInt> getAllowedInteractionForIndex(int columnIndex){
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/tree/TreeHandler.java ../build/h2o-algos/src/main/java/hex/tree/TreeHandler.java
+--- ./h2o-algos/src/main/java/hex/tree/TreeHandler.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/tree/TreeHandler.java	2026-06-16 15:01:00.158461350 +0100
+@@ -393,9 +393,9 @@
+     private static void fillLanguagePathRepresentation(TreeProperties properties, SharedTreeNode root) {
+         List<Integer> nodeIds = extractInternalIds(properties);
+         List<PathResult> paths = findPaths(root);
+-        for (PathResult path : paths) {
++        paths.stream().forEach(path -> {
+             properties._decisionPaths[nodeIds.indexOf(path.nodeId)] = path.path.toString();
+-        }
++        });
+     }
+     
+     private static void fillnodeDescriptions(final SharedTreeNode node, final String[] nodeDescriptions,
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/util/DimensionReductionUtils.java ../build/h2o-algos/src/main/java/hex/util/DimensionReductionUtils.java
+--- ./h2o-algos/src/main/java/hex/util/DimensionReductionUtils.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/util/DimensionReductionUtils.java	2026-06-16 15:01:00.158664601 +0100
+@@ -70,7 +70,7 @@
+         List<String> colFormat = new ArrayList<>();
+         ArrayList<String> otherTableEntries = new ArrayList<String>();
+ 
+-        for (String fieldName:scoreTable.keySet()) {
++        scoreTable.keySet().stream().forEach(fieldName -> {
+             if (fieldName.equals("Timestamp")) {
+                 colHeaders.add("Timestamp"); colTypes.add("string"); colFormat.add("%s");
+                 colHeaders.add("Duration"); colTypes.add("string"); colFormat.add("%s");
+@@ -78,7 +78,7 @@
+             } else {
+                 otherTableEntries.add(fieldName); colHeaders.add(fieldName); colTypes.add("double"); colFormat.add("%.5f");
+             }
+-        }
++        });
+ 
+         int rows = scoreTable.get("Timestamp").size(); // number of entries of training history
+ 
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/word2vec/Word2VecModel.java ../build/h2o-algos/src/main/java/hex/word2vec/Word2VecModel.java
+--- ./h2o-algos/src/main/java/hex/word2vec/Word2VecModel.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/word2vec/Word2VecModel.java	2026-06-16 15:01:00.158832407 +0100
+@@ -267,8 +267,7 @@
+   void buildModelOutput(Word2VecModelInfo modelInfo) {
+     IcedHashMapGeneric<BufferedString, Integer> vocab = ((Vocabulary) DKV.getGet(modelInfo._vocabKey))._data;
+     BufferedString[] words = new BufferedString[vocab.size()];
+-    for (BufferedString str : vocab.keySet())
+-      words[vocab.get(str)] = str;
++    vocab.keySet().stream().forEach(str -> words[vocab.get(str)] = str);
+ 
+     _output._vecSize = _parms._vec_size;
+     _output._vecs = modelInfo._syn0;
+diff '--color=auto' -ur ./h2o-algos/src/main/java/hex/word2vec/WordCountTask.java ../build/h2o-algos/src/main/java/hex/word2vec/WordCountTask.java
+--- ./h2o-algos/src/main/java/hex/word2vec/WordCountTask.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-algos/src/main/java/hex/word2vec/WordCountTask.java	2026-06-16 15:01:00.159007446 +0100
+@@ -42,20 +42,19 @@
+   public void reduce(WordCountTask other) {
+     assert _counts != null;
+     assert other._counts != null;
+-    for (BufferedString str : other._counts.keySet()) {
++    other._counts.keySet().stream().forEach(str -> {
+       IcedLong myCount = _counts.get(str);
+       if (myCount == null)
+         _counts.put(str, other._counts.get(str));
+       else
+         myCount._val += other._counts.get(str)._val;
+-    }
++    });
+   }
+ 
+   public final AutoBuffer write_impl(AutoBuffer ab) {
+     if( _counts != null )
+-      for (BufferedString key : _counts.keySet())
+-        ab.put2((char)key.length()).putA1(key.getBuffer(), key.getOffset(), key.getOffset() + key.length())
+-                .put8(_counts.get(key)._val);
++        _counts.keySet().stream().forEach(key -> ab.put2((char)key.length()).putA1(key.getBuffer(), key.getOffset(), key.getOffset() + key.length())
++                .put8(_counts.get(key)._val));
+     return ab.put2((char)65535); // End of map marker
+   }
+ 
+diff '--color=auto' -ur ./h2o-automl/src/main/java/ai/h2o/automl/AutoML.java ../build/h2o-automl/src/main/java/ai/h2o/automl/AutoML.java
+--- ./h2o-automl/src/main/java/ai/h2o/automl/AutoML.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-automl/src/main/java/ai/h2o/automl/AutoML.java	2026-06-16 15:01:00.159231387 +0100
+@@ -260,12 +260,12 @@
+       put("blending", blendingFrame);
+       put("leaderboard", leaderboardFrame);
+     }};
+-    for (Map.Entry<String, Frame> entry : compatibleFrames.entrySet()) {
++    compatibleFrames.entrySet().stream().forEach(entry -> {
+       Frame frame = entry.getValue();
+       if (frame != null && frame.find(input.response_column) < 0) {
+         throw new H2OIllegalArgumentException("Response column '"+input.response_column+"' is not in the "+entry.getKey()+" frame.");
+       }
+-    }
++    });
+ 
+     if (input.fold_column != null && trainingFrame.find(input.fold_column) < 0) {
+       throw new H2OIllegalArgumentException("Fold column '"+input.fold_column+"' is not in the training frame.");
+@@ -281,13 +281,13 @@
+         put("fold_column", input.fold_column);
+         put("weights_column", input.weights_column);
+       }};
+-      for (Map.Entry<String, String> entry: doNotIgnore.entrySet()) {
++      doNotIgnore.entrySet().stream().forEach(entry -> {
+         if (entry.getValue() != null && ignoredColumns.contains(entry.getValue())) {
+           eventLog().info(Stage.Validation,
+                   "Removing "+entry.getKey()+" '"+entry.getValue()+"' from list of ignored columns.");
+           ignoredColumns.remove(entry.getValue());
+         }
+-      }
++      });
+       input.ignored_columns = ignoredColumns.toArray(new String[0]);
+     }
+   }
+@@ -442,10 +442,10 @@
+     for (ModelingStep step: getExecutionPlan()) {
+       workAllocations.allocate(step.makeWork());
+     }
+-    for (IAlgo skippedAlgo : skippedAlgos) {
++    skippedAlgos.stream().forEach(skippedAlgo -> {
+       eventLog().info(Stage.Workflow, "Disabling Algo: "+skippedAlgo+" as requested by the user.");
+       workAllocations.remove(skippedAlgo);
+-    }
++    });
+     eventLog().debug(Stage.Workflow, "Defined work allocations: "+workAllocations);
+     distributeExplorationVsExploitationWork(workAllocations);
+     eventLog().debug(Stage.Workflow, "Actual work allocations: "+workAllocations);
+diff '--color=auto' -ur ./h2o-automl/src/main/java/ai/h2o/automl/AutoMLSession.java ../build/h2o-automl/src/main/java/ai/h2o/automl/AutoMLSession.java
+--- ./h2o-automl/src/main/java/ai/h2o/automl/AutoMLSession.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-automl/src/main/java/ai/h2o/automl/AutoMLSession.java	2026-06-16 15:01:00.159431113 +0100
+@@ -50,7 +50,7 @@
+     }
+     
+     void detach() {
+-        for (ModelingSteps steps : _availableStepsByProviderName.values()) steps.cleanup();
++        _availableStepsByProviderName.values().stream().forEach(steps -> steps.cleanup());
+         _aml = null;
+         DKV.put(this);
+     }
+diff '--color=auto' -ur ./h2o-automl/src/main/java/ai/h2o/automl/preprocessing/TargetEncoding.java ../build/h2o-automl/src/main/java/ai/h2o/automl/preprocessing/TargetEncoding.java
+--- ./h2o-automl/src/main/java/ai/h2o/automl/preprocessing/TargetEncoding.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-automl/src/main/java/ai/h2o/automl/preprocessing/TargetEncoding.java	2026-06-16 15:01:00.159561410 +0100
+@@ -129,7 +129,7 @@
+ 
+     @Override
+     public void dispose() {
+-        for (Completer disposable : _disposables) disposable.run();
++        _disposables.stream().forEach(disposable -> disposable.run());
+     }
+ 
+     @Override
+diff '--color=auto' -ur ./h2o-core/src/main/java/hex/FeatureInteraction.java ../build/h2o-core/src/main/java/hex/FeatureInteraction.java
+--- ./h2o-core/src/main/java/hex/FeatureInteraction.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/hex/FeatureInteraction.java	2026-06-16 15:01:00.159745990 +0100
+@@ -58,12 +58,12 @@
+         StringBuilder sb = new StringBuilder();
+         String delim = encodePath ? "-" : "|";
+         
+-        for (SharedTreeNode node : interactionPath) {
++        interactionPath.stream().forEach(node -> {
+             if (node != interactionPath.get(0)) {
+                 sb.append(delim);
+             }
+             sb.append(encodePath ? node.getNodeNumber() : node.getColName());
+-        }
++        });
+         
+         return sb.toString();
+     }
+diff '--color=auto' -ur ./h2o-core/src/main/java/hex/FeatureInteractions.java ../build/h2o-core/src/main/java/hex/FeatureInteractions.java
+--- ./h2o-core/src/main/java/hex/FeatureInteractions.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-core/src/main/java/hex/FeatureInteractions.java	2026-06-16 15:01:00.159925633 +0100
+@@ -16,7 +16,7 @@
+     }
+ 
+     public void mergeWith(FeatureInteractions featureInteractions) {
+-        for (Map.Entry<String,FeatureInteraction> currEntry : featureInteractions.entrySet()) {
++        featureInteractions.entrySet().stream().forEach(currEntry -> {
+             if (this.map.containsKey(currEntry.getKey())) {
+                 FeatureInteraction leftFeatureInteraction = this.get(currEntry.getKey());
+                 FeatureInteraction rightFeatureInteraction = currEntry.getValue();
+@@ -39,7 +39,7 @@
+             } else {
+                 this.put(currEntry.getKey(), currEntry.getValue());
+             }
+-        }
++        });
+     }
+ 
+     public int maxDepth() {
+diff '--color=auto' -ur ./h2o-core/src/main/java/hex/Model.java ../build/h2o-core/src/main/java/hex/Model.java
+--- ./h2o-core/src/main/java/hex/Model.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-core/src/main/java/hex/Model.java	2026-06-16 15:01:00.160280444 +0100
+@@ -1965,7 +1965,7 @@
+           CategoricalWrappedVec.updateDomain(output.vec(0), sdomain);
+       }
+     }
+-    for (Frame tmp : tmpFrames) Frame.deleteTempFrameAndItsNonSharedVecs(tmp, fr);
++    tmpFrames.stream().forEach(tmp -> Frame.deleteTempFrameAndItsNonSharedVecs(tmp, fr));
+     return output;
+   }
+   
+diff '--color=auto' -ur ./h2o-core/src/main/java/hex/ModelBuilder.java ../build/h2o-core/src/main/java/hex/ModelBuilder.java
+--- ./h2o-core/src/main/java/hex/ModelBuilder.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-core/src/main/java/hex/ModelBuilder.java	2026-06-16 15:01:00.160793889 +0100
+@@ -805,11 +805,11 @@
+ 
+     if( error_count() > 0 ) {               // Found an error in one or more submodels
+       Futures fs = new Futures();
+-      for (Frame cvf : cvFramesForFailedModels) {
++      cvFramesForFailedModels.stream().forEach(cvf -> {
+         cvf.vec(weightName).remove(fs);     // delete the Vec's chunks
+         DKV.remove(cvf._key, fs);           // delete the Frame from the DKV, leaving its vecs
+         Log.info("Removing frame for failed cv model: " + cvf._key);
+-      }
++      });
+       fs.blockForPending();
+       throw H2OModelBuilderIllegalArgumentException.makeFromBuilder(this);
+     }
+@@ -2069,7 +2069,7 @@
+ 
+     // make unique, and sort alphabetically
+     Set<String> rowNames=new TreeSet<>();
+-    for (Method m : methods) rowNames.add(m.getName());
++    methods.stream().forEach(m -> rowNames.add(m.getName()));
+     List<Method> meths = new ArrayList<>();
+     OUTER:
+     for (String n : rowNames)
+diff '--color=auto' -ur ./h2o-core/src/main/java/hex/PartialDependence.java ../build/h2o-core/src/main/java/hex/PartialDependence.java
+--- ./h2o-core/src/main/java/hex/PartialDependence.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-core/src/main/java/hex/PartialDependence.java	2026-06-16 15:01:00.161084383 +0100
+@@ -176,12 +176,12 @@
+     }
+ 
+     if (! _user_splits_present) {
+-      for (String col : _cols_1d_2d) {
++      _cols_1d_2d.stream().forEach(col -> {
+         Vec v = fr.vec(col);
+         if (v.isCategorical() && v.cardinality() > _nbins) {
+           throw new IllegalArgumentException("Column " + col + "'s cardinality of " + v.cardinality() + " > nbins of " + _nbins);
+         }
+-      }
++      });
+     }
+   }
+ 
+diff '--color=auto' -ur ./h2o-core/src/main/java/hex/SplitValueHistogram.java ../build/h2o-core/src/main/java/hex/SplitValueHistogram.java
+--- ./h2o-core/src/main/java/hex/SplitValueHistogram.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/hex/SplitValueHistogram.java	2026-06-16 15:01:00.161273403 +0100
+@@ -21,9 +21,9 @@
+     }
+     
+     public void merge(SplitValueHistogram histogram) {
+-        for (Map.Entry<Double, MutableInt> entry: histogram.entrySet()) {
++        histogram.entrySet().stream().forEach(entry -> {
+             this.addValue(entry.getKey(), entry.getValue().intValue());
+-        }
++        });
+     }
+ 
+     public Set<Map.Entry<Double, MutableInt>> entrySet() {
+diff '--color=auto' -ur ./h2o-core/src/main/java/hex/createframe/CreateFrameExecutor.java ../build/h2o-core/src/main/java/hex/createframe/CreateFrameExecutor.java
+--- ./h2o-core/src/main/java/hex/createframe/CreateFrameExecutor.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/hex/createframe/CreateFrameExecutor.java	2026-06-16 15:01:00.161432118 +0100
+@@ -147,12 +147,12 @@
+     // Post-process the frame
+     Random rng = RandomUtils.getRNG(seed + 40245345791L);
+     rng.setSeed(rng.nextLong());
+-    for (CreateFramePostprocessStep step: postprocessSteps) {
++    postprocessSteps.stream().forEach(step -> {
+       long nextSeed = rng.nextLong();
+       step.exec(out, rng);
+       rng.setSeed(nextSeed);
+       job.update(step.workAmount());
+-    }
++    });
+ 
+     // Clean up
+     DKV.put(out);
+diff '--color=auto' -ur ./h2o-core/src/main/java/hex/faulttolerance/Recovery.java ../build/h2o-core/src/main/java/hex/faulttolerance/Recovery.java
+--- ./h2o-core/src/main/java/hex/faulttolerance/Recovery.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/hex/faulttolerance/Recovery.java	2026-06-16 15:01:00.161636187 +0100
+@@ -155,10 +155,10 @@
+      */
+     public void onDone(Recoverable<T> r) {
+         final URI storageUri = FileUtils.getURI(storagePath);
+-        for (String path : writtenFiles) {
++        writtenFiles.stream().forEach(path -> {
+             URI pathUri = FileUtils.getURI(path);
+             H2O.getPM().getPersistForURI(storageUri).delete(pathUri.toString());
+-        }
++        });
+     }
+ 
+     /**
+diff '--color=auto' -ur ./h2o-core/src/main/java/hex/grid/HyperParameters.java ../build/h2o-core/src/main/java/hex/grid/HyperParameters.java
+--- ./h2o-core/src/main/java/hex/grid/HyperParameters.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/hex/grid/HyperParameters.java	2026-06-16 15:01:00.161871761 +0100
+@@ -29,7 +29,7 @@
+ 
+     private void writeHyperParamsMap(AutoBuffer ab, Map<String, Object[]> params) {
+         ab.putInt(params.keySet().size());
+-        for (String key : params.keySet()) {
++        params.keySet().stream().forEach(key -> {
+             ab.putStr(key);
+             Object[] vals = params.get(key);
+             if (vals.length > 0 && vals[0] instanceof Map) {
+@@ -41,7 +41,7 @@
+                 ab.putInt(-1);
+                 ab.putASer(vals);
+             }
+-        }
++        });
+     }
+ 
+     public final HyperParameters read_impl(AutoBuffer ab) {
+diff '--color=auto' -ur ./h2o-core/src/main/java/hex/schemas/GridSearchSchema.java ../build/h2o-core/src/main/java/hex/schemas/GridSearchSchema.java
+--- ./h2o-core/src/main/java/hex/schemas/GridSearchSchema.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/hex/schemas/GridSearchSchema.java	2026-06-16 15:01:00.162040213 +0100
+@@ -77,14 +77,14 @@
+ 
+   private static Map<String, Object[]> paramValuesToArray(Map<String, Object> params) {
+     Map<String, Object[]> result = new HashMap<>();
+-    for (Map.Entry<String, Object> e : params.entrySet()) {
++    params.entrySet().stream().forEach(e -> {
+       String k = e.getKey();
+       Object v = e.getValue();
+       Object[] arr = SUBSPACES.equals(k) ? ((List) v).stream().map(x -> paramValuesToArray((Map<String, Object>) x)).toArray(Map[]::new)
+               : v instanceof List ? ((List) v).toArray()
+               : new Object[]{v};
+       result.put(k, arr);
+-    }
++    });
+     return result;
+   }
+   
+diff '--color=auto' -ur ./h2o-core/src/main/java/jsr166y/ForkJoinPool.java ../build/h2o-core/src/main/java/jsr166y/ForkJoinPool.java
+--- ./h2o-core/src/main/java/jsr166y/ForkJoinPool.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/jsr166y/ForkJoinPool.java	2026-06-16 15:01:00.162317016 +0100
+@@ -2299,19 +2299,17 @@
+ 
+         boolean done = false;
+         try {
+-            for (Callable<T> t : tasks) {
++            tasks.stream().forEach((Callable<T> t) -> {
+                 ForkJoinTask<T> f = new ForkJoinTask.AdaptedCallable<T>(t);
+                 doSubmit(f);
+                 fs.add(f);
+-            }
+-            for (ForkJoinTask<T> f : fs)
+-                f.quietlyJoin();
++            });
++            fs.stream().forEach(f -> f.quietlyJoin());
+             done = true;
+             return futures;
+         } finally {
+             if (!done)
+-                for (ForkJoinTask<T> f : fs)
+-                    f.cancel(false);
++                fs.stream().forEach(f -> f.cancel(false));
+         }
+     }
+ 
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/Cleaner.java ../build/h2o-core/src/main/java/water/Cleaner.java
+--- ./h2o-core/src/main/java/water/Cleaner.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/Cleaner.java	2026-06-16 15:01:00.162666715 +0100
 @@ -10,6 +10,7 @@
  /** Store Cleaner: User-Mode Swap-To-Disk */
  
@@ -165,9 +1127,170 @@ diff -ur ./h2o-core/src/main/java/water/Cleaner.java ../build/h2o-core/src/main/
        if( DESIRED == -1 ) clean_to_age = now;  // Test mode: clean all
  
        // No logging if under memory pressure: can deadlock the cleaner thread
-diff -ur ./h2o-core/src/main/java/water/MemoryManager.java ../build/h2o-core/src/main/java/water/MemoryManager.java
---- ./h2o-core/src/main/java/water/MemoryManager.java	2024-12-19 08:33:21.000000000 +0000
-+++ ../build/h2o-core/src/main/java/water/MemoryManager.java	2024-12-19 08:33:34.233033439 +0000
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/ExtensionManager.java ../build/h2o-core/src/main/java/water/ExtensionManager.java
+--- ./h2o-core/src/main/java/water/ExtensionManager.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/ExtensionManager.java	2026-06-16 15:01:00.162831564 +0100
+@@ -139,9 +139,9 @@
+     }
+ 
+     // Log core extension registrations here so the message is grouped in the right spot.
+-    for (AbstractH2OExtension e : getCoreExtensions()) {
++    getCoreExtensions().stream().forEach(e -> {
+       e.printInitialized();
+-    }
++    });
+     Log.info("Registered " + coreExtensions.size() + " core extensions in: " + registerCoreExtensionsMillis + "ms");
+     Log.info("Registered H2O core extensions: " + Arrays.toString(getCoreExtensionNames()));
+ 
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/H2O.java ../build/h2o-core/src/main/java/water/H2O.java
+--- ./h2o-core/src/main/java/water/H2O.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/H2O.java	2026-06-16 15:01:00.163059735 +0100
+@@ -210,9 +210,9 @@
+ 
+     System.out.print(s);
+ 
+-    for (AbstractH2OExtension e : extManager.getCoreExtensions()) {
++    extManager.getCoreExtensions().stream().forEach(e -> {
+       e.printHelp();
+-    }
++    });
+   }
+ 
+   /**
+@@ -917,9 +917,9 @@
+     }
+ 
+     // Validate extension arguments
+-    for (AbstractH2OExtension e : extManager.getCoreExtensions()) {
++    extManager.getCoreExtensions().stream().forEach(e -> {
+       e.validateArguments();
+-    }
++    });
+   }
+ 
+   //-------------------------------------------------------------------------------------------------------------------
+@@ -2355,7 +2355,7 @@
+     // Copy all ai.h2o.* system properties to the tail of the command line,
+     // effectively overwriting the earlier args.
+     ArrayList<String> args2 = new ArrayList<>(Arrays.asList(args));
+-    for( Object p : System.getProperties().keySet() ) {
++    System.getProperties().keySet().stream().forEach(p -> {
+       String s = (String) p;
+       if(isArgProperty(s)) {
+         args2.add("-" + s.substring(7));
+@@ -2363,7 +2363,7 @@
+         if (!s.substring(7).equals("ga_opt_out") && !System.getProperty(s).isEmpty())
+           args2.add(System.getProperty(s));
+       }
+-    }
++    });
+ 
+     // Parse args
+     String[] arguments = args2.toArray(args);
+@@ -2422,9 +2422,9 @@
+ 
+     // Allow core extensions to perform initialization that requires the network.
+     long time6 = System.currentTimeMillis();
+-    for (AbstractH2OExtension ext: extManager.getCoreExtensions()) {
++    extManager.getCoreExtensions().stream().forEach(ext -> {
+       ext.onLocalNodeStarted();
+-    }
++    });
+ 
+     try {
+       String logDir = Log.getLogDir();
+@@ -2527,13 +2527,9 @@
+   private static boolean isGCLoggingEnabled() {
+     RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+     List<String> jvmArgs = runtimeMXBean.getInputArguments();
+-    for (String arg : jvmArgs) {
+-      if (arg.startsWith("-XX:+PrintGC") || 
++    return jvmArgs.stream().anyMatch(arg -> arg.startsWith("-XX:+PrintGC") || 
+               arg.equals("-verbose:gc") || 
+-              (arg.startsWith("-Xlog:") && arg.contains("gc")))
+-        return true;
+-    }
+-    return false;
++              (arg.startsWith("-Xlog:") && arg.contains("gc")));
+   }
+   
+   /** Find PID of the current process, use -1 if we can't find the value. */
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/H2ONode.java ../build/h2o-core/src/main/java/water/H2ONode.java
+--- ./h2o-core/src/main/java/water/H2ONode.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/H2ONode.java	2026-06-16 15:01:00.163530893 +0100
+@@ -218,21 +218,16 @@
+ 
+   static H2ONode[] getClients(){
+     ArrayList<H2ONode> clients = new ArrayList<>(INTERN.size());
+-    for( Map.Entry<H2Okey, H2ONode> entry : INTERN.entrySet()){
++    INTERN.entrySet().stream().forEach(entry -> {
+       if (entry.getValue().isClient() && !entry.getValue().isRemovedFromCloud()) {
+         clients.add(entry.getValue());
+       }
+-    }
++    });
+     return clients.toArray(new H2ONode[0]);
+   }
+ 
+   static H2ONode getClientByIPPort(String ipPort){
+-    for( Map.Entry<H2Okey, H2ONode> entry : INTERN.entrySet()){
+-      if (entry.getValue().isClient() && !entry.getValue().isRemovedFromCloud() && entry.getValue().getIpPortString().equals(ipPort)) {
+-        return entry.getValue();
+-      }
+-    }
+-    return null;
++    return INTERN.entrySet().stream().filter(entry -> entry.getValue().isClient() && !entry.getValue().isRemovedFromCloud() && entry.getValue().getIpPortString().equals(ipPort)).findFirst().map(entry -> entry.getValue()).orElse(null);
+   }
+ 
+   private void refreshClient(short newTimestamp) {
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/Key.java ../build/h2o-core/src/main/java/water/Key.java
+--- ./h2o-core/src/main/java/water/Key.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/Key.java	2026-06-16 17:17:09.388739548 +0100
+@@ -8,6 +8,7 @@
+ import java.util.Arrays;
+ import java.util.UUID;
+ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
++import java.util.stream.IntStream;
+ 
+ /**
+  * Keys!  H2O supports a distributed Key/Value store, with exact Java Memory
+@@ -216,12 +217,13 @@
+   private Key(byte[] kb) {
+     _kb = kb;
+     // Quicky hash: http://en.wikipedia.org/wiki/Jenkins_hash_function
+-    int hash = 0;
+-    for( byte b : kb ) {
+-      hash += b;
+-      hash += (hash << 10);
+-      hash ^= (hash >> 6);
+-    }
++    int hash = IntStream.range(0, kb.length).reduce(0, (h, i) -> {
++      byte b = kb[i];
++      h += b;
++      h += (h << 10);
++      h ^= (h >> 6);
++      return h;
++    });
+     hash += (hash << 3);
+     hash ^= (hash >> 11);
+     hash += (hash << 15);
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/ListenerService.java ../build/h2o-core/src/main/java/water/ListenerService.java
+--- ./h2o-core/src/main/java/water/ListenerService.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/ListenerService.java	2026-06-16 15:01:00.163719690 +0100
+@@ -14,8 +14,8 @@
+   }
+ 
+   public void report(String msg, Object... data){
+-    for (H2OListenerExtension ext : ExtensionManager.getInstance().getListenerExtensions()) {
++    ExtensionManager.getInstance().getListenerExtensions().stream().forEach(ext -> {
+       ext.report(msg, data);
+-    }
++    });
+   }
+ }
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/MemoryManager.java ../build/h2o-core/src/main/java/water/MemoryManager.java
+--- ./h2o-core/src/main/java/water/MemoryManager.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/MemoryManager.java	2026-06-16 15:01:00.163899343 +0100
 @@ -42,6 +42,26 @@
   * @author cliffc
   */
@@ -222,9 +1345,1532 @@ diff -ur ./h2o-core/src/main/java/water/MemoryManager.java ../build/h2o-core/src
  
    /**
     * Try to reserve memory needed for task execution and return true if
-diff -ur ./h2o-extensions/target-encoder/build.gradle ../build/h2o-extensions/target-encoder/build.gradle
---- ./h2o-extensions/target-encoder/build.gradle	2024-12-19 08:33:22.000000000 +0000
-+++ ../build/h2o-extensions/target-encoder/build.gradle	2024-12-19 08:33:34.233033439 +0000
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/Paxos.java ../build/h2o-core/src/main/java/water/Paxos.java
+--- ./h2o-core/src/main/java/water/Paxos.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/Paxos.java	2026-06-16 15:01:00.164074640 +0100
+@@ -155,12 +155,12 @@
+       _cloudLocked = true;
+       // remove nodes which are not in the cluster (e.g. nodes from flat-file which are not actually used)
+       if(H2O.isFlatfileEnabled()){
+-        for(H2ONode n: H2O.getFlatfile()){
++        H2O.getFlatfile().stream().forEach(n -> {
+           if(!n._heartbeat._client && !PROPOSED.containsKey(n._key)){
+             Log.warn("Flatfile entry ignored: Node " + n._key.getIpPortString() + " not active in this cloud. Removing it from the list.");
+             n.removeFromCloud();
+           }
+-        }
++        });
+       }
+     }
+   }
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/api/AboutHandler.java ../build/h2o-core/src/main/java/water/api/AboutHandler.java
+--- ./h2o-core/src/main/java/water/api/AboutHandler.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/api/AboutHandler.java	2026-06-16 15:01:00.164279452 +0100
+@@ -28,9 +28,9 @@
+                                    "Your H2O version is over 100 days old. Please download the latest version from: https://h2o-release.s3.amazonaws.com/h2o/latest_stable.html"));
+     }
+ 
+-    for (H2O.AboutEntry ae : H2O.getAboutEntries()) {
++    H2O.getAboutEntries().stream().forEach(ae -> {
+       entries.add(new AboutEntryV3(ae.getName(), ae.getValue()));
+-    }
++    });
+ 
+     s.entries = entries.toArray(new AboutEntryV3[entries.size()]);
+     return s;
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/api/CapabilitiesHandler.java ../build/h2o-core/src/main/java/water/api/CapabilitiesHandler.java
+--- ./h2o-core/src/main/java/water/api/CapabilitiesHandler.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/api/CapabilitiesHandler.java	2026-06-16 15:01:00.164457046 +0100
+@@ -12,17 +12,17 @@
+ 
+   private ArrayList<CapabilityEntryV3> getCoreExtensionEntries(){
+     ArrayList<CapabilityEntryV3> entries = new ArrayList<>();
+-    for(AbstractH2OExtension ext: ExtensionManager.getInstance().getCoreExtensions()){
++    ExtensionManager.getInstance().getCoreExtensions().stream().forEach(ext -> {
+       entries.add(new CapabilityEntryV3(ext.getExtensionName()));
+-    }
++    });
+     return entries;
+   }
+ 
+   private ArrayList<CapabilityEntryV3> getRestAPIExtensionEntries(){
+     ArrayList<CapabilityEntryV3> entries = new ArrayList<>();
+-    for(RestApiExtension ext: ExtensionManager.getInstance().getRestApiExtensions()){
++    ExtensionManager.getInstance().getRestApiExtensions().stream().forEach(ext -> {
+       entries.add(new CapabilityEntryV3(ext.getName()));
+-    }
++    });
+     return entries;
+   }
+ 
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/api/ModelsHandler.java ../build/h2o-core/src/main/java/water/api/ModelsHandler.java
+--- ./h2o-core/src/main/java/water/api/ModelsHandler.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/api/ModelsHandler.java	2026-06-16 15:01:00.164653258 +0100
+@@ -53,7 +53,7 @@
+ 
+       Set<String> model_column_names = new HashSet<>(Arrays.asList(model._output._names));
+ 
+-      for (Map.Entry<Frame, Set<String>> entry : all_frames_cols.entrySet()) {
++      all_frames_cols.entrySet().stream().forEach(entry -> {
+         Frame frame = entry.getKey();
+         Set<String> frame_cols = entry.getValue();
+ 
+@@ -66,7 +66,7 @@
+             // skip
+           }
+         }
+-      }
++      });
+       return compatible_frames.toArray(new Frame[0]);
+     }
+   }
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/api/RemoveAllHandler.java ../build/h2o-core/src/main/java/water/api/RemoveAllHandler.java
+--- ./h2o-core/src/main/java/water/api/RemoveAllHandler.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/api/RemoveAllHandler.java	2026-06-16 15:01:00.164803459 +0100
+@@ -15,8 +15,7 @@
+     for( Job j : Job.jobs() ) { j.stop_requested(); j.remove(fs); }
+     // Wipe out any and all session info
+     if( RapidsHandler.SESSIONS != null ) {
+-      for(String k: RapidsHandler.SESSIONS.keySet() )
+-        (RapidsHandler.SESSIONS.get(k)).endQuietly(null);
++      RapidsHandler.SESSIONS.keySet().stream().forEach(k -> (RapidsHandler.SESSIONS.get(k)).endQuietly(null));
+       RapidsHandler.SESSIONS.clear();
+     }
+     fs.blockForPending();
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/api/RequestServer.java ../build/h2o-core/src/main/java/water/api/RequestServer.java
+--- ./h2o-core/src/main/java/water/api/RequestServer.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/api/RequestServer.java	2026-06-16 15:01:00.164991045 +0100
+@@ -278,7 +278,7 @@
+         // application/x-www-form-urlencoded
+         Map<String, String[]> parameterMap;
+         parameterMap = request.getParameterMap();
+-        for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
++        parameterMap.entrySet().stream().forEach(entry -> {
+           String key = entry.getKey();
+           String[] values = entry.getValue();
+ 
+@@ -296,7 +296,7 @@
+             sb.append("]");
+             parms.put(key, sb.toString());
+           }
+-        }
++        });
+       }
+ 
+       // Make serve() call.
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/api/schemas3/ModelParametersSchemaV3.java ../build/h2o-core/src/main/java/water/api/schemas3/ModelParametersSchemaV3.java
+--- ./h2o-core/src/main/java/water/api/schemas3/ModelParametersSchemaV3.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/api/schemas3/ModelParametersSchemaV3.java	2026-06-16 15:01:00.165209752 +0100
+@@ -253,18 +253,18 @@
+       // Make a new Set which contains ourselves, fields we have already been connected to,
+       // and fields *they* have already been connected to.
+       Set<String> new_set = new HashSet<>();
+-      for (String s : me) {
++      me.stream().forEach(s -> {
+         // Were we mentioned by a previous field?
+         if (field_exclusivity_groups.containsKey(s))
+           new_set.addAll(field_exclusivity_groups.get(s));
+         else
+           new_set.add(s);
+-      }
++      });
+ 
+       // Now point all the fields in our Set to the Set.
+-      for (String s : me) {
++      me.stream().forEach(s -> {
+         field_exclusivity_groups.put(s, new_set);
+-      }
++      });
+     }
+ 
+     // Now walk over all the fields and create new comprehensive is_mutually_exclusive arrays, not containing self.
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/codegen/CodeGeneratorPipeline.java ../build/h2o-core/src/main/java/water/codegen/CodeGeneratorPipeline.java
+--- ./h2o-core/src/main/java/water/codegen/CodeGeneratorPipeline.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/codegen/CodeGeneratorPipeline.java	2026-06-16 15:01:00.165384820 +0100
+@@ -15,8 +15,8 @@
+ 
+   @Override
+   public void generate(JCodeSB out) {
+-    for (CodeGenerator codeGen : this) {
++    this.stream().forEach(codeGen -> {
+       codeGen.generate(out);
+-    }
++    });
+   }
+ }
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/fvec/C2Chunk.java ../build/h2o-core/src/main/java/water/fvec/C2Chunk.java
+--- ./h2o-core/src/main/java/water/fvec/C2Chunk.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/fvec/C2Chunk.java	2026-06-16 16:26:23.541124807 +0100
+@@ -2,6 +2,8 @@
+ 
+ import water.util.UnsafeUtils;
+ 
++import java.util.stream.IntStream;
++
+ /**
+  * The empty-compression function, where data is in shorts.
+  */
+@@ -41,19 +43,19 @@
+ 
+ 
+   @Override public double [] getDoubles(double [] vals, int from, int to, double NA){
+-    for(int i = from; i < to; i++) {
+-      int x = UnsafeUtils.get2(_mem, 2*i);
+-      vals[i-from] = (x == _NA)?NA:x;
+-    }
++    IntStream.range(from, to).forEach(i -> {
++      int x = UnsafeUtils.get2(_mem, 2 * i);
++      vals[i - from] = (x == _NA) ? NA : x;
++    });
+     return vals;
+   }
+ 
+-  @Override public double [] getDoubles(double [] vals, int [] ids){
+-    int k = 0;
+-    for(int i:ids) {
+-      int x = UnsafeUtils.get2(_mem, 2*i);
+-      vals[k++] = (x == _NA)?Double.NaN:x;
+-    }
++  @Override public double[] getDoubles(double[] vals, int[] ids) {
++    IntStream.range(0, ids.length).forEach(k -> {
++      int i = ids[k];
++      int x = UnsafeUtils.get2(_mem, 2 * i);
++      vals[k] = (x == _NA) ? Double.NaN : x;
++    });
+     return vals;
+   }
+ 
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/fvec/C2SChunk.java ../build/h2o-core/src/main/java/water/fvec/C2SChunk.java
+--- ./h2o-core/src/main/java/water/fvec/C2SChunk.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/fvec/C2SChunk.java	2026-06-16 16:26:23.155135626 +0100
+@@ -3,6 +3,8 @@
+ import water.util.PrettyPrint;
+ import water.util.UnsafeUtils;
+ 
++import java.util.stream.IntStream;
++
+ /**
+  * The scale/bias function, where data is in SIGNED bytes before scaling.
+  */
+@@ -51,15 +53,17 @@
+   @Override boolean setNA_impl(int idx) {setMantissa(idx,(short)C2Chunk._NA); return true; }
+ 
+   @Override public double [] getDoubles(double [] vals, int from, int to, double NA){
+-    for(int i = from; i < to; i++)
+-      vals[i-from] = getD(getMantissa(i),C2Chunk._NA,NA);
++    IntStream.range(from, to).forEach(i ->
++      vals[i - from] = getD(getMantissa(i), C2Chunk._NA, NA)
++    );
+     return vals;
+   }
+ 
+-  @Override public double [] getDoubles(double [] vals, int [] ids){
+-    int k = 0;
+-    for(int i:ids)
+-      vals[k++] = getD(getMantissa(i),C2Chunk._NA);
++  @Override public double[] getDoubles(double[] vals, int[] ids) {
++    IntStream.range(0, ids.length).forEach(k -> {
++      int i = ids[k];
++      vals[k] = getD(getMantissa(i), C2Chunk._NA);
++    });
+     return vals;
+   }
+ 
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/fvec/C8Chunk.java ../build/h2o-core/src/main/java/water/fvec/C8Chunk.java
+--- ./h2o-core/src/main/java/water/fvec/C8Chunk.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/fvec/C8Chunk.java	2026-06-16 16:27:28.425306260 +0100
+@@ -2,6 +2,8 @@
+ 
+ import water.util.UnsafeUtils;
+ 
++import java.util.stream.IntStream;
++
+ /**
+  * The empty-compression function, where data is in 'long's.
+  */
+@@ -50,18 +52,18 @@
+   }
+ 
+   @Override public double [] getDoubles(double [] vals, int from, int to, double NA){
+-    for(int i = from; i < to; i++) {
+-      long x = UnsafeUtils.get8(_mem, 8*i);
+-      vals[i-from] = (x == _NA)?NA:x;
+-    }
++    IntStream.range(from, to).forEach(i -> {
++      long x = UnsafeUtils.get8(_mem, 8 * i);
++      vals[i - from] = (x == _NA) ? NA : x;
++    });
+     return vals;
+   }
+   @Override public double [] getDoubles(double [] vals, int [] ids){
+-    int k = 0;
+-    for(int i:ids) {
+-      long x = UnsafeUtils.get8(_mem, 8*i);
+-      vals[k++] = (x == _NA)?Double.NaN:x;
+-    }
++    IntStream.range(0, ids.length).forEach(k -> {
++      int i = ids[k];
++      long x = UnsafeUtils.get8(_mem, 8 * i);
++      vals[k] = (x == _NA) ? Double.NaN : x;
++    });
+     return vals;
+   }
+ }
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/fvec/C8DChunk.java ../build/h2o-core/src/main/java/water/fvec/C8DChunk.java
+--- ./h2o-core/src/main/java/water/fvec/C8DChunk.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/fvec/C8DChunk.java	2026-06-16 16:28:26.040691510 +0100
+@@ -2,6 +2,8 @@
+ 
+ import water.util.UnsafeUtils;
+ 
++import java.util.stream.IntStream;
++
+ /**
+  * The empty-compression function, where data is in 'double's.
+  */
+@@ -58,16 +60,17 @@
+   }
+ 
+   @Override public double [] getDoubles(double [] vals, int from, int to, double NA){
+-    for(int i = from; i < to; i++) {
++    IntStream.range(from, to).forEach(i -> {
+       double d = UnsafeUtils.get8d(_mem, 8 * i);
+-      vals[i - from] = Double.isNaN(d)?NA:d;
+-    }
++      vals[i - from] = Double.isNaN(d) ? NA : d;
++    });
+     return vals;
+   }
+   @Override public double [] getDoubles(double [] vals, int [] ids){
+-    int k = 0;
+-    for(int i:ids)
+-      vals[k++] = UnsafeUtils.get8d(_mem,8*i);
++    IntStream.range(0, ids.length).forEach(k -> {
++      int i = ids[k];
++      vals[k] = UnsafeUtils.get8d(_mem, 8 * i);
++    });
+     return vals;
+   }
+ 
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/fvec/CreateInteractions.java ../build/h2o-core/src/main/java/water/fvec/CreateInteractions.java
+--- ./h2o-core/src/main/java/water/fvec/CreateInteractions.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/fvec/CreateInteractions.java	2026-06-16 15:01:00.165566591 +0100
+@@ -44,9 +44,9 @@
+     });
+     // Maintaining insertion order with the help of LinkedList
+     Map sortedMap = new LinkedHashMap<>();
+-    for (Map.Entry<IcedLong, IcedLong> entry : list) {
++    list.stream().forEach(entry -> {
+       sortedMap.put(entry.getKey()._val, entry.getValue()._val);
+-    }
++    });
+     return sortedMap;
+   }
+ 
+@@ -276,14 +276,14 @@
+     public void reduce(createInteractionDomain mrt) {
+       assert(mrt._unsortedMap != null);
+       assert(_unsortedMap != null);
+-      for (Map.Entry<IcedLong,IcedLong> e : mrt._unsortedMap.entrySet()) {
++      mrt._unsortedMap.entrySet().stream().forEach(e -> {
+         IcedLong x = _unsortedMap.get(e.getKey());
+         if (x != null) {
+           x._val+=e.getValue()._val;
+         } else {
+           _unsortedMap.put(e.getKey(), e.getValue());
+         }
+-      }
++      });
+ 
+       mrt._unsortedMap = null;
+ //    Log.info("Merged hash tables");
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/fvec/InteractionWrappedVec.java ../build/h2o-core/src/main/java/water/fvec/InteractionWrappedVec.java
+--- ./h2o-core/src/main/java/water/fvec/InteractionWrappedVec.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/fvec/InteractionWrappedVec.java	2026-06-16 15:01:00.165722383 +0100
+@@ -267,19 +267,18 @@
+     }
+ 
+     @Override public void reduce(CombineDomainTask t) {
+-      for (Map.Entry<String, IcedLong> e : t._perChkMap.entrySet()) {
++      t._perChkMap.entrySet().stream().forEach(e -> {
+         IcedLong i = _perChkMap.get(e.getKey());
+         if (i != null) i._val += e.getValue()._val;
+         else _perChkMap.put(e.getKey(), e.getValue());
+-      }
++      });
+       t._perChkMap = null;
+       if(_perChkMapMissing==null && t._perChkMapMissing!=null ) {
+         _perChkMapMissing=new IcedHashMap<>();
+         _perChkMapMissing.putAll(t._perChkMapMissing);
+       }
+       else if( _perChkMapMissing!=null && t._perChkMapMissing!=null ) {
+-        for (String s: t._perChkMapMissing.keySet())
+-          _perChkMapMissing.putIfAbsent(s,"");
++        t._perChkMapMissing.keySet().stream().forEach(s -> _perChkMapMissing.putIfAbsent(s,""));
+       }
+       t._perChkMapMissing=null;
+     }
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/init/HostnameGuesser.java ../build/h2o-core/src/main/java/water/init/HostnameGuesser.java
+--- ./h2o-core/src/main/java/water/init/HostnameGuesser.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/init/HostnameGuesser.java	2026-06-16 15:01:00.165877045 +0100
+@@ -162,7 +162,7 @@
+     boolean isWindows = OSUtils.isWindows();
+     boolean isWsl = OSUtils.isWsl();
+     int localIpTimeout = NetworkUtils.getLocalIpPingTimeout();
+-    for (NetworkInterface nIface : networkInterfaceList) {
++    networkInterfaceList.stream().forEach(nIface -> {
+       Enumeration<InetAddress> ias = nIface.getInetAddresses();
+       if (NetworkUtils.isUp(nIface)) {
+         while (ias.hasMoreElements()) {
+@@ -178,7 +178,7 @@
+       } else {
+         Log.info("Network interface is down: ", nIface);
+       }
+-    }
++    });
+ 
+     return ips;
+   }
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/init/NetworkInit.java ../build/h2o-core/src/main/java/water/init/NetworkInit.java
+--- ./h2o-core/src/main/java/water/init/NetworkInit.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/init/NetworkInit.java	2026-06-16 15:01:00.166028421 +0100
+@@ -390,8 +390,7 @@
+     }
+     HashSet<H2ONode> h2os = new HashSet<>();
+     List<FlatFileEntry> list = parseFlatFile(f);
+-    for(FlatFileEntry entry : list)
+-      h2os.add(H2ONode.intern(entry.inet, entry.port+H2O.ARGS.port_offset));// use the UDP port here
++    list.stream().forEach(entry -> h2os.add(H2ONode.intern(entry.inet, entry.port+H2O.ARGS.port_offset)));
+     return h2os;
+   }
+ 
+@@ -399,8 +398,7 @@
+     HashSet<H2ONode> h2os = new HashSet<>();
+     InputStream is = new ByteArrayInputStream(StringUtils.bytesOf(s));
+     List<FlatFileEntry> list = parseFlatFile(is);
+-    for(FlatFileEntry entry : list)
+-      h2os.add(H2ONode.intern(entry.inet, entry.port+H2O.ARGS.port_offset));// use the UDP port here
++    list.stream().forEach(entry -> h2os.add(H2ONode.intern(entry.inet, entry.port+H2O.ARGS.port_offset)));
+     return h2os;
+   }
+ 
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/init/TimelineSnapshot.java ../build/h2o-core/src/main/java/water/init/TimelineSnapshot.java
+--- ./h2o-core/src/main/java/water/init/TimelineSnapshot.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/init/TimelineSnapshot.java	2026-06-16 15:01:00.166201581 +0100
+@@ -331,10 +331,7 @@
+     if (senderCnd.isSend() && recvCnd.isRecv() && senderCnd.match(recvCnd)) {
+       ArrayList<Event> recvs = _sends.get(senderCnd);
+       if (recvs.isEmpty() || senderCnd.packH2O()==null ) {
+-        for (Event e : recvs)
+-          if (e._nodeId == recvCnd._nodeId)
+-            return false;
+-        return true;
++        return recvs.stream().noneMatch(e -> e._nodeId == recvCnd._nodeId);
+       }
+     }
+     return false;
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/nbhm/NonBlockingHashMap.java ../build/h2o-core/src/main/java/water/nbhm/NonBlockingHashMap.java
+--- ./h2o-core/src/main/java/water/nbhm/NonBlockingHashMap.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/nbhm/NonBlockingHashMap.java	2026-06-16 15:01:00.166440147 +0100
+@@ -400,10 +400,7 @@
+   @Override
+   public boolean containsValue( final Object val ) {
+     if( val == null ) throw new NullPointerException();
+-    for( TypeV V : values() )
+-      if( V == val || V.equals(val) )
+-        return true;
+-    return false;
++    return values().stream().anyMatch(V -> V == val || V.equals(val));
+   }
+ 
+   // This function is supposed to do something for Hashtable, and the JCK
+@@ -432,10 +429,10 @@
+       // Wipe out the cloned array (it was shallow anyways).
+       t.clear();
+       // Now copy sanely
+-      for( TypeK K : keySet() ) {
++      keySet().stream().forEach(K -> {
+         final TypeV V = get(K);  // Do an official 'get'
+         t.put(K,V);
+-      }
++      });
+       return t;
+     } catch (CloneNotSupportedException e) {
+       // this shouldn't happen, since we are Cloneable
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/nbhm/NonBlockingHashMapLong.java ../build/h2o-core/src/main/java/water/nbhm/NonBlockingHashMapLong.java
+--- ./h2o-core/src/main/java/water/nbhm/NonBlockingHashMapLong.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/nbhm/NonBlockingHashMapLong.java	2026-06-16 15:01:00.166741131 +0100
+@@ -341,10 +341,7 @@
+   public boolean containsValue( Object val ) {
+     if( val == null ) return false;
+     if( val == _val_1 ) return true; // Key 0
+-    for( TypeV V : values() )
+-      if( V == val || V.equals(val) )
+-        return true;
+-    return false;
++    return values().stream().anyMatch(V -> V == val || V.equals(val));
+   }
+ 
+   // --- get -----------------------------------------------------------------
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/nbhm/NonBlockingIdentityHashMap.java ../build/h2o-core/src/main/java/water/nbhm/NonBlockingIdentityHashMap.java
+--- ./h2o-core/src/main/java/water/nbhm/NonBlockingIdentityHashMap.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/nbhm/NonBlockingIdentityHashMap.java	2026-06-16 15:01:00.166969695 +0100
+@@ -390,10 +390,7 @@
+   @Override
+   public boolean containsValue( final Object val ) {
+     if( val == null ) throw new NullPointerException();
+-    for( TypeV V : values() )
+-      if( V == val || V.equals(val) )
+-        return true;
+-    return false;
++    return values().stream().anyMatch(V -> V == val || V.equals(val));
+   }
+ 
+   // This function is supposed to do something for Hashtable, and the JCK
+@@ -422,10 +419,10 @@
+       // Wipe out the cloned array (it was shallow anyways).
+       t.clear();
+       // Now copy sanely
+-      for( TypeK K : keySet() ) {
++      keySet().stream().forEach(K -> {
+         final TypeV V = get(K);  // Do an official 'get'
+         t.put(K,V);
+-      }
++      });
+       return t;
+     } catch (CloneNotSupportedException e) {
+       // this shouldn't happen, since we are Cloneable
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/parser/ARFFParser.java ../build/h2o-core/src/main/java/water/parser/ARFFParser.java
+--- ./h2o-core/src/main/java/water/parser/ARFFParser.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/parser/ARFFParser.java	2026-06-16 15:01:00.167229454 +0100
+@@ -144,10 +144,7 @@
+   }
+ 
+   private static boolean isValidHeader(List<String> header) {
+-    for (String line : header) {
+-      if (!isValidHeaderLine(line)) return false;
+-    }
+-    return header.size() > 0;
++    return header.stream().filter(line -> !isValidHeaderLine(line)).findFirst().map(line -> false).orElse(header.size() > 0);
+   }
+ 
+   private static boolean isValidHeaderLine(String str) {
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/parser/XlsParser.java ../build/h2o-core/src/main/java/water/parser/XlsParser.java
+--- ./h2o-core/src/main/java/water/parser/XlsParser.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/parser/XlsParser.java	2026-06-16 15:01:00.167438066 +0100
+@@ -548,8 +548,7 @@
+     }
+ 
+     // Parse all Sheets, although honestly H2O probably only wants the 1st sheet
+-    for( Sheet sheet : _boundsheets )
+-      sheet.parse();
++    _boundsheets.stream().forEach(sheet -> sheet.parse());
+     return true;
+   }
+ 
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/persist/PersistH2O.java ../build/h2o-core/src/main/java/water/persist/PersistH2O.java
+--- ./h2o-core/src/main/java/water/persist/PersistH2O.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/persist/PersistH2O.java	2026-06-16 15:01:00.167636566 +0100
+@@ -78,9 +78,9 @@
+             return Collections.emptyList();
+         }
+         try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
+-            String line;
+-            while ((line = reader.readLine()) != null)
+-            contents.add(PREFIX + line);
++            reader.lines().forEach(line -> {
++                contents.add(PREFIX + line);
++            });
+         } finally {
+             IOUtils.closeQuietly(is);
+         }
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/persist/PersistManager.java ../build/h2o-core/src/main/java/water/persist/PersistManager.java
+--- ./h2o-core/src/main/java/water/persist/PersistManager.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/persist/PersistManager.java	2026-06-16 15:01:00.167807354 +0100
+@@ -490,8 +490,7 @@
+       @SuppressWarnings("unchecked")
+       List<String> removed = ((List<String>) keys.clone());
+       removed.removeAll(retainKeys);
+-      for (String r : removed)
+-        Keyed.remove(Key.make(r), fs, true);
++      removed.stream().forEach(r -> Keyed.remove(Key.make(r), fs, true));
+       fs.blockForPending();
+       keys.retainAll(retainKeys); //New keys ArrayList after matching pattern of choice
+     }
+@@ -851,12 +850,12 @@
+   private ArrayList<String> matchPattern(String prefix, ArrayList<String> fileList, String matchStr){
+     ArrayList<String> result = new ArrayList<>();
+     Pattern pattern = Pattern.compile(matchStr);
+-    for (String s : fileList) {
++    fileList.stream().forEach(s -> {
+       Matcher matcher = pattern.matcher(afterPrefix(s,prefix));
+       if (matcher.find()) {
+         result.add(s);
+       }
+-    }
++    });
+     return result;
+   }
+ 
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/rapids/Session.java ../build/h2o-core/src/main/java/water/rapids/Session.java
+--- ./h2o-core/src/main/java/water/rapids/Session.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/rapids/Session.java	2026-06-16 15:01:00.168023119 +0100
+@@ -140,7 +140,7 @@
+     try {
+       GLOBALS.clear();
+       Futures fs = new Futures();
+-      for (Frame fr : FRAMES.values()) {
++      FRAMES.values().stream().forEach(fr -> {
+         for (Key<Vec> vec : fr.keys()) {
+           Integer I = REFCNTS.get(vec);
+           int i = (I == null ? 0 : I) - 1;
+@@ -151,7 +151,7 @@
+           }
+         }
+         DKV.remove(fr._key, fs);   // Shallow remove, internal Vecs removed 1-by-1
+-      }
++      });
+       fs.blockForPending();
+       FRAMES.clear();
+       REFCNTS.clear();
+@@ -343,7 +343,7 @@
+ 
+     // Now compare computed refcnts to cached REFCNTS.
+     // First check that every Vec in computed refcnt is also in REFCNTS, with equal counts.
+-    for (Map.Entry<Key<Vec>,Integer> pair : refcnts.entrySet()) {
++    refcnts.entrySet().stream().forEach(pair -> {
+       Key<Vec> vec = pair.getKey();
+       Integer count = pair.getValue();
+       Integer savedCount = REFCNTS.get(vec);
+@@ -351,14 +351,14 @@
+       if (count.intValue() != savedCount.intValue())
+         throw new IllegalStateException(
+             "Ref-count mismatch for vec " + vec + ": REFCNT = " + savedCount + ", should be " + count);
+-    }
++    });
+     // Then check that every cached REFCNT is in the computed set as well.
+     if (refcnts.size() != REFCNTS.size())
+-      for (Map.Entry<Key<Vec>, Integer> pair : REFCNTS.entrySet()) {
++      REFCNTS.entrySet().stream().forEach(pair -> {
+         if (!refcnts.containsKey(pair.getKey()))
+           throw new IllegalStateException(
+               "REFCNTs contains an extra vec " + pair.getKey() + ", count = " + pair.getValue());
+-      }
++      });
+   }
+ 
+   // To avoid a class-circularity hang, we need to force other members of the
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/rapids/ast/prims/mungers/AstGroup.java ../build/h2o-core/src/main/java/water/rapids/ast/prims/mungers/AstGroup.java
+--- ./h2o-core/src/main/java/water/rapids/ast/prims/mungers/AstGroup.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/rapids/ast/prims/mungers/AstGroup.java	2026-06-16 15:01:00.168259526 +0100
+@@ -663,13 +663,13 @@
+ 
+     // Non-blocking race-safe update of the shared per-node groups hashtable
+     private void reduce(IcedHashSet<G> r) {
+-      for (G rg : r) {
++      r.stream().forEach(rg -> {
+         G lg;
+         if ((lg = _gss.addIfAbsent(rg)) != null) {
+           for (int i = 0; i < _aggs.length; i++)
+             _aggs[i].atomic_op(lg._dss, lg._ns, i, rg._dss[i], rg._ns[i]); // Need to atomically merge groups here
+         }
+-      }
++      });
+     }
+ 
+     @Override
+@@ -726,13 +726,13 @@
+     // combine IcedHashMap from all threads here.
+     @Override
+     public void reduce(GBTaskAggsPerMap t) {
+-      for (G rg : t._gss) {
++      t._gss.stream().forEach(rg -> {
+         if (_gss.addIfAbsent(rg) != null) {
+           G lg = _gss.get(rg);
+           for (int i = 0; i < _aggs.length; i++)
+             _aggs[i].atomic_op(lg._dss, lg._ns, i, rg._dss[i], rg._ns[i]); // Need to atomically merge groups here
+         }
+-      }
++      });
+     }
+ 
+     @Override
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/rapids/ast/prims/mungers/AstGroupedPermute.java ../build/h2o-core/src/main/java/water/rapids/ast/prims/mungers/AstGroupedPermute.java
+--- ./h2o-core/src/main/java/water/rapids/ast/prims/mungers/AstGroupedPermute.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/rapids/ast/prims/mungers/AstGroupedPermute.java	2026-06-16 15:01:00.168487477 +0100
+@@ -138,7 +138,7 @@
+     }
+ 
+     private void reduce(IcedHashMap<Long, IcedHashMap<Long, double[]>[]> r) {
+-      for (Long l : r.keySet()) {
++      r.keySet().stream().forEach(l -> {
+         if (_grps.putIfAbsent(l, r.get(l)) != null) {
+           IcedHashMap<Long, double[]>[] rdbls = r.get(l);
+           IcedHashMap<Long, double[]>[] ldbls = _grps.get(l);
+@@ -151,7 +151,7 @@
+             if (ldbls[1].putIfAbsent(rr, rdbls[1].get(rr)) != null)
+               ldbls[1].get(rr)[1] += rdbls[1].get(rr)[1];
+         }
+-      }
++      });
+     }
+   }
+ 
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/rapids/ast/prims/mungers/AstMerge.java ../build/h2o-core/src/main/java/water/rapids/ast/prims/mungers/AstMerge.java
+--- ./h2o-core/src/main/java/water/rapids/ast/prims/mungers/AstMerge.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/rapids/ast/prims/mungers/AstMerge.java	2026-06-16 15:01:00.168655005 +0100
+@@ -398,8 +398,7 @@
+         abort();
+         return;
+       } // Missing: aborted due to size
+-      for (Row row : ms._rows.keySet())
+-        add(rows, row);          // Merge RHS into LHS, collecting dups as we go
++      ms._rows.keySet().stream().forEach(row -> add(rows, row));
+     }
+   }
+ 
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/rapids/transforms/Transform.java ../build/h2o-core/src/main/java/water/rapids/transforms/Transform.java
+--- ./h2o-core/src/main/java/water/rapids/transforms/Transform.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/rapids/transforms/Transform.java	2026-06-16 15:01:00.168866118 +0100
+@@ -59,12 +59,12 @@
+     sb.append("    public " + stepName + "() { super(new String[]{" + toJavaString(_inNames) +"},\n");
+     sb.append("                                new String[]{" + toJavaString(_inTypes) + "}," +
+               "                                new String[]{" + toJavaString(_outNames) +"});\n");
+-    for (String k : _params.keySet()) {
++    _params.keySet().stream().forEach(k -> {
+       String v = _params.get(k).toJavaString();
+       sb.append(
+               "    _params.put(\""+k+"\", new String[]{"+v.replace("\\","\\\\")+"});\n"
+       );
+-    }
++    });
+     sb.append("  }\n");
+     return sb.append(genClassImpl()).append("  }\n");
+   }
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/udf/FoldingColumn.java ../build/h2o-core/src/main/java/water/udf/FoldingColumn.java
+--- ./h2o-core/src/main/java/water/udf/FoldingColumn.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/udf/FoldingColumn.java	2026-06-16 15:01:00.169041717 +0100
+@@ -90,8 +90,7 @@
+     @Override public Chunk rawChunk() { return myChunk; }
+ 
+     @Override public boolean isNA(int i) {
+-      for (TypedChunk<X> c : chunks) if (c.isNA(i)) return true;
+-      return false;
++      return chunks.stream().anyMatch(c -> c.isNA(i));
+     }
+ 
+     @Override
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/udf/UnfoldingFrame.java ../build/h2o-core/src/main/java/water/udf/UnfoldingFrame.java
+--- ./h2o-core/src/main/java/water/udf/UnfoldingFrame.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/udf/UnfoldingFrame.java	2026-06-16 15:01:00.169262023 +0100
+@@ -109,7 +109,7 @@
+     List<Vec> vecs = makeVecs();
+     List<DataColumn<X>> result = new ArrayList<>(width);
+ 
+-    for (Vec vec : vecs) result.add(factory.newColumn(vec));
++    vecs.stream().forEach(vec -> result.add(factory.newColumn(vec)));
+     return result;
+   }
+   
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/util/ArrayUtils.java ../build/h2o-core/src/main/java/water/util/ArrayUtils.java
+--- ./h2o-core/src/main/java/water/util/ArrayUtils.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/util/ArrayUtils.java	2026-06-16 16:19:16.561094553 +0100
+@@ -5,6 +5,7 @@
+ 
+ import java.text.DecimalFormat;
+ import java.util.*;
++import java.util.stream.IntStream;
+ 
+ import static java.lang.StrictMath.sqrt;
+ import static water.util.RandomUtils.getRNG;
+@@ -26,69 +27,57 @@
+   
+   // Sum elements of an array
+   public static long sum(final long[] from) {
+-    long result = 0;
+-    for (long d: from) result += d;
+-    return result;
++    return Arrays.stream(from).sum();
+   }
++
+   public static long sum(final long[] from, int startIdx, int endIdx) {
+-    long result = 0;
+-    for (int i = startIdx; i < endIdx; i++) result += from[i];
+-    return result;
++    return Arrays.stream(from, startIdx, endIdx).sum();
+   }
++
+   public static int sum(final int[] from) {
+-    int result = 0;
+-    for( int d : from ) result += d;
+-    return result;
++    return Arrays.stream(from).sum();
+   }
++
+   public static long suml(final int[] from) {
+-    long result = 0;
+-    for( int d : from ) result += d;
+-    return result;
++    return Arrays.stream(from).asLongStream().sum();
+   }
+ 
+   public static float sum(final float[] from) {
+-    float result = 0;
++    float result = 0.0f;
+     for (float d: from) result += d;
+     return result;
+   }
++
+   public static double sum(final double[] from) {
+-    double result = 0;
+-    for (double d: from) result += d;
+-    return result;
++    return Arrays.stream(from).sum();
+   }
++
+   public static float[] reduceMin(float[] a, float[] b) {
+-    for (int i=0; i<a.length; ++i)
+-      a[i] = Math.min(a[i], b[i]);
++    IntStream.range(0, a.length).forEach(i -> a[i] = Math.min(a[i], b[i]));
+     return a;
+   }
++
+   public static float[] reduceMax(float[] a, float[] b) {
+-    for (int i=0; i<a.length; ++i)
+-      a[i] = Math.max(a[i], b[i]);
++    IntStream.range(0, a.length).forEach(i -> a[i] = Math.max(a[i], b[i]));
+     return a;
+   }
++  
+   public static double innerProduct(double [] x, double [] y){
+-    double result = 0;
+-    for (int i = 0; i < x.length; i++)
+-      result += x[i] * y[i];
+-    return result;
++    return IntStream.range(0, x.length).mapToDouble(i -> x[i] * y[i]).sum();
+   }
+ 
+   public static double innerProductPartial(double [] x, int[] x_index, double [] y){
+-    double result = 0;
+-    for (int i = 0; i < y.length; i++)
+-      result += x[x_index[i]] * y[i];
+-    return result;
++    return IntStream.range(0, y.length).mapToDouble(i -> x[x_index[i]] * y[i]).sum();
+   }
+ 
+   public static double [] mmul(double [][] M, double [] V) {
+     double [] res = new double[M.length];
+-    for(int i = 0; i < M.length; ++i) {
+-      double d = 0;
+-      for (int j = 0; j < V.length; ++j) {
+-        d += M[i][j] * V[j];
+-      }
++    IntStream.range(0, M.length).forEach(i -> {
++      double d = IntStream.range(0, V.length)
++        .mapToDouble(j -> M[i][j] * V[j])
++        .sum();
+       res[i] = d;
+-    }
++    });
+     return res;
+   }
+ 
+@@ -99,11 +88,12 @@
+   public static double[][] outerProduct(double[][] result, double[] x, double[] y) {
+     if (result == null)
+       result = new double[x.length][y.length];
+-    for(int i = 0; i < x.length; i++) {
+-      for(int j = 0; j < y.length; j++)
+-        result[i][j] = x[i] * y[j];
+-    }
+-    return result;
++    
++    final double[][] finalResult = result;
++    IntStream.range(0, x.length).forEach(i ->
++      IntStream.range(0, y.length).forEach(j -> finalResult[i][j] = x[i] * y[j])
++    );
++    return finalResult;
+   }
+ 
+   // return the sqrt of each element of the array.  Will overwrite the original array in this case
+@@ -111,52 +101,46 @@
+     assert (x != null);
+     int len = x.length;
+ 
+-    for (int index = 0; index < len; index++) {
++    IntStream.range(0, len).forEach(index -> {
+       assert (x[index]>=0.0);
+       x[index] = sqrt(x[index]);
+-    }
++    });
+ 
+     return x;
+   }
+   public static double l2norm2(double [] x){ return l2norm2(x, false); }
+ 
+   public static double l2norm2(double [][] xs, boolean skipLast){
+-    double res = 0;
+-    for(double [] x:xs)
+-      res += l2norm2(x,skipLast);
+-    return res;
++    return Arrays.stream(xs)
++      .mapToDouble(x -> l2norm2(x, skipLast))
++      .sum();
+   }
+   public static double l2norm2(double [] x, boolean skipLast){
+-    double sum = 0;
+     int last = x.length - (skipLast?1:0);
+-    for(int i = 0; i < last; ++i)
+-      sum += x[i]*x[i];
+-    return sum;
++    return IntStream.range(0, last)
++      .mapToDouble(i -> x[i] * x[i])
++      .sum();
+   }
+   public static double l2norm2(double[] x, double[] y) {  // Computes \sum_{i=1}^n (x_i - y_i)^2
+     assert x.length == y.length;
+-    double sse = 0;
+-    for(int i = 0; i < x.length; i++) {
+-      double diff = x[i] - y[i];
+-      sse += diff * diff;
+-    }
+-    return sse;
++    return IntStream.range(0, x.length)
++      .mapToDouble(i -> x[i] - y[i])
++      .map(diff -> diff * diff)
++      .sum();
+   }
+   public static double l2norm2(double[][] x, double[][] y) {
+     assert x.length == y.length && x[0].length == y[0].length;
+-    double sse = 0;
+-    for(int i = 0; i < x.length; i++)
+-      sse += l2norm2(x[i], y[i]);
+-    return sse;
++    return IntStream.range(0, x.length)
++      .mapToDouble(i -> l2norm2(x[i], y[i]))
++      .sum();
+   }
+ 
+   public static double l1norm(double [] x){ return l1norm(x, false); }
+   public static double l1norm(double [] x, boolean skipLast){
+-    double sum = 0;
+     int last = x.length -(skipLast?1:0);
+-    for(int i = 0; i < last; ++i)
+-      sum += x[i] >= 0?x[i]:-x[i];
+-    return sum;
++    return IntStream.range(0, last)
++      .mapToDouble(i -> x[i] >= 0 ? x[i] : -x[i])
++      .sum();
+   }
+ 
+   /**
+@@ -198,186 +182,197 @@
+ 
+   // Add arrays, element-by-element
+   public static byte[] add(byte[] a, byte[] b) {
+-    for(int i = 0; i < a.length; i++ ) a[i] += b[i];
++    IntStream.range(0, a.length).forEach(i -> a[i] += b[i]);
+     return a;
+   }
++
+   public static int[] add(int[] a, int[] b) {
+-    for(int i = 0; i < a.length; i++ ) a[i] += b[i];
++    IntStream.range(0, a.length).forEach(i -> a[i] += b[i]);
+     return a;
+   }
++
+   public static int[][] add(int[][] a, int[][] b) {
+-    for(int i = 0; i < a.length; i++ ) add(a[i],b[i]);
++    IntStream.range(0, a.length).forEach(i -> add(a[i], b[i]));
+     return a;
+   }
++
+   public static long[] add(long[] a, long[] b) {
+-    if( b==null ) return a;
+-    for(int i = 0; i < a.length; i++ ) a[i] += b[i];
++    if (b == null) return a;
++    IntStream.range(0, a.length).forEach(i -> a[i] += b[i]);
+     return a;
+   }
++
+   public static long[][] add(long[][] a, long[][] b) {
+-    for(int i = 0; i < a.length; i++ ) add(a[i],b[i]);
++    IntStream.range(0, a.length).forEach(i -> add(a[i], b[i]));
+     return a;
+   }
++
+   public static long[][][] add(long[][][] a, long[][][] b) {
+-    for(int i = 0; i < a.length; i++ ) add(a[i],b[i]);
++    IntStream.range(0, a.length).forEach(i -> add(a[i], b[i]));
+     return a;
+   }
++
+   public static float[] add(float[] a, float[] b) {
+-    if( b==null ) return a;
+-    for(int i = 0; i < a.length; i++ ) a[i] += b[i];
++    if (b == null) return a;
++    IntStream.range(0, a.length).forEach(i -> a[i] += b[i]);
+     return a;
+   }
++
+   public static float[] add(float ca, float[] a, float cb, float[] b) {
+-    for(int i = 0; i < a.length; i++ ) a[i] = (ca * a[i]) + (cb * b[i]);
++    IntStream.range(0, a.length).forEach(i -> a[i] = (ca * a[i]) + (cb * b[i]));
+     return a;
+   }
++
+   public static float[][] add(float[][] a, float[][] b) {
+-    for(int i = 0; i < a.length; i++ ) add(a[i],b[i]);
++    IntStream.range(0, a.length).forEach(i -> add(a[i], b[i]));
+     return a;
+   }
++
+   public static boolean[] or(boolean[] a, boolean[] b) {
+-    if (b==null)return a;
+-    for (int i = 0; i < a.length; i++) a[i] |= b[i];
++    if (b == null) return a;
++    IntStream.range(0, a.length).forEach(i -> a[i] |= b[i]);
+     return a;
+   }
+ 
+   public static double[][] deepClone(double [][] ary){
+     double [][] res = ary.clone();
+-    for(int i = 0 ; i < res.length; ++i)
+-      res[i] = ary[i].clone();
++    IntStream.range(0, res.length).forEach(i -> res[i] = ary[i].clone());
+     return res;
+   }
+ 
+-  public static <T extends Iced> T[][] deepClone(T [][] ary){
+-    T [][] res = ary.clone();
+-    for(int i = 0 ; i < res.length; ++i)
+-      res[i] = deepClone(res[i]);
++  public static <T extends Iced> T[][] deepClone(T[][] ary) {
++    T[][] res = ary.clone();
++    IntStream.range(0, res.length).forEach(i -> res[i] = deepClone(res[i]));
+     return res;
+   }
++  
+   public static <T extends Iced> T[] deepClone(T [] ary){
+     T [] res = ary.clone();
+-    for(int j = 0; j < res.length; ++j)
+-      if(res[j] != null)
+-        res[j] = (T)res[j].clone();
++    IntStream.range(0, res.length)
++      .filter(j -> res[j] != null)
++      .forEach(j -> res[j] = (T) res[j].clone());
+     return res;
+   }
+ 
+   public static double[] add(double[] a, double[] b) {
+     if( a==null ) return b;
+-    for(int i = 0; i < a.length; i++ ) a[i] += b[i];
++    IntStream.range(0, a.length).forEach(i ->  a[i] += b[i]);
+     return a;
+   }
+ 
+   public static double[] add(double[] a, double b) {
+-    for(int i = 0; i < a.length; i++ ) a[i] += b;
++    IntStream.range(0, a.length).forEach(i ->  a[i] += b);
+     return a;
+   }
+   public static int[] add(int[] a, int b) {
+-    for(int i = 0; i < a.length; i++ ) a[i] += b;
++    IntStream.range(0, a.length).forEach(i ->  a[i] += b);
+     return a;
+   }
+   public static double[] wadd(double[] a, double[] b, double w) {
+     if( a==null ) return b;
+-    for(int i = 0; i < a.length; i++ )
+-      a[i] += w*b[i];
++    IntStream.range(0, a.length).forEach(i -> a[i] += w * b[i]);
+     return a;
+   }
+ 
+   public static double[] wadd(double[] a, double[] b, double [] c, double w) {
+     if( a==null ) return b;
+-    for(int i = 0; i < a.length; i++ )
+-      c[i] = a[i] + w*b[i];
++    IntStream.range(0, a.length).forEach(i -> c[i] = a[i] + w * b[i]);
+     return c;
+   }
+ 
+   // a <- b + c
+   public static double[] add(double[] a, double[] b, double [] c) {
+-    for(int i = 0; i < a.length; i++ )
+-      a[i] = b[i] + c[i];
++    IntStream.range(0, a.length).forEach(i -> a[i] = b[i] + c[i]);
+     return a;
+   }
+   public static double[][] add(double[][] a, double[][] b) {
+     if (a == null) return b;
+-    for(int i = 0; i < a.length; i++ ) a[i] = add(a[i], b[i]);
++    IntStream.range(0, a.length).forEach(i ->  a[i] = add(a[i], b[i]));
+     return a;
+   }
+   public static double[][][] add(double[][][] a, double[][][] b) {
+-    for(int i = 0; i < a.length; i++ ) a[i] = add(a[i],b[i]);
++    IntStream.range(0, a.length).forEach(i ->  a[i] = add(a[i],b[i]));
+     return a;
+   }
+ 
+   public static double avg(double[] nums) {
+-    double sum = 0;
+-    for(double n: nums) sum+=n;
+-    return sum/nums.length;
++    double sum = Arrays.stream(nums).sum();
++    return sum / nums.length;
+   }
++
+   public static double avg(long[] nums) {
+-    long sum = 0;
+-    for(long n: nums) sum+=n;
+-    return sum/nums.length;
++    long sum = Arrays.stream(nums).sum();
++    return sum / nums.length;
+   }
++
+   public static long[] add(long[] nums, long a) {
+-    for (int i=0;i<nums.length;i++) nums[i] += a;
++    IntStream.range(0, nums.length).forEach(i -> nums[i] += a);
+     return nums;
+   }
++
+   public static float[] div(float[] nums, int n) {
+-    for (int i=0; i<nums.length; i++) nums[i] /= n;
++    IntStream.range(0, nums.length).forEach(i -> nums[i] /= n);
+     return nums;
+   }
++
+   public static float[] div(float[] nums, float n) {
+     assert !Float.isInfinite(n) : "Trying to divide " + Arrays.toString(nums) + " by  " + n; // Almost surely not what you want
+-    for (int i=0; i<nums.length; i++) nums[i] /= n;
++    IntStream.range(0, nums.length).forEach(i -> nums[i] /= n);
+     return nums;
+   }
++
+   public static double[] div(double[] nums, double n) {
+     assert !Double.isInfinite(n) : "Trying to divide " + Arrays.toString(nums) + " by  " + n; // Almost surely not what you want
+-    for (int i=0; i<nums.length; i++) nums[i] /= n;
++    IntStream.range(0, nums.length).forEach(i -> nums[i] /= n);
+     return nums;
+   }
++
+   public static double[][] div(double[][] ds, long[] n) {
+-    for (int i=0; i<ds.length; i++) div(ds[i],n[i]);
++    IntStream.range(0, ds.length).forEach(i -> div(ds[i], n[i]));
+     return ds;
+   }
+ 
+   public static double[][] div(double[][] ds, double[] n) {
+-    for (int i=0; i<ds.length; i++) div(ds[i],n[i]);
++    IntStream.range(0, ds.length).forEach(i -> div(ds[i], n[i]));
+     return ds;
+   }
+ 
+   public static double[] div(double[] ds, long[] n) {
+-    for (int i=0; i<ds.length; i++) ds[i]/=n[i];
++    IntStream.range(0, ds.length).forEach(i -> ds[i] /= n[i]);
+     return ds;
+   }
++
+   public static double[] div(double[] ds, double[] n) {
+-    for (int i=0; i<ds.length; i++) ds[i]/=n[i];
++    IntStream.range(0, ds.length).forEach(i -> ds[i] /= n[i]);
+     return ds;
+   }
+ 
+   public static double[][] mult(double[][] ds, double[] n) {
+-    for (int i=0; i<ds.length; i++) mult(ds[i],n[i]);
++    IntStream.range(0, ds.length).forEach(i -> mult(ds[i], n[i]));
+     return ds;
+   }
+ 
+   public static float[] mult(float[] nums, float n) {
+ //    assert !Float.isInfinite(n) : "Trying to multiply " + Arrays.toString(nums) + " by  " + n; // Almost surely not what you want
+-    for (int i=0; i<nums.length; i++) nums[i] *= n;
++    IntStream.range(0, nums.length).forEach(i -> nums[i] *= n);
+     return nums;
+   }
++
+   public static double[][] mult(double[][] ary, double n) {
+     if(ary == null) return null;
+-    for (double[] row : ary) mult(row, n);
++    Arrays.stream(ary).forEach(row -> mult(row, n));
+     return ary;
+   }
+ 
+   public static double[] mult(double[] nums, double n) {
+ //    assert !Double.isInfinite(n) : "Trying to multiply " + Arrays.toString(nums) + " by  " + n; // Almost surely not what you want
+     if (nums != null)
+-      for (int i=0; i<nums.length; i++) nums[i] *= n;
++      IntStream.range(0, nums.length).forEach(i -> nums[i] *= n);
+     return nums;
+   }
+ 
+   public static double[] mult(double[] nums, double[] nums2) {
+-    for (int i=0; i<nums.length; i++) nums[i] *= nums2[i];
++    IntStream.range(0, nums.length).forEach(i -> nums[i] *= nums2[i]);
+     return nums;
+   }
+ 
+@@ -389,15 +384,14 @@
+    * @return Result of matrix operation (data - p) * n
+    */
+   public static double subAndMul(double[] data, double[] p, double[] n) {
+-    double res = 0;
+-    for (int col=0; col<data.length; col++)
+-      res += (data[col] - p[col]) * n[col];
+-    return res;
++    return IntStream.range(0, data.length)
++      .mapToDouble(col -> (data[col] - p[col]) * n[col])
++      .sum();
+   }
+ 
+   public static double[] invert(double[] ary) {
+     if(ary == null) return null;
+-    for(int i=0;i<ary.length;i++) ary[i] = 1. / ary[i];
++    IntStream.range(0, ary.length).forEach(i -> ary[i] = 1. / ary[i]);
+     return ary;
+   }
+ 
+@@ -409,19 +403,16 @@
+ 
+   public static double[] multArrVecPartial(double[][] ary, double[] nums, int[] numColInd) {
+     if(ary == null) return null;
+-    double[] res = new double[ary.length];
+-    for (int ind = 0; ind < ary.length; ind++) {
+-      res[ind] = innerProductPartial(nums, numColInd, ary[ind]);
+-    }
+-    return res;
++    return Arrays.stream(ary)
++      .mapToDouble(doubles -> innerProductPartial(nums, numColInd, doubles))
++      .toArray();
+   }
+   public static double[] diagArray(double[][] ary) {
+     if(ary == null) return null;
+     int arraylen = ary.length;
+-    double[] res = new double[ary.length];
+-    for (int index=0; index < arraylen; index++)
+-      res[index] = ary[index][index];
+-    return res;
++    return IntStream.range(0, arraylen)
++      .mapToDouble(index -> ary[index][index])
++      .toArray();
+   }
+ 
+   /***
+@@ -658,12 +649,12 @@
+   // Convert array of primitives to an array of Strings.
+   public static String[] toString(long[] dom) {
+     String[] result = new String[dom.length];
+-    for (int i=0; i<dom.length; i++) result[i] = String.valueOf(dom[i]);
++    IntStream.range(0, dom.length).forEach(i ->  result[i] = String.valueOf(dom[i]));
+     return result;
+   }
+   public static String[] toString(int[] dom) {
+     String[] result = new String[dom.length];
+-    for (int i=0; i<dom.length; i++) result[i] = String.valueOf(dom[i]);
++    IntStream.range(0, dom.length).forEach(i ->  result[i] = String.valueOf(dom[i]));
+     return result;
+   }
+   public static String[] toString(Object[] ary) {
+@@ -927,10 +918,10 @@
+ 
+   // Find an element with linear search & return it's index, or -1
+   public static <T> int find(T[] ts, T elem, int off) {
+-    for (int i = off; i < ts.length; i++)
+-      if (elem == ts[i] || elem.equals(ts[i]))
+-        return i;
+-    return -1;
++    return IntStream.range(off, ts.length)
++      .filter(i -> elem == ts[i] || elem.equals(ts[i]))
++      .findFirst()
++      .orElse(-1);
+   }
+ 
+ 
+@@ -959,14 +950,16 @@
+   }
+   
+   public static int find(long[] ls, long elem) {
+-    for(int i=0; i<ls.length; ++i )
+-      if( elem==ls[i] ) return i;
+-    return -1;
++    return IntStream.range(0, ls.length)
++      .filter(i -> elem == ls[i])
++      .findFirst()
++      .orElse(-1);
+   }
+   public static int find(int[] ls, int elem) {
+-    for(int i=0; i<ls.length; ++i )
+-      if( elem==ls[i] ) return i;
+-    return -1;
++    return IntStream.range(0, ls.length)
++      .filter(i -> elem == ls[i])
++      .findFirst()
++      .orElse(-1);
+   }
+   // behaves like Arrays.binarySearch, but is slower -> Just good for tiny arrays (length<20)
+   public static int linearSearch(double[] vals, double v) {
+@@ -1579,17 +1572,16 @@
+   public static void sort(final int[] idxs, final double[] values, int cutoff, int increasing) {
+     if (idxs.length < cutoff) {
+       //hand-rolled insertion sort
+-      for (int i = 0; i < idxs.length; i++) {
++      IntStream.range(0, idxs.length).forEach(i -> {
+         for (int j = i; j > 0 && values[idxs[j - 1]]*increasing > values[idxs[j]]*increasing; j--) {
+           int tmp = idxs[j];
+           idxs[j] = idxs[j - 1];
+           idxs[j - 1] = tmp;
+         }
+-      }
++      });
+     } else {
+-      Integer[] d = new Integer[idxs.length];
+-      for (int i = 0; i < idxs.length; ++i) d[i] = idxs[i];
+-//      Arrays.parallelSort(d, new Comparator<Integer>() {
++      Integer[] d = Arrays.stream(idxs).boxed().toArray(Integer[]::new);
++      //      Arrays.parallelSort(d, new Comparator<Integer>() {
+       Arrays.sort(d, new Comparator<Integer>() {
+         @Override
+         public int compare(Integer x, Integer y) {
+@@ -1597,7 +1589,7 @@
+                   (values[x]*increasing > values[y]*increasing ? 1 : 0);
+         }
+       });
+-      for (int i = 0; i < idxs.length; ++i) idxs[i] = d[i];
++      IntStream.range(0, idxs.length).forEach(i -> idxs[i] = d[i]);
+     }
+   }
+ 
+@@ -1609,9 +1601,9 @@
+   
+   public static double [][] subtract (double [][] a, double [][] b) {
+     double [][] c = MemoryManager.malloc8d(a.length, a[0].length);
+-    for (int rowIndex = 0; rowIndex < c.length; rowIndex++) {
+-      c[rowIndex] = subtract(a[rowIndex], b[rowIndex], c[rowIndex]);
+-    }
++    IntStream.range(0, c.length).forEach(rowIndex ->
++      c[rowIndex] = subtract(a[rowIndex], b[rowIndex], c[rowIndex])
++    );
+     return c;
+   }
+ 
+@@ -1904,7 +1896,7 @@
+   }
+ 
+   public static long[] subtract(long n, long[] nums) {
+-    for (int i=0; i<nums.length; i++) nums[i] = n - nums[i];
++    IntStream.range(0, nums.length).forEach(i ->  nums[i] = n - nums[i]);
+     return nums;
+   }
+ 
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/util/IcedHashMapBase.java ../build/h2o-core/src/main/java/water/util/IcedHashMapBase.java
+--- ./h2o-core/src/main/java/water/util/IcedHashMapBase.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/util/IcedHashMapBase.java	2026-06-16 15:01:00.169429196 +0100
+@@ -176,13 +176,13 @@
+     KeyType keyType = keyType(mode);
+     ValueType valueType = valueType(mode);
+     ArrayType arrayType = arrayType(mode);
+-    for( Entry<K, V> e : map().entrySet() ) {
++    map().entrySet().stream().forEach(e -> {
+       K key = e.getKey();   assert key != null;
+       V val = e.getValue(); assert val != null;
+ 
+       writeKey(ab, keyType, key);
+       writeValue(ab, valueType, arrayType, val);
+-    }
++    });
+   }
+ 
+   protected void writeKey(AutoBuffer ab, KeyType keyType, K key) {
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/util/IcedHashMapGeneric.java ../build/h2o-core/src/main/java/water/util/IcedHashMapGeneric.java
+--- ./h2o-core/src/main/java/water/util/IcedHashMapGeneric.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/util/IcedHashMapGeneric.java	2026-06-16 15:01:00.169605444 +0100
+@@ -82,7 +82,7 @@
+   public final AutoBuffer write_impl( AutoBuffer ab ) {
+     _write_lock = true;
+     try{
+-      for( Entry<K, V> e : map().entrySet() ) {
++      map().entrySet().stream().forEach(e -> {
+         K key = e.getKey();
+         assert key != null;
+         V val = e.getValue();
+@@ -149,7 +149,7 @@
+           ab.put8d((Double)val);
+         else
+           throw H2O.fail();
+-      }
++      });
+       ab.put1(-1);
+     } catch(Throwable t){
+       throw H2O.fail("Iced hash map serialization failed!" + t.toString() + ", msg = " + t.getMessage(), t);
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/util/JStackCollectorTask.java ../build/h2o-core/src/main/java/water/util/JStackCollectorTask.java
+--- ./h2o-core/src/main/java/water/util/JStackCollectorTask.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/util/JStackCollectorTask.java	2026-06-16 15:01:00.169752698 +0100
+@@ -171,12 +171,12 @@
+       rowNames.add("HttpReq");
+       cellVals.add(httpReqs.toDoubleArray());
+     }
+-    for(Entry<Integer,ThreadInfo> e:fjThreadSummary.entrySet()) {
++    fjThreadSummary.entrySet().stream().forEach(e -> {
+       rowNames.add("FJ-" + e.getKey());
+       ThreadInfo fjt = e.getValue();
+       threadSum.add(fjt);
+       cellVals.add(fjt.toDoubleArray());
+-    }
++    });
+     if(otherThreads.hasAny()) {
+       rowNames.add("other");
+       cellVals.add(otherThreads.toDoubleArray());
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/util/Log.java ../build/h2o-core/src/main/java/water/util/Log.java
+--- ./h2o-core/src/main/java/water/util/Log.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/util/Log.java	2026-06-16 15:01:00.169905641 +0100
+@@ -160,19 +160,18 @@
+ 
+   public static void flushBufferedMessages() {
+     List<BufferedMsg> buff = consumeBufferedMessages();
+-    if (buff != null) 
+-      for (BufferedMsg m : buff)
+-        write0(m.lvl, m.msg, m.t);
++    if (buff != null)
++        buff.stream().forEach(m -> write0(m.lvl, m.msg, m.t));
+   }
+ 
+   public static void flushBufferedMessagesToStdout() {
+     List<BufferedMsg> buff = consumeBufferedMessages();
+     if (buff != null)
+-      for (BufferedMsg m : buff) {
++      buff.stream().forEach(m -> {
+         System.out.println(m.msg);
+         if (m.t != null)
+           m.t.printStackTrace();
+-      }
++      });
+   }
+ 
+   public static int getLogLevel(){
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/util/PojoUtils.java ../build/h2o-core/src/main/java/water/util/PojoUtils.java
+--- ./h2o-core/src/main/java/water/util/PojoUtils.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/util/PojoUtils.java	2026-06-16 15:01:00.170062517 +0100
+@@ -652,7 +652,7 @@
+    * @see #fillFromJson(Object, String)
+    */
+   private static <T> T fillFromMap(T o, Map<String, Object> setFields) {
+-    for (String key : setFields.keySet()) {
++    setFields.keySet().stream().forEach(key -> {
+       Field f;
+       try {
+         f = PojoUtils.getFieldEvenInherited(o, key);
+@@ -713,6 +713,7 @@
+         }
+       } // else not a nested object
+     } // for all fields in the map
++);
+     return o;
+   }
+ 
+diff '--color=auto' -ur ./h2o-core/src/main/java/water/util/RString.java ../build/h2o-core/src/main/java/water/util/RString.java
+--- ./h2o-core/src/main/java/water/util/RString.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-core/src/main/java/water/util/RString.java	2026-06-16 15:01:00.170256405 +0100
+@@ -129,8 +129,7 @@
+   public void replace(String what, Object with) {
+     if (what.charAt(0)=='$')
+       throw new RuntimeException("$ is now control char that denotes URL encoding!");
+-    for (Placeholder p : _placeholders.get(what))
+-      p.end.insertAndAdvance(with.toString());
++    _placeholders.get(what).stream().forEach(p -> p.end.insertAndAdvance(with.toString()));
+ 
+     ArrayList<Placeholder> ar = _placeholders.get("$"+what);
+     if( ar == null ) return;
+diff '--color=auto' -ur ./h2o-extensions/krbstandalone/src/main/java/hex/security/KerberosExtension.java ../build/h2o-extensions/krbstandalone/src/main/java/hex/security/KerberosExtension.java
+--- ./h2o-extensions/krbstandalone/src/main/java/hex/security/KerberosExtension.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-extensions/krbstandalone/src/main/java/hex/security/KerberosExtension.java	2026-06-16 15:01:00.170421620 +0100
+@@ -105,11 +105,11 @@
+     List<StandaloneKerberosComponent> components = StandaloneKerberosComponent.loadAll();
+     List<String> componentNames = components.stream().map(StandaloneKerberosComponent::name).collect(Collectors.toList()); 
+     Log.info("Standalone Kerberos components: " + componentNames);
+-    for (StandaloneKerberosComponent component : components) {
++    components.stream().forEach(component -> {
+       boolean active = component.initComponent(conf, args);
+       String statusMsg = active ? "successfully initialized" : "not active"; 
+       Log.info("Component " + component.name() + " " + statusMsg + ".");
+-    }
++    });
+   }
+ 
+   private long parseRefreshIntervalToSecs(String refreshInterval) {
+diff '--color=auto' -ur ./h2o-extensions/mojo-pipeline/src/main/java/hex/mojopipeline/H2OAssemblyToMojoPipelineConverter.java ../build/h2o-extensions/mojo-pipeline/src/main/java/hex/mojopipeline/H2OAssemblyToMojoPipelineConverter.java
+--- ./h2o-extensions/mojo-pipeline/src/main/java/hex/mojopipeline/H2OAssemblyToMojoPipelineConverter.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-extensions/mojo-pipeline/src/main/java/hex/mojopipeline/H2OAssemblyToMojoPipelineConverter.java	2026-06-16 15:01:00.170620263 +0100
+@@ -196,7 +196,7 @@
+     }
+     
+     private static void convertParameters(H2OColOp stage, Custom.CustomOp.Builder builder) {
+-        for (Map.Entry<String,AstParameter> entry: stage.getParams().entrySet()) {
++        stage.getParams().entrySet().stream().forEach(entry -> {
+             String name = entry.getKey();
+             AstParameter value = entry.getValue();
+             Custom.CustomParam.Builder paramBuilder = Custom.CustomParam.newBuilder().setName(name);
+@@ -215,7 +215,7 @@
+                 paramBuilder.setStringParam(parameter.str());
+             }
+             builder.addParams(paramBuilder.build());
+-        }
++        });
+     }
+ 
+     private static Transformation convertBinaryOp(H2OBinaryOp stage, InplaceOperationSimulator inplaceOperationSimulator){
+diff '--color=auto' -ur ./h2o-extensions/steam/src/main/java/hex/steam/SteamMessageExchange.java ../build/h2o-extensions/steam/src/main/java/hex/steam/SteamMessageExchange.java
+--- ./h2o-extensions/steam/src/main/java/hex/steam/SteamMessageExchange.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-extensions/steam/src/main/java/hex/steam/SteamMessageExchange.java	2026-06-16 15:01:00.170829988 +0100
+@@ -30,28 +30,28 @@
+     }
+ 
+     public void onConnected() {
+-        for (SteamMessenger listener : messengers) {
++        messengers.stream().forEach(listener -> {
+             try {
+                 listener.onConnectionStateChange(this);
+             } catch (Exception e) {
+                 LOG.error("Error while onConnected event.", e);
+             }
+-        }
++        });
+     }
+ 
+     public void onConnectionClosed() {
+-        for (SteamMessenger listener : messengers) {
++        messengers.stream().forEach(listener -> {
+             try {
+                 listener.onConnectionStateChange(null);
+             } catch (Exception e) {
+                 LOG.error("Error while onConnectionClosed event.", e);
+             }
+-        }
++        });
+     }
+ 
+     public void distributeMessage(String message) {
+         Map<String, String> parsedMessage = Collections.unmodifiableMap(gson.fromJson(message, MAP_TYPE));
+-        for (SteamMessenger listener : messengers) {
++        messengers.stream().forEach(listener -> {
+             if (parsedMessage.get(TYPE) != null) {
+                 try {
+                     listener.onMessage(parsedMessage);
+@@ -61,7 +61,7 @@
+             } else {
+                 LOG.error("Received message from steam without type: " + message);
+             }
+-        }
++        });
+     }
+ 
+     @Override
+diff '--color=auto' -ur ./h2o-extensions/target-encoder/build.gradle ../build/h2o-extensions/target-encoder/build.gradle
+--- ./h2o-extensions/target-encoder/build.gradle	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-extensions/target-encoder/build.gradle	2026-06-16 15:01:00.170967620 +0100
 @@ -12,7 +12,7 @@
      testImplementation 'com.pholser:junit-quickcheck-generators:0.9'
      testRuntimeOnly project(":${defaultWebserverModule}")
@@ -234,9 +2880,669 @@ diff -ur ./h2o-extensions/target-encoder/build.gradle ../build/h2o-extensions/ta
  }
  
  apply from: "${rootDir}/gradle/dataCheck.gradle"
-diff -ur ./settings.gradle ../build/settings.gradle
---- ./settings.gradle	2024-12-19 08:33:22.000000000 +0000
-+++ ../build/settings.gradle	2024-12-19 08:33:34.233033439 +0000
+diff '--color=auto' -ur ./h2o-extensions/target-encoder/src/main/java/ai/h2o/targetencoding/TargetEncoder.java ../build/h2o-extensions/target-encoder/src/main/java/ai/h2o/targetencoding/TargetEncoder.java
+--- ./h2o-extensions/target-encoder/src/main/java/ai/h2o/targetencoding/TargetEncoder.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-extensions/target-encoder/src/main/java/ai/h2o/targetencoding/TargetEncoder.java	2026-06-16 15:01:00.171117892 +0100
+@@ -140,10 +140,10 @@
+         String[] singleColumnsToEncode = Arrays.stream(columnsToEncodeMapping).map(ColumnsToSingleMapping::toSingle).toArray(String[]::new);
+         IcedHashMap<String, Frame> _targetEncodingMap = prepareEncodingMap(workingFrame, singleColumnsToEncode);
+ 
+-        for (Map.Entry<String, Frame> entry : _targetEncodingMap.entrySet()) {
++        _targetEncodingMap.entrySet().stream().forEach(entry -> {
+           Frame encodings = entry.getValue();
+           Scope.untrack(encodings);
+-        }
++        });
+ 
+         output.init(_targetEncodingMap,  columnsToEncodeMapping);
+         _job.update(1);
+diff '--color=auto' -ur ./h2o-extensions/target-encoder/src/main/java/ai/h2o/targetencoding/TargetEncoderModel.java ../build/h2o-extensions/target-encoder/src/main/java/ai/h2o/targetencoding/TargetEncoderModel.java
+--- ./h2o-extensions/target-encoder/src/main/java/ai/h2o/targetencoding/TargetEncoderModel.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-extensions/target-encoder/src/main/java/ai/h2o/targetencoding/TargetEncoderModel.java	2026-06-16 15:01:00.171299385 +0100
+@@ -125,7 +125,7 @@
+ 
+     private IcedHashMap<String, Boolean> buildCol2HasNAsMap() {
+       final IcedHashMap<String, Boolean> col2HasNAs = new IcedHashMap<>();
+-      for (Map.Entry<String, Frame> entry : _target_encoding_map.entrySet()) {
++      _target_encoding_map.entrySet().stream().forEach(entry -> {
+         String teColumn = entry.getKey();
+         Frame encodingsFrame = entry.getValue();
+         int teColCard = _parms.train().vec(teColumn) == null 
+@@ -133,7 +133,7 @@
+                 : _parms.train().vec(teColumn).cardinality();
+         boolean hasNAs = teColCard > 0 && teColCard < encodingsFrame.vec(teColumn).cardinality(); //XXX: _parms.train().vec(teColumn).naCnt() > 0 ?
+         col2HasNAs.put(teColumn, hasNAs);
+-      }
++      });
+       return col2HasNAs;
+     }
+     
+@@ -528,9 +528,9 @@
+   @Override
+   protected Futures remove_impl(Futures fs, boolean cascade) {
+     if (_output._target_encoding_map != null) {
+-      for (Frame encodings : _output._target_encoding_map.values()) {
++      _output._target_encoding_map.values().stream().forEach(encodings -> {
+         encodings.delete();
+-      }
++      });
+     }
+     return super.remove_impl(fs, cascade);
+   }
+diff '--color=auto' -ur ./h2o-extensions/target-encoder/src/main/java/ai/h2o/targetencoding/TargetEncoderMojoWriter.java ../build/h2o-extensions/target-encoder/src/main/java/ai/h2o/targetencoding/TargetEncoderMojoWriter.java
+--- ./h2o-extensions/target-encoder/src/main/java/ai/h2o/targetencoding/TargetEncoderMojoWriter.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-extensions/target-encoder/src/main/java/ai/h2o/targetencoding/TargetEncoderMojoWriter.java	2026-06-16 15:01:00.171518206 +0100
+@@ -75,7 +75,7 @@
+     groupEncodingsByFoldColumnIfNeeded(targetEncoderOutput, targetEncodingMap);
+ 
+     startWritingTextFile(ENCODING_MAP_PATH);
+-    for (Entry<String, Frame> encodingsEntry : targetEncodingMap.entrySet()) {
++    targetEncodingMap.entrySet().stream().forEach(encodingsEntry -> {
+       String column = encodingsEntry.getKey();
+       Frame encodings = encodingsEntry.getValue();
+       Vec.Reader catRead = encodings.vec(0).new Reader();
+@@ -91,7 +91,7 @@
+                 : new String[] {Double.toString(numRead.at(i)), Double.toString(denRead.at(i)), Long.toString(tcRead.at8(i))};
+         writelnkv(category, String.join(" ", components));
+       }
+-    }
++    });
+     
+     finishWritingTextFile();
+   }
+@@ -103,13 +103,13 @@
+     String foldColumn = targetEncoderOutput._parms._fold_column;
+     if (foldColumn != null) {
+       try {
+-        for (Entry<String, Frame> encodingMapEntry : targetEncodingMap.entrySet()) {
++        targetEncodingMap.entrySet().stream().forEach(encodingMapEntry -> {
+           String teColumn = encodingMapEntry.getKey();
+           Frame encodingsWithFolds = encodingMapEntry.getValue();
+           Frame encodingsWithoutFolds = groupEncodingsByCategory(encodingsWithFolds, encodingsWithFolds.find(teColumn) , true);
+           targetEncodingMap.put(teColumn, encodingsWithoutFolds);
+           encodingsWithFolds.delete();
+-        }
++        });
+       } catch (Exception ex) {
+         throw new IllegalStateException("Failed to group encoding maps by fold column", ex);
+       }
+@@ -119,9 +119,9 @@
+   //XXX: additional file unnecessary, we could just write the list/set of columns with NAs
+   private void writeColumnsHasNAs(IcedHashMap<String, Boolean> col2HasNAs, String fileName) throws IOException {
+     startWritingTextFile(fileName);
+-    for(Entry<String, Boolean> entry: col2HasNAs.entrySet()) {
++    col2HasNAs.entrySet().stream().forEach(entry -> {
+       writelnkv(entry.getKey(), entry.getValue() ? "1" : "0");
+-    }
++    });
+     finishWritingTextFile();
+   }
+   
+diff '--color=auto' -ur ./h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/BoosterParms.java ../build/h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/BoosterParms.java
+--- ./h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/BoosterParms.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/BoosterParms.java	2026-06-16 15:01:00.171714886 +0100
+@@ -49,7 +49,7 @@
+    */
+   private static Map<String, Object> localizeDecimalParams(final Map<String, Object> params) {
+     Map<String, Object> localized = new HashMap<>(params.size());
+-    for (String key : params.keySet()) {
++    params.keySet().stream().forEach(key -> {
+       final Object value = params.get(key);
+       final Object newValue;
+       if (value instanceof Float || value instanceof Double) {
+@@ -57,7 +57,7 @@
+       } else
+         newValue = value;
+       localized.put(key, newValue);
+-    }
++    });
+     return localized;
+   }
+ 
+diff '--color=auto' -ur ./h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/XGBoost.java ../build/h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/XGBoost.java
+--- ./h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/XGBoost.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/XGBoost.java	2026-06-16 15:01:00.171894879 +0100
+@@ -157,8 +157,7 @@
+ 
+       Map<String, Object> incompats = _parms.gpuIncompatibleParams();
+       if (! incompats.isEmpty())
+-        for (Map.Entry<String, Object> incompat : incompats.entrySet())
+-          error("_backend", "GPU backend is not available for parameter setting '" + incompat.getKey() + " = " + incompat.getValue() + "'. Use CPU backend instead.");
++        incompats.entrySet().stream().forEach(incompat -> error("_backend", "GPU backend is not available for parameter setting '" + incompat.getKey() + " = " + incompat.getValue() + "'. Use CPU backend instead."));
+     }
+     DistributionFamily[] allowed_distributions = new DistributionFamily[] {
+             DistributionFamily.AUTO,
+@@ -674,9 +673,9 @@
+       String interaction = "['" + parentOriginalName + "']";
+       if (interactionUnion != null) {
+         StringBuilder sb = new StringBuilder("[");
+-        for(Integer i: interactionUnion){
++        interactionUnion.stream().forEach(i -> {
+           sb.append(originalNames[i]).append(",");
+-        }
++        });
+         interaction = sb.replace(sb.length()-1, sb.length(), "]").toString();
+       }
+       return interaction;
+diff '--color=auto' -ur ./h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/XGBoostModel.java ../build/h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/XGBoostModel.java
+--- ./h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/XGBoostModel.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/XGBoostModel.java	2026-06-16 15:01:00.172140102 +0100
+@@ -499,9 +499,9 @@
+     }
+     
+     LOG.info("XGBoost Parameters:");
+-    for (Map.Entry<String,Object> s : params.entrySet()) {
++    params.entrySet().stream().forEach(s -> {
+       LOG.info(" " + s.getKey() + " = " + s.getValue());
+-    }
++    });
+     LOG.info("");
+     return Collections.unmodifiableMap(params);
+   }
+diff '--color=auto' -ur ./h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/RabitTrackerH2O.java ../build/h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/RabitTrackerH2O.java
+--- ./h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/RabitTrackerH2O.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/RabitTrackerH2O.java	2026-06-16 15:01:00.172408488 +0100
+@@ -111,13 +111,13 @@
+         }
+ 
+         private void terminateSocketChannels(){
+-            for (SocketChannel channel : socketChannels) {
++            socketChannels.stream().forEach(channel -> {
+                 try {
+                     channel.close();
+                 } catch (IOException e) {
+                     LOG.warn("Unable to close RabitTracerH2O SocketChannel on port " + channel.socket().getPort());
+                 }
+-            }
++            });
+         }
+ 
+         private static final String PRINT_CMD = "print";
+diff '--color=auto' -ur ./h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/RabitWorker.java ../build/h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/RabitWorker.java
+--- ./h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/RabitWorker.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/RabitWorker.java	2026-06-16 15:01:00.172561273 +0100
+@@ -85,9 +85,9 @@
+         writerAB.put4(linkMap.treeMap.size());
+         writerAB.put4(nnset.size());
+ 
+-        for (Integer r : nnset) {
++        nnset.stream().forEach(r -> {
+             writerAB.put4(r);
+-        }
++        });
+ 
+         if (rprev != -1 && rprev != rank) {
+             nnset.add(rprev);
+@@ -115,11 +115,11 @@
+             Set<Integer> badSet = new LinkedHashSet<>(nnset);
+             badSet.removeAll(goodSet);
+             Set<Integer> conset = new LinkedHashSet<>();
+-            for (Integer r : badSet) {
++            badSet.stream().forEach(r -> {
+                 if(waitConn.containsKey(r)) {
+                     conset.add(r);
+                 }
+-            }
++            });
+ 
+             writerAB.put4(conset.size());
+             AutoBuffer.writeToChannel(writerAB.buffer(), socket);
+@@ -140,15 +140,15 @@
+             this.port = ab.get4();
+             Set<Integer> rmset = new LinkedHashSet<>();
+             // All connections were successfully setup
+-            for (Integer r : conset) {
++            conset.stream().forEach(r -> {
+                 waitConn.get(r).waitAccept -= 1;
+                 if(waitConn.get(r).waitAccept == 0) {
+                     rmset.add(r);
+                 }
+-            }
+-            for (Integer r : rmset) {
++            });
++            rmset.stream().forEach(r -> {
+                 waitConn.remove(r);
+-            }
++            });
+             this.waitAccept = badSet.size() - conset.size();
+             return;
+         }
+diff '--color=auto' -ur ./h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/util/AssignedRank.java ../build/h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/util/AssignedRank.java
+--- ./h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/util/AssignedRank.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/util/AssignedRank.java	2026-06-16 15:01:00.172698570 +0100
+@@ -26,9 +26,9 @@
+         ByteBuffer buffer = ByteBuffer.allocate(4 * (neighbours.size() + 6)).order(ByteOrder.nativeOrder());
+         buffer.putInt(rank).putInt(parent).putInt(worldSize).putInt(neighbours.size());
+         // neighbors in tree structure
+-        for(Integer n : neighbours) {
++        neighbours.stream().forEach(n -> {
+             buffer.putInt(n);
+-        }
++        });
+         buffer.putInt((ring._1() != -1 && ring._1() != rank) ? ring._1() : -1);
+         buffer.putInt((ring._2() != -1 && ring._2() != rank) ? ring._2() : -1);
+         buffer.flip();
+diff '--color=auto' -ur ./h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/util/LinkMap.java ../build/h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/util/LinkMap.java
+--- ./h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/util/LinkMap.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-extensions/xgboost/src/main/java/hex/tree/xgboost/rabit/util/LinkMap.java	2026-06-16 15:01:00.172845634 +0100
+@@ -33,31 +33,31 @@
+             rMap_.put(kNext, (i + 1));
+         }
+ 
+-        for (Map.Entry<Integer, Pair<Integer, Integer>> kv : ringMap_.entrySet()) {
++        ringMap_.entrySet().stream().forEach(kv -> {
+             this.ringMap.put(
+                     rMap_.get(kv.getKey()),
+                     new Pair<>(rMap_.get(kv.getValue()._1()), rMap_.get(kv.getValue()._2()))
+             );
+-        }
++        });
+ 
+-        for (Map.Entry<Integer, List<Integer>> kv : treeMap_.entrySet()) {
++        treeMap_.entrySet().stream().forEach(kv -> {
+             List<Integer> mapped = new ArrayList<>(kv.getValue().size());
+-            for(Integer v : kv.getValue()) {
++            kv.getValue().stream().forEach(v -> {
+                 mapped.add(rMap_.get(v));
+-            }
++            });
+             treeMap.put(
+                     rMap_.get(kv.getKey()),
+                     mapped
+             );
+-        }
++        });
+ 
+-        for (Map.Entry<Integer, Integer> kv : parentMap_.entrySet()) {
++        parentMap_.entrySet().stream().forEach(kv -> {
+             if(kv.getKey() == 0) {
+                 parentMap.put(rMap_.get(kv.getKey()), -1);
+             } else {
+                 parentMap.put(rMap_.get(kv.getKey()), rMap_.get(kv.getValue()));
+             }
+-        }
++        });
+     }
+ 
+     /**
+diff '--color=auto' -ur ./h2o-hive/src/main/java/water/hive/HiveTableImporterImpl.java ../build/h2o-hive/src/main/java/water/hive/HiveTableImporterImpl.java
+--- ./h2o-hive/src/main/java/water/hive/HiveTableImporterImpl.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-hive/src/main/java/water/hive/HiveTableImporterImpl.java	2026-06-16 15:01:00.173084175 +0100
+@@ -67,15 +67,9 @@
+     String tableLib = table.getSerializationLib();
+     String tableInput = table.getInputFormat();
+     Map<String, String> tableParams = table.getSerDeParams();
+-    for (HiveMetaData.Partition part : partitions) {
+-      if (!tableLib.equals(part.getSerializationLib()) ||
++    return partitions.stream().noneMatch(part -> !tableLib.equals(part.getSerializationLib()) ||
+           !tableParams.equals(part.getSerDeParams()) ||
+-          !tableInput.equals(part.getInputFormat())
+-      ) {
+-        return false;
+-      }
+-    }
+-    return true;
++          !tableInput.equals(part.getInputFormat()));
+   }
+ 
+   private List<HiveMetaData.Partition> filterPartitions(HiveMetaData.Table table, String[][] partitionFilter) {
+@@ -155,14 +149,14 @@
+     List<Key> fileKeysList = new ArrayList<>();
+     int keyCount = table.getPartitionKeys().size();
+     List<String[]> partitionValuesMap = new ArrayList<>();
+-    for (HiveMetaData.Partition p : partitions) {
++    partitions.stream().forEach(p -> {
+       Key[] partFileKeys = importFiles(p.getLocation());
+       fileKeysList.addAll(Arrays.asList(partFileKeys));
+       String[] keyValues = p.getValues().toArray(new String[0]);
+       for (Key f : partFileKeys) {
+         partitionValuesMap.add(keyValues);
+       }
+-    }
++    });
+     Key[] filesKeys = fileKeysList.toArray(new Key[0]);
+     checkTableNotEmpty(table, filesKeys);
+     ParseSetup setup = guessTableSetup(filesKeys, table);
+diff '--color=auto' -ur ./h2o-hive/src/main/java/water/hive/JdbcHiveMetadata.java ../build/h2o-hive/src/main/java/water/hive/JdbcHiveMetadata.java
+--- ./h2o-hive/src/main/java/water/hive/JdbcHiveMetadata.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-hive/src/main/java/water/hive/JdbcHiveMetadata.java	2026-06-16 15:01:00.173249890 +0100
+@@ -272,10 +272,10 @@
+     private List<String> parsePartitionValues(Map<String, Object> partition, String hiveVersion) {
+         List<String> values = new ArrayList<>();
+         List<Map<String, Object>> valuesData = (List<Map<String, Object>>) partition.get("values");
+-        for (Map<String, Object> valueRecord : valuesData) {
++        valuesData.stream().forEach(valueRecord -> {
+             String value = unescapePartitionValue((String) valueRecord.get("columnValue"), hiveVersion);
+             values.add(value);
+-        }
++        });
+         return values;
+     }
+ 
+diff '--color=auto' -ur ./h2o-hive/src/main/java/water/hive/PartitionFrameJoiner.java ../build/h2o-hive/src/main/java/water/hive/PartitionFrameJoiner.java
+--- ./h2o-hive/src/main/java/water/hive/PartitionFrameJoiner.java	2025-03-15 14:43:05.000000000 +0000
++++ ../build/h2o-hive/src/main/java/water/hive/PartitionFrameJoiner.java	2026-06-16 15:01:00.173417390 +0100
+@@ -34,7 +34,7 @@
+   public void compute2() {
+     int keyCount = _table.getPartitionKeys().size();
+     StringBuilder partKeys = new StringBuilder();
+-    for (Job<Frame> job : _parseJobs) {
++    _parseJobs.stream().forEach(job -> {
+       Frame partitionFrame = job.get();
+       String partKey = partitionFrame._key.toString();
+       String[] keySplit = partKey.split("_");
+@@ -48,16 +48,16 @@
+         partitionFrame.add(_table.getPartitionKeys().get(keyIndex).getName(), vec);
+       }
+       _job.update(1);
+-    }
++    });
+ 
+     String tree = "(rbind" + partKeys + ")";
+     Val val = Rapids.exec(tree);
+     Frame merged = val.getFrame();
+     merged._key = Key.make(_targetFrame);
+     DKV.put(merged);
+-    for (Job<Frame> parseJob : _parseJobs) {
++    _parseJobs.stream().forEach(parseJob -> {
+       DKV.remove(parseJob._result);
+-    }
++    });
+     _job.update(1);
+     tryComplete();
+   }
+diff '--color=auto' -ur ./h2o-jetty-8/src/main/java/org/eclipse/jetty/server/Response.java ../build/h2o-jetty-8/src/main/java/org/eclipse/jetty/server/Response.java
+--- ./h2o-jetty-8/src/main/java/org/eclipse/jetty/server/Response.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-jetty-8/src/main/java/org/eclipse/jetty/server/Response.java	2026-06-16 15:01:00.173649908 +0100
+@@ -1118,8 +1118,7 @@
+ 
+             reset();
+ 
+-            for (String v:cookieValues)
+-                response_fields.add(HttpHeaders.SET_COOKIE, v);
++            cookieValues.stream().forEach(v -> response_fields.add(HttpHeaders.SET_COOKIE, v));
+         }
+     }
+ 
+diff '--color=auto' -ur ./h2o-logging/impl-log4j2/src/main/java/water/util/LoggerBackend.java ../build/h2o-logging/impl-log4j2/src/main/java/water/util/LoggerBackend.java
+--- ./h2o-logging/impl-log4j2/src/main/java/water/util/LoggerBackend.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-logging/impl-log4j2/src/main/java/water/util/LoggerBackend.java	2026-06-16 15:01:00.173878674 +0100
+@@ -148,18 +148,18 @@
+ 
+     LoggerComponentBuilder newLoggerComponent(ConfigurationBuilder builder, String name, List<AppenderRefComponentBuilder> appenderReferences) {
+         LoggerComponentBuilder loggerComponentBuilder = builder.newLogger(name);
+-        for (AppenderRefComponentBuilder reference : appenderReferences) {
++        appenderReferences.stream().forEach(reference -> {
+             loggerComponentBuilder.add(reference);
+-        }
++        });
+         loggerComponentBuilder.addAttribute("additivity", false);
+         return loggerComponentBuilder;
+     }
+ 
+     LoggerComponentBuilder newLoggerComponent(ConfigurationBuilder builder, String name, List<AppenderRefComponentBuilder> appenderReferences, String level) {
+         LoggerComponentBuilder loggerComponentBuilder = builder.newLogger(name);
+-        for (AppenderRefComponentBuilder reference : appenderReferences) {
++        appenderReferences.stream().forEach(reference -> {
+             loggerComponentBuilder.add(reference);
+-        }
++        });
+         loggerComponentBuilder.addAttribute("additivity", false);
+         loggerComponentBuilder.addAttribute("level", level);
+         return loggerComponentBuilder;
+diff '--color=auto' -ur ./h2o-mapreduce-generic/src/main/java/water/hadoop/H2OYarnDiagnostic.java ../build/h2o-mapreduce-generic/src/main/java/water/hadoop/H2OYarnDiagnostic.java
+--- ./h2o-mapreduce-generic/src/main/java/water/hadoop/H2OYarnDiagnostic.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-mapreduce-generic/src/main/java/water/hadoop/H2OYarnDiagnostic.java	2026-06-16 15:01:00.174051006 +0100
+@@ -140,7 +140,7 @@
+         ArrayList<String> vcores = new ArrayList<String>();
+ 
+         System.out.println("----- Nodes -----");
+-        for (NodeReport node : clusterNodeReports) {
++        clusterNodeReports.stream().forEach(node -> {
+             Resource capability = node.getCapability();
+             Resource used = node.getUsed();
+             nodes.add("Node: http://" + node.getHttpAddress());
+@@ -149,7 +149,7 @@
+             containers.add("" + node.getNumContainers() + " containers used");
+             gbs.add(prettyPrintMb(used.getMemory(), false) + " / " + prettyPrintMb(capability.getMemory(), false) + " GB used");
+             vcores.add(used.getVirtualCores() + " / " + capability.getVirtualCores() + " vcores used");
+-        }
++        });
+ 
+         ArrayList<ArrayList<String>> cols = new ArrayList<ArrayList<String>>();
+         cols.add(nodes);
+@@ -204,7 +204,7 @@
+         if (applications.size() > 0) {
+             System.out.println("    ----- Applications in this queue -----");
+         }
+-        for (ApplicationReport ar : applications){
++        applications.stream().forEach(ar -> {
+             System.out.println("    Application ID:                  " + ar.getApplicationId()
+                     + " (" + ar.getName() + ")");
+             System.out.println("        Started:                     " + ar.getUser()
+@@ -230,7 +230,7 @@
+                             + " / " + ur.getUsedResources().getVirtualCores()
+                             + " / " + ur.getReservedResources().getVirtualCores()
+             );
+-        }
++        });
+         List<QueueInfo> childQueues = queueInfo.getChildQueues();
+         for (QueueInfo q : childQueues) {
+             printQueueInfo2(q);
+diff '--color=auto' -ur ./h2o-mapreduce-generic/src/main/java/water/hadoop/clouding/fs/FileSystemBasedClouding.java ../build/h2o-mapreduce-generic/src/main/java/water/hadoop/clouding/fs/FileSystemBasedClouding.java
+--- ./h2o-mapreduce-generic/src/main/java/water/hadoop/clouding/fs/FileSystemBasedClouding.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-mapreduce-generic/src/main/java/water/hadoop/clouding/fs/FileSystemBasedClouding.java	2026-06-16 15:01:00.174282099 +0100
+@@ -80,10 +80,10 @@
+       Thread.sleep(1000);
+     }
+     StringBuilder sb = new StringBuilder();
+-    for (URI node : _nodes.values()) {
++    _nodes.values().stream().forEach(node -> {
+       sb.append(node.getHost()).append(':').append(node.getPort());
+       sb.append('\n');
+-    }
++    });
+     return sb.toString();
+   }
+   
+diff '--color=auto' -ur ./h2o-mapreduce-generic/src/main/java/water/hadoop/h2odriver.java ../build/h2o-mapreduce-generic/src/main/java/water/hadoop/h2odriver.java
+--- ./h2o-mapreduce-generic/src/main/java/water/hadoop/h2odriver.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-mapreduce-generic/src/main/java/water/hadoop/h2odriver.java	2026-06-16 15:01:00.174527511 +0100
+@@ -1720,9 +1720,9 @@
+               .append((enableExcludeMethods ? " -XX:CompileCommand=exclude,water/fvec/NewChunk.append2slowd" : ""))
+               .append((enableLog4jDefaultInitOverride ? " -Dlog4j.defaultInitOverride=true" : ""))
+               .append((enableDebug ? " -agentlib:jdwp=transport=dt_socket,server=y,suspend=" + (enableSuspend ? "y" : "n") + ",address=" + debugPort : ""));
+-      for (String s : extraJvmArguments) {
++      extraJvmArguments.stream().forEach(s -> {
+         sb.append(" ").append(s);
+-      }
++      });
+ 
+       String mapChildJavaOpts = sb.toString();
+ 
+@@ -1837,9 +1837,9 @@
+     }
+     addMapperArg(conf, "-user_name", userName);
+ 
+-    for (String s : extraArguments) {
++    extraArguments.stream().forEach(s -> {
+       addMapperArg(conf, s);
+-    }
++    });
+ 
+     if (client) {
+       addMapperArg(conf, "-md5skip");
+diff '--color=auto' -ur ./h2o-mapreduce-generic/src/main/java/water/hadoop/mapred/H2OYARNRunner.java ../build/h2o-mapreduce-generic/src/main/java/water/hadoop/mapred/H2OYARNRunner.java
+--- ./h2o-mapreduce-generic/src/main/java/water/hadoop/mapred/H2OYARNRunner.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-mapreduce-generic/src/main/java/water/hadoop/mapred/H2OYARNRunner.java	2026-06-16 15:01:00.174804901 +0100
+@@ -78,12 +78,12 @@
+ 
+   private List<String> replaceMRAppMaster(List<String> commands) {
+     Vector<String> args = new Vector<String>(8);
+-    for (String cmd : commands) {
++    commands.stream().forEach(cmd -> {
+       if (cmd.contains(MRJobConfig.APPLICATION_MASTER_CLASS)) {
+         cmd = cmd.replace(MRJobConfig.APPLICATION_MASTER_CLASS, NEW_APP_MASTER_CLASS.getName());
+       }
+       args.add(cmd);
+-    }
++    });
+     return args;
+   }
+ 
+diff '--color=auto' -ur ./h2o-parsers/h2o-parquet-parser/src/main/java/water/parser/parquet/ParquetParser.java ../build/h2o-parsers/h2o-parquet-parser/src/main/java/water/parser/parquet/ParquetParser.java
+--- ./h2o-parsers/h2o-parquet-parser/src/main/java/water/parser/parquet/ParquetParser.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-parsers/h2o-parquet-parser/src/main/java/water/parser/parquet/ParquetParser.java	2026-06-16 15:01:00.174960178 +0100
+@@ -213,7 +213,7 @@
+ 
+   private static void checkCompatibility(ParquetMetadata metadata) {
+     // make sure we can map Parquet blocks to Chunks
+-    for (BlockMetaData block : metadata.getBlocks()) {
++    metadata.getBlocks().stream().forEach(block -> {
+       if (block.getRowCount() > Integer.MAX_VALUE) {
+         IcedHashMapGeneric.IcedHashMapStringObject dbg = new IcedHashMapGeneric.IcedHashMapStringObject();
+         dbg.put("startingPos", block.getStartingPos());
+@@ -222,7 +222,7 @@
+                 "Current implementation doesn't support Parquet files with blocks larger than " +
+                 Integer.MAX_VALUE + " rows.", dbg); // because we map each block to a single H2O Chunk
+       }
+-    }
++    });
+     // check that file doesn't have nested structures
+     MessageType schema = metadata.getFileMetaData().getSchema();
+     for (String[] path : schema.getPaths())
+diff '--color=auto' -ur ./h2o-persist-hdfs/src/main/java/water/persist/PersistHdfs.java ../build/h2o-persist-hdfs/src/main/java/water/persist/PersistHdfs.java
+--- ./h2o-persist-hdfs/src/main/java/water/persist/PersistHdfs.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-persist-hdfs/src/main/java/water/persist/PersistHdfs.java	2026-06-16 15:01:00.175182402 +0100
+@@ -84,10 +84,10 @@
+   }
+ 
+   static void configureFromProperties(Configuration conf, Properties props) {
+-    for (Object propertyKey : Collections.list(props.keys())) {
++    Collections.list(props.keys()).stream().forEach(propertyKey -> {
+       String propertyValue = props.getProperty((String) propertyKey);
+       conf.set((String) propertyKey, propertyValue);
+-    }
++    });
+   }
+ 
+   static void injectS3ASecurityCredentialProviders(Configuration conf) {
+diff '--color=auto' -ur ./h2o-test-support/src/main/java/water/TestUtil.java ../build/h2o-test-support/src/main/java/water/TestUtil.java
+--- ./h2o-test-support/src/main/java/water/TestUtil.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-test-support/src/main/java/water/TestUtil.java	2026-06-16 15:01:00.175477367 +0100
+@@ -1467,11 +1467,7 @@
+ 
+   public static boolean equalTwoHashMaps(HashMap<String, Double> coeff1, HashMap<String, Double> coeff2, double tol) {
+     assert coeff1.size() == coeff2.size() : "HashMap sizes are differenbt";
+-    for (String key : coeff1.keySet()) {
+-      if (Math.abs(coeff1.get(key) - coeff2.get(key)) > tol)
+-        return false;
+-    }
+-    return true;
++    return coeff1.keySet().stream().noneMatch(key -> Math.abs(coeff1.get(key) - coeff2.get(key)) > tol);
+   }
+ 
+   public static boolean equalTwoDimTables(TwoDimTable tab1, TwoDimTable tab2, double tol) {
+diff '--color=auto' -ur ./h2o-test-support/src/main/java/water/fvec/TestFrameBuilder.java ../build/h2o-test-support/src/main/java/water/fvec/TestFrameBuilder.java
+--- ./h2o-test-support/src/main/java/water/fvec/TestFrameBuilder.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-test-support/src/main/java/water/fvec/TestFrameBuilder.java	2026-06-16 15:01:00.175764361 +0100
+@@ -285,8 +285,7 @@
+   // Utility method to get unique values from categorical domain
+   private String[] getUniqueValues(Map<String, Integer> mapping){
+     String[] values = new String[mapping.size()];
+-    for (String key : mapping.keySet())
+-      values[mapping.get(key)] = key;
++    mapping.keySet().stream().forEach(key -> values[mapping.get(key)] = key);
+     return values;
+   }
+ 
+diff '--color=auto' -ur ./h2o-test-support/src/main/java/water/junit/H2OTestRunner.java ../build/h2o-test-support/src/main/java/water/junit/H2OTestRunner.java
+--- ./h2o-test-support/src/main/java/water/junit/H2OTestRunner.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-test-support/src/main/java/water/junit/H2OTestRunner.java	2026-06-16 15:01:00.175921259 +0100
+@@ -41,10 +41,10 @@
+     // Add XML generator listener
+     jcore.addListener(new XMLTestReporter());
+     Result result = jcore.run(classes.toArray(new Class[0]));
+-    for (Failure each : missingClasses) {
++    missingClasses.stream().forEach(each -> {
+       System.err.println("FAIL Missing class in H2OTestRunner: " + each);
+       result.getFailures().add(each);
+-    }
++    });
+     return result;
+   }
+ 
+diff '--color=auto' -ur ./h2o-test-support/src/main/java/water/junit/XMLTestReporter.java ../build/h2o-test-support/src/main/java/water/junit/XMLTestReporter.java
+--- ./h2o-test-support/src/main/java/water/junit/XMLTestReporter.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-test-support/src/main/java/water/junit/XMLTestReporter.java	2026-06-16 15:01:00.176056847 +0100
+@@ -159,12 +159,12 @@
+     Element propertiesElement = document.createElement("properties");
+     testSuiteElement.appendChild(propertiesElement);
+ 
+-    for (String name : System.getProperties().stringPropertyNames()) {
++    System.getProperties().stringPropertyNames().stream().forEach(name -> {
+       Element propertyElement = document.createElement("property");
+       propertyElement.setAttribute("name", StringEscapeUtils.escapeXml(name));
+       propertyElement.setAttribute("value", StringEscapeUtils.escapeXml(System.getProperty(name)));
+       propertiesElement.appendChild(propertyElement);
+-    }
++    });
+ 
+     // reset counters
+     testCount = 0;
+diff '--color=auto' -ur ./h2o-test-support/src/main/java/water/runner/H2ORunnerAfters.java ../build/h2o-test-support/src/main/java/water/runner/H2ORunnerAfters.java
+--- ./h2o-test-support/src/main/java/water/runner/H2ORunnerAfters.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-test-support/src/main/java/water/runner/H2ORunnerAfters.java	2026-06-16 15:01:00.176268848 +0100
+@@ -40,13 +40,13 @@
+             } catch (Throwable e) {
+                 errors.add(e);
+             }
+-            for (FrameworkMethod each : afters) {
++            afters.stream().forEach(each -> {
+                 try {
+                     each.invokeExplosively(target);
+                 } catch (Throwable e) {
+                     errors.add(e);
+                 }
+-            }
++            });
+         }
+         MultipleFailureException.assertEmpty(errors);
+     }
+diff '--color=auto' -ur ./h2o-test-support/src/main/java/water/test/util/NaiveTreeSHAP.java ../build/h2o-test-support/src/main/java/water/test/util/NaiveTreeSHAP.java
+--- ./h2o-test-support/src/main/java/water/test/util/NaiveTreeSHAP.java	2025-03-15 14:43:06.000000000 +0000
++++ ../build/h2o-test-support/src/main/java/water/test/util/NaiveTreeSHAP.java	2026-06-16 15:01:00.176409998 +0100
+@@ -26,12 +26,12 @@
+     contribsNaive[contribsNaive.length - 1] += treeMeanValue() /* tree bias */;
+     // pre-calculate expValue for each subset
+     Map<Set<Integer>, Double> expVals = new HashMap<>();
+-    for (Set<Integer> subset : allSubsets(usedFeatures)) {
++    allSubsets(usedFeatures).stream().forEach(subset -> {
+       expVals.put(subset, expValue(row, subset));
+-    }
++    });
+     // calculate contributions using pre-calculated expValues
+-    for (Integer feature : usedFeatures) {
+-      for (Set<Integer> subset : expVals.keySet()) {
++    usedFeatures.stream().forEach(feature -> {
++      expVals.keySet().stream().forEach(subset -> {
+         if (subset.contains(feature)) {
+           Set<Integer> noFeature = new HashSet<>(subset);
+           noFeature.remove(feature);
+@@ -39,8 +39,8 @@
+           double contrib = mult * (expVals.get(subset) - expVals.get(noFeature));
+           contribsNaive[feature] += contrib;
+         }
+-      }
+-    }
++      });
++    });
+     // expValue of a tree with all features marked as used should sum-up to the total prediction
+     return expValue(row, usedFeatures);
+   }
+diff '--color=auto' -ur ./settings.gradle ../build/settings.gradle
+--- ./settings.gradle	2025-03-15 14:43:06.000000000 +0000
++++ ../build/settings.gradle	2026-06-16 15:01:00.176540654 +0100
 @@ -7,9 +7,9 @@
  include 'h2o-algos'
  include 'h2o-web'
