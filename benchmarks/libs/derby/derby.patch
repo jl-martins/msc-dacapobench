@@ -1,6 +1,1198 @@
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/build/org/apache/derbyBuild/JarDriftTest.java ../build/db-derby-10.15.2.0-src/java/build/org/apache/derbyBuild/JarDriftTest.java
+--- ./db-derby-10.15.2.0-src/java/build/org/apache/derbyBuild/JarDriftTest.java	2019-01-06 20:49:14.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/build/org/apache/derbyBuild/JarDriftTest.java	2026-04-19 23:47:39.890772461 +0100
+@@ -166,8 +166,7 @@
+                     "lastgoodjarcontents" + fs +
+                     sanityState + "." + jarName + ".lastcontents";
+             PrintWriter pwf = new PrintWriter(outputFile);
+-            for (String className : classNames)
+-                pwf.println(className);
++            classNames.stream().forEach(className -> pwf.println(className));
+             pwf.close();
+         }
+     }
+@@ -204,11 +203,10 @@
+         try {
+             FileReader fr = new FileReader(file);
+             BufferedReader br = new BufferedReader(fr);
+-            String line;
+-            while ((line = br.readLine()) != null) {
++            br.lines().forEach(line -> {
+                 strbuf.append(line);
+                 strbuf.append("\n");
+-            }
++            });
+             fr.close();
+             /* if (verbose) {
+                 System.out.println("Contents of file:");
+@@ -231,12 +229,11 @@
+         // split up the string at each \n
+         BufferedReader br = 
+                 new BufferedReader(new StringReader(pastJarContentsString));
+-        String className = null;
+-        while ((className = br.readLine()) != null){
++        br.lines().forEach(className -> {
+             if (verbose)
+                 System.out.println("found/added: " + className);
+             pastJarContents.add(className);
+-        }
++        });
+     }
+     
+     protected void jarCheck(String jarName) throws Exception {
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.client/org/apache/derby/client/ClientPooledConnection.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.client/org/apache/derby/client/ClientPooledConnection.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.client/org/apache/derby/client/ClientPooledConnection.java	2019-01-06 20:50:14.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.client/org/apache/derby/client/ClientPooledConnection.java	2026-04-20 15:45:44.602439247 +0100
+@@ -492,9 +492,9 @@
+     public void onStatementClose(PreparedStatement statement) {
+         if (!statementEventListeners.isEmpty()) {
+             StatementEvent event = new StatementEvent(this, statement);
+-            for (StatementEventListener l : statementEventListeners) {
++            statementEventListeners.stream().forEach(l -> {
+                 l.statementClosed(event);
+-            }
++            });
+         }
+     }
+ 
+@@ -510,9 +510,9 @@
+             SQLException sqle) {
+         if (!statementEventListeners.isEmpty()) {
+             StatementEvent event = new StatementEvent(this, statement, sqle);
+-            for (StatementEventListener l : statementEventListeners) {
++            statementEventListeners.stream().forEach(l -> {
+                 l.statementErrorOccurred(event);
+-            }
++            });
+         }
+     }
+ }
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.commons/org/apache/derby/shared/common/sanity/ThreadDump.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.commons/org/apache/derby/shared/common/sanity/ThreadDump.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.commons/org/apache/derby/shared/common/sanity/ThreadDump.java	2019-01-06 20:50:08.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.commons/org/apache/derby/shared/common/sanity/ThreadDump.java	2026-04-20 15:45:45.406745571 +0100
+@@ -32,7 +32,7 @@
+     public static String getStackDumpString() {
+         StringBuffer sb = new StringBuffer();
+         Map<Thread, StackTraceElement[]> st = Thread.getAllStackTraces();
+-        for (Map.Entry<Thread, StackTraceElement[]> e : st.entrySet()) {
++        st.entrySet().stream().forEach(e -> {
+             StackTraceElement[] lines = e.getValue();
+             Thread t = e.getKey();
+             sb.append("Thread name=" + t.getName() + " id=" + t.getId()
+@@ -43,7 +43,7 @@
+ 
+             }
+             sb.append("\n");
+-        }
++        });
+         return sb.toString();
+     }
+ 
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/ColumnDescriptorList.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/ColumnDescriptorList.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/ColumnDescriptorList.java	2019-01-06 20:49:55.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/ColumnDescriptorList.java	2026-04-20 15:45:46.063223316 +0100
+@@ -62,17 +62,8 @@
+ 	public ColumnDescriptor getColumnDescriptor(UUID tableID,
+ 							String columnName)
+ 	{
+-		ColumnDescriptor	returnValue = null;
+-
+-        for (ColumnDescriptor columnDescriptor : this)
+-		{
+-			if ( columnName.equals( columnDescriptor.getColumnName() ) &&
+-			    tableID.equals( columnDescriptor.getReferencingUUID() ) )
+-			{
+-				returnValue = columnDescriptor;
+-				break;
+-			}
+-		}
++		ColumnDescriptor	returnValue = this.stream().filter(columnDescriptor -> columnName.equals( columnDescriptor.getColumnName() ) &&
++		    tableID.equals( columnDescriptor.getReferencingUUID() )).findFirst().orElse(null);
+ 
+ 		return returnValue;
+ 	}
+@@ -87,17 +78,8 @@
+ 	 */	
+ 	public ColumnDescriptor getColumnDescriptor(UUID tableID, int columnID)
+ 	{
+-		ColumnDescriptor	returnValue = null;
+-
+-        for (ColumnDescriptor columnDescriptor : this)
+-		{
+-			if ( ( columnID == columnDescriptor.getPosition() ) &&
+-				tableID.equals( columnDescriptor.getReferencingUUID() ) )
+-			{
+-				returnValue = columnDescriptor;
+-				break;
+-			}
+-		}
++		ColumnDescriptor	returnValue = this.stream().filter(columnDescriptor -> ( columnID == columnDescriptor.getPosition() ) &&
++			tableID.equals( columnDescriptor.getReferencingUUID() )).findFirst().orElse(null);
+ 
+ 		return returnValue;
+ 	}
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/ConglomerateDescriptorList.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/ConglomerateDescriptorList.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/ConglomerateDescriptorList.java	2019-01-06 20:49:55.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/ConglomerateDescriptorList.java	2026-04-20 15:45:46.153030503 +0100
+@@ -43,16 +43,7 @@
+ 	 */
+ 	public ConglomerateDescriptor getConglomerateDescriptor(long conglomerateNumber)
+ 	{
+-		ConglomerateDescriptor	returnValue = null;
+-
+-        for (ConglomerateDescriptor conglomerateDescriptor : this)
+-		{
+-			if (conglomerateNumber == conglomerateDescriptor.getConglomerateNumber())
+-			{
+-				returnValue = conglomerateDescriptor;
+-				break;
+-			}
+-		}
++		ConglomerateDescriptor	returnValue = this.stream().filter(conglomerateDescriptor -> conglomerateNumber == conglomerateDescriptor.getConglomerateNumber()).findFirst().orElse(null);
+ 
+ 		return returnValue;
+ 	}
+@@ -96,16 +87,7 @@
+ 
+ 	public ConglomerateDescriptor getConglomerateDescriptor(String conglomerateName)
+ 	{
+-		ConglomerateDescriptor	returnValue = null;
+-
+-        for (ConglomerateDescriptor conglomerateDescriptor : this)
+-		{
+-			if (conglomerateName.equals(conglomerateDescriptor.getConglomerateName()))
+-			{
+-				returnValue = conglomerateDescriptor;
+-				break;
+-			}
+-		}
++		ConglomerateDescriptor	returnValue = this.stream().filter(conglomerateDescriptor -> conglomerateName.equals(conglomerateDescriptor.getConglomerateName())).findFirst().orElse(null);
+ 
+ 		return returnValue;
+ 	}
+@@ -123,16 +105,7 @@
+ 	public ConglomerateDescriptor getConglomerateDescriptor(UUID uuid)
+ 						throws StandardException
+ 	{
+-		ConglomerateDescriptor	returnValue = null;
+-
+-        for (ConglomerateDescriptor conglomerateDescriptor : this)
+-		{
+-			if (uuid.equals(conglomerateDescriptor.getUUID()))
+-			{
+-				returnValue = conglomerateDescriptor;
+-				break;
+-			}
+-		}
++		ConglomerateDescriptor	returnValue = this.stream().filter(conglomerateDescriptor -> uuid.equals(conglomerateDescriptor.getUUID())).findFirst().orElse(null);
+ 
+ 		return returnValue;
+ 	}
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/GenericDescriptorList.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/GenericDescriptorList.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/GenericDescriptorList.java	2019-01-06 20:49:55.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/GenericDescriptorList.java	2026-04-20 15:45:46.059203038 +0100
+@@ -64,13 +64,6 @@
+ 	 */
+     public E getUniqueTupleDescriptor(UUID uuid)
+ 	{
+-        for (E ud : this)
+-		{
+-			if (ud.getUUID().equals(uuid))
+-			{
+-				return ud;
+-			}
+-		}
+-		return null;
++       return this.stream().filter(ud -> ud.getUUID().equals(uuid)).findFirst().orElse(null);
+ 	}
+ }
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/TableDescriptor.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/TableDescriptor.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/TableDescriptor.java	2019-01-06 20:49:55.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/sql/dictionary/TableDescriptor.java	2026-04-20 15:45:46.135395741 +0100
+@@ -1244,12 +1244,7 @@
+ 	 */
+ 	public boolean tableHasAutoincrement()
+ 	{
+-        for (ColumnDescriptor cd : columnDescriptorList)
+-		{
+-			if (cd.isAutoincrement())
+-				return true;
+-		}
+-		return false;
++       return columnDescriptorList.stream().anyMatch(cd -> cd.isAutoincrement());
+ 	}
+ 	
+ 	/**
+@@ -1393,13 +1388,7 @@
+ 
+ 		UUID cdUUID = cd.getUUID();
+ 
+-        for (StatisticsDescriptor statDesc : sdl) {
+-            if (cdUUID.equals(statDesc.getReferenceID())) {
+-				return true;
+-            }
+-		}
+-
+-		return false;
++       return sdl.stream().anyMatch(statDesc -> cdUUID.equals(statDesc.getReferenceID()));
+ 	}
+ 
+ 	/**
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/util/PropertyUtil.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/util/PropertyUtil.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/util/PropertyUtil.java	2019-01-06 20:49:52.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/iapi/util/PropertyUtil.java	2026-04-20 15:45:46.606135916 +0100
+@@ -119,10 +119,9 @@
+      **/
+     public static void copyProperties(Properties src_prop, Properties dest_prop)
+     {
+-        for (String key : src_prop.stringPropertyNames())
+-        {
++        src_prop.stringPropertyNames().stream().forEach(key -> {
+             dest_prop.put(key, src_prop.get(key));
+-        }
++        });
+     }
+ 
+ 	/** 
+@@ -166,13 +165,13 @@
+ 		// Now, trim off any excess whitespace, if any, and then
+ 		// add the properties from file to the received Properties
+ 		// set.
+-        for (String tmpKey : p.stringPropertyNames()) {
++        p.stringPropertyNames().stream().forEach(tmpKey -> {
+ 		// get the value, trim off the whitespace, then store it
+ 		// in the received properties object.
+ 			String tmpValue = p.getProperty(tmpKey);
+ 			tmpValue = tmpValue.trim();
+ 			prop.put(tmpKey, tmpValue);
+-		}
++		});
+ 
+ 	}
+ }
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/jdbc/EmbedPooledConnection.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/jdbc/EmbedPooledConnection.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/jdbc/EmbedPooledConnection.java	2019-01-06 20:49:16.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/jdbc/EmbedPooledConnection.java	2026-04-20 15:45:46.743667282 +0100
+@@ -376,13 +376,13 @@
+             ConnectionEvent event = new ConnectionEvent(this, exception);
+             eventIterators++;
+             try {
+-                for (ConnectionEventListener l : eventListener) {
++                eventListener.stream().forEach(l -> {
+                     if (exception == null) {
+                         l.connectionClosed(event);
+                     } else {
+                         l.connectionErrorOccurred(event);
+                     }
+-                }
++                });
+             } finally {
+                 eventIterators--;
+             }
+@@ -591,9 +591,9 @@
+     public void onStatementClose(PreparedStatement statement) {
+         if (!statementEventListeners.isEmpty()) {
+             StatementEvent event = new StatementEvent(this, statement);
+-            for (StatementEventListener l : statementEventListeners) {
++            statementEventListeners.stream().forEach(l -> {
+                 l.statementClosed(event);
+-            }
++            });
+         }
+     }
+ 
+@@ -609,9 +609,9 @@
+             SQLException sqle) {
+         if (!statementEventListeners.isEmpty()) {
+             StatementEvent event = new StatementEvent(this, statement, sqle);
+-            for (StatementEventListener l : statementEventListeners) {
++            statementEventListeners.stream().forEach(l -> {
+                 l.statementErrorOccurred(event);
+-            }
++            });
+         }
+     }
+ 
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/cache/ConcurrentCache.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/cache/ConcurrentCache.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/cache/ConcurrentCache.java	2019-01-06 20:49:17.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/cache/ConcurrentCache.java	2026-04-20 15:45:46.905519440 +0100
+@@ -599,7 +599,7 @@
+      * Remove all objects that are not kept and not dirty.
+      */
+     public void ageOut() {
+-        for (CacheEntry entry : cache.values()) {
++        cache.values().stream().forEach(entry -> {
+             entry.lock();
+             try {
+                 // never remove kept entries
+@@ -614,7 +614,7 @@
+             } finally {
+                 entry.unlock();
+             }
+-        }
++        });
+     }
+ 
+     /**
+@@ -697,7 +697,7 @@
+      */
+     public Collection<Cacheable> values() {
+         ArrayList<Cacheable> values = new ArrayList<Cacheable>();
+-        for (CacheEntry entry : cache.values()) {
++        cache.values().stream().forEach(entry -> {
+             entry.lock();
+             try {
+                 Cacheable c = entry.getCacheable();
+@@ -707,7 +707,7 @@
+             } finally {
+                 entry.unlock();
+             }
+-        }
++        });
+         return values;
+     }
+ 
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/jmx/JMXManagementService.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/jmx/JMXManagementService.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/jmx/JMXManagementService.java	2019-01-06 20:49:17.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/jmx/JMXManagementService.java	2026-04-20 15:45:46.956464506 +0100
+@@ -146,11 +146,9 @@
+         }
+ 
+         // Need a copy of registeredMbeans since unregisterMBean will remove
+-        // items from registeredMbeans and thus invalidate any iterator
+-        // on it directly.
+-        for (ObjectName mbeanName :
+-                new HashSet<ObjectName>(registeredMbeans.keySet()))
+-            unregisterMBean(mbeanName);
++		// items from registeredMbeans and thus invalidate any iterator
++		// on it directly.
++		new HashSet<ObjectName>(registeredMbeans.keySet()).forEach(mbeanName -> unregisterMBean(mbeanName));
+         
+         mbeanServer = null;
+         
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/locks/ConcurrentLockSet.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/locks/ConcurrentLockSet.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/locks/ConcurrentLockSet.java	2019-01-06 20:49:18.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/locks/ConcurrentLockSet.java	2026-04-20 15:45:46.968474810 +0100
+@@ -275,9 +275,9 @@
+                                      wakeupReason);
+             } finally {
+                 // unlock all entries we visited
+-                for (Entry e : seenByDeadlockDetection) {
++				seenByDeadlockDetection.stream().forEach(e -> {
+                     e.unlock();
+-                }
++                });
+                 seenByDeadlockDetection = null;
+                 // re-lock the entry
+                 entry.exitDeadlockDetection();
+@@ -973,13 +973,13 @@
+      */
+     public void addWaiters(Map<Object,Object> waiters) {
+         seenByDeadlockDetection = new ArrayList<Entry>(locks.size());
+-        for (Entry entry : locks.values()) {
++        locks.values().stream().forEach(entry -> {
+             seenByDeadlockDetection.add(entry);
+             entry.lockForDeadlockDetection();
+             if (entry.control != null) {
+                 entry.control.addWaiters(waiters);
+             }
+-        }
++        });
+     }
+ 
+ //EXCLUDE-START-lockdiag- 
+@@ -989,7 +989,7 @@
+     public Map<Lockable, Control> shallowClone() {
+         HashMap<Lockable, Control> clone = new HashMap<Lockable, Control>();
+ 
+-        for (Entry entry : locks.values()) {
++        locks.values().stream().forEach(entry -> {
+             entry.lock();
+             try {
+                 Control control = entry.control;
+@@ -999,7 +999,7 @@
+             } finally {
+                 entry.unlock();
+             }
+-		}
++		});
+ 
+ 		return clone;
+ 	}
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/locks/LockSpace.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/locks/LockSpace.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/locks/LockSpace.java	2019-01-06 20:49:18.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/services/locks/LockSpace.java	2026-04-20 15:45:46.990078154 +0100
+@@ -149,9 +149,9 @@
+ 		if (dl == null)
+ 			return;
+ 
+-        for (Lock lock : dl.keySet()) {
++        dl.keySet().stream().forEach(lock -> {
+             lset.unlock(lock, 0);
+-		}
++		});
+ 
+ 		if ((callbackGroup != null) && group.equals(callbackGroup)) {
+ 			nextLimitCall = limit;
+@@ -239,7 +239,7 @@
+ 
+     private void mergeGroups(HashMap<Lock, Lock> from, HashMap<Lock, Lock> into) {
+ 
+-        for (Lock lock : from.keySet()) {
++        from.keySet().stream().forEach(lock -> {
+ 
+             Lock lockI = into.get(lock);
+ 
+@@ -253,7 +253,7 @@
+ 
+ 				intoL.count += fromL.getCount();
+ 			}
+-		}
++		});
+ 
+ 	}
+ 
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/CreateTriggerNode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/CreateTriggerNode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/CreateTriggerNode.java	2019-01-06 20:49:31.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/CreateTriggerNode.java	2026-04-20 15:45:47.445523455 +0100
+@@ -1240,12 +1240,11 @@
+ 			if (refClause != null)
+ 			{
+                 StringBuilder buf = new StringBuilder();
+-                for (TriggerReferencingStruct trn : refClause)
+-				{
++                refClause.stream().forEach(trn -> {
+ 					buf.append("\t");
+ 					buf.append(trn.toString());
+ 					buf.append("\n");
+-				}
++				});
+ 				refString = buf.toString();
+ 			}
+ 
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/DMLModStatementNode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/DMLModStatementNode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/DMLModStatementNode.java	2019-01-06 20:49:32.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/DMLModStatementNode.java	2026-04-20 15:45:47.778923959 +0100
+@@ -1662,10 +1662,9 @@
+                     new CollectNodesVisitor<ColumnReference>( ColumnReference.class );
+                 rc.accept( getCRs );
+ 
+-                for ( ColumnReference cr : getCRs.getList() )
+-                {
++                getCRs.getList().stream().forEach(cr -> {
+                     cr.getSource().setResultSetNumber( rsNumber );
+-                }
++                });
+             }
+ 
+             rc.generateExpression(ecb, userExprFun);
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/FromBaseTable.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/FromBaseTable.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/FromBaseTable.java	2019-01-06 20:49:31.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/FromBaseTable.java	2026-04-20 15:45:47.331596229 +0100
+@@ -2447,9 +2447,9 @@
+ 
+                 fsq.accept(cnv);
+ 
+-                for (QueryTreeNode node : cnv.getList()) {
++                cnv.getList().stream().forEach(node -> {
+                     node.disablePrivilegeCollection();
+-                }
++                });
+ 
+ 				fsq.setOrigTableName(this.getOrigTableName());
+ 
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/FromSubquery.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/FromSubquery.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/FromSubquery.java	2019-01-06 20:49:33.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/FromSubquery.java	2026-04-20 15:45:47.275211960 +0100
+@@ -264,10 +264,9 @@
+         CollectNodesVisitor<FromVTI> nestedVTIs =
+                 new CollectNodesVisitor<FromVTI>(FromVTI.class);
+ 		subquery.accept( nestedVTIs );
+-        for (FromVTI ref : nestedVTIs.getList())
+-		{
++        nestedVTIs.getList().stream().forEach(ref -> {
+             ref.addOuterFromList( fromListParam );
+-		}
++		});
+         
+ 		try {
+ 			subquery.bindExpressions(nestedFromList);
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/FromVTI.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/FromVTI.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/FromVTI.java	2019-01-06 20:49:33.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/FromVTI.java	2026-04-20 15:45:47.707555415 +0100
+@@ -1595,8 +1595,7 @@
+      */
+     private void remapBaseTableColumns() throws StandardException
+     {
+-        for (ColumnReference ref : getNodesFromParameters(ColumnReference.class))
+-		{
++        getNodesFromParameters(ColumnReference.class).stream().forEach(ref -> {
+             FromTable fromTable = argSources.get(
+                 Integer.valueOf(ref.getTableNumber()));
+ 
+@@ -1611,7 +1610,7 @@
+                     if ( newRC != null ) { ref.setSource( newRC ); }
+                 }
+             }
+-        }
++        });
+     }
+ 
+ 	private int getScanArguments(ActivationClassBuilder acb,
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/GrantNode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/GrantNode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/GrantNode.java	2019-01-06 20:49:31.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/GrantNode.java	2026-04-20 15:45:47.328984153 +0100
+@@ -67,12 +67,11 @@
+ 		{
+             StringBuilder sb = new StringBuilder();
+ 
+-            for (String grantee : grantees)
+-			{
++            grantees.stream().forEach(grantee -> {
+ 				if( sb.length() > 0)
+ 					sb.append( ",");
+                 sb.append(grantee);
+-			}
++			});
+ 			return super.toString() +
+ 				   privileges.toString() +
+ 				   "TO: \n" + sb.toString() + "\n";
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/GrantRoleNode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/GrantRoleNode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/GrantRoleNode.java	2019-01-06 20:49:32.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/GrantRoleNode.java	2026-04-20 15:45:47.761110487 +0100
+@@ -75,20 +75,20 @@
+     {
+         if (SanityManager.DEBUG) {
+                 StringBuilder sb1 = new StringBuilder();
+-                for(String role : roles) {
++                roles.stream().forEach(role -> {
+ 					if( sb1.length() > 0) {
+ 						sb1.append( ", ");
+ 					}
+                     sb1.append(role);
+-				}
++				});
+ 
+                 StringBuilder sb2 = new StringBuilder();
+-                for(String grantee : grantees) {
++                grantees.stream().forEach(grantee -> {
+ 					if( sb2.length() > 0) {
+ 						sb2.append( ", ");
+ 					}
+                     sb2.append(grantee);
+-				}
++				});
+                 return (super.toString() +
+                         sb1.toString() +
+                         " TO: " +
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/MatchingClauseNode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/MatchingClauseNode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/MatchingClauseNode.java	2019-01-06 20:49:33.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/MatchingClauseNode.java	2026-04-20 15:45:47.264479045 +0100
+@@ -1275,10 +1275,9 @@
+             if ( checkConstraints != null )
+             {
+                 List<ColumnReference> colRefs = getColumnReferences( checkConstraints );
+-                for ( ColumnReference cr : colRefs )
+-                {
++                colRefs.stream().forEach(cr -> {
+                     cr.getSource().setResultSetNumber( NoPutResultSet.TEMPORARY_RESULT_SET_NUMBER );
+-                }
++                });
+             }            
+         }
+     }
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/MergeNode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/MergeNode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/MergeNode.java	2019-01-06 20:49:31.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/MergeNode.java	2026-04-20 15:45:47.395174029 +0100
+@@ -904,10 +904,9 @@
+     {
+         HashSet<String>     set = new HashSet<String>();
+ 
+-        for ( ColumnReference cr : map.values() )
+-        {
++        map.values().stream().forEach(cr -> {
+             if ( cr.getMergeTableID() == mergeTableID ) { set.add( cr.getColumnName() ); }
+-        }
++        });
+ 
+         String[]    retval = new String[ set.size() ];
+         set.toArray( retval );
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/MethodCallNode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/MethodCallNode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/MethodCallNode.java	2019-01-06 20:49:32.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/MethodCallNode.java	2026-04-20 15:45:47.546777621 +0100
+@@ -222,13 +222,12 @@
+         CollectNodesVisitor<ColumnReference> getCRs =
+             new CollectNodesVisitor<ColumnReference>(ColumnReference.class);
+ 		accept(getCRs);
+-        for (ColumnReference ref : getCRs.getList())
+-		{
++        getCRs.getList().stream().forEach(ref -> {
+ 			if (ref.getCorrelated())
+ 			{
+ 				correlationMap.set(ref.getTableNumber());
+ 			}
+-		}
++		});
+ 	}
+ 
+ 	/**
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/PredicateList.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/PredicateList.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/PredicateList.java	2019-01-06 20:49:32.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/PredicateList.java	2026-04-20 15:45:47.513968300 +0100
+@@ -1579,8 +1579,7 @@
+             p.getAndNode().accept(collectCRs);
+ 		}
+ 
+-        for (ColumnReference ref : collectCRs.getList())
+-		{
++        collectCRs.getList().stream().forEach(ref -> {
+ 			ResultColumn source = ref.getSource();
+ 
+             // DERBY-4391: Don't try to call markAllRCsInChainReferenced() if
+@@ -1591,7 +1590,7 @@
+ 			if (source != null) {
+ 				source.markAllRCsInChainReferenced();
+ 			}
+-		}
++		});
+ 	}
+ 
+ 	/**
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/QueryTreeNode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/QueryTreeNode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/QueryTreeNode.java	2019-01-06 20:49:33.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/QueryTreeNode.java	2026-04-20 15:45:47.227183002 +0100
+@@ -735,7 +735,7 @@
+         if ( that.visitableTags == null ) { return; }
+         else
+         {
+-            for ( String tag : that.visitableTags ) { addTag( tag ); }
++            that.visitableTags.stream().forEach(tag -> { addTag( tag ); });
+         }
+     }
+     
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/ResultSetNode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/ResultSetNode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/ResultSetNode.java	2019-01-06 20:49:32.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/ResultSetNode.java	2026-04-20 15:45:47.713457244 +0100
+@@ -1984,19 +1984,8 @@
+         }
+ 
+         boolean hasOffsetFetchFirst() {
+-            for (ValueNode o : offset) {
+-                if (o != null) {
+-                    return true;
+-                }
+-            }
+-
+-            for (ValueNode ff : fetchFirst) {
+-                if (ff != null) {
+-                    return true;
+-                }
+-            }
+-
+-            return false;
++            return offset.stream().filter(o -> o != null).findFirst().map(o -> true)
++					.orElse(fetchFirst.stream().anyMatch(ff -> ff != null));
+         }
+     }
+ 
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/RevokeNode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/RevokeNode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/RevokeNode.java	2019-01-06 20:49:32.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/RevokeNode.java	2026-04-20 15:45:47.564698989 +0100
+@@ -66,11 +66,11 @@
+ 		{
+             StringBuilder sb = new StringBuilder();
+ 
+-            for(String grantee : grantees) {
++            grantees.stream().forEach(grantee -> {
+                 if( sb.length() > 0)
+                     sb.append( ",");
+                 sb.append(grantee);
+-            }
++            });
+ 			return super.toString() +
+                    privileges.toString() +
+                    "TO: \n" + sb.toString() + "\n";
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/SelectNode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/SelectNode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/SelectNode.java	2019-01-06 20:49:31.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/SelectNode.java	2026-04-20 15:45:47.356683786 +0100
+@@ -1298,7 +1298,7 @@
+                     WindowFunctionNode.class);
+             qec.getOrderByList(0).accept(cnvw);
+ 
+-            for (WindowFunctionNode wfn : cnvw.getList()) {
++            cnvw.getList().stream().forEach(wfn -> {
+ 				windowFuncCalls.add(wfn);
+ 
+ 
+@@ -1316,7 +1316,7 @@
+ 							"a window reference, should be bound already");
+ 					}
+ 				}
+-			}
++			});
+ 		}
+ 
+ 
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/SetConstraintsNode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/SetConstraintsNode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/SetConstraintsNode.java	2019-01-06 20:49:33.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/SetConstraintsNode.java	2026-04-20 15:45:47.597874526 +0100
+@@ -87,10 +87,10 @@
+             if (constraints == null) {
+                 return "ALL";
+             } else {
+-                for (TableName tn : constraints) {
++                constraints.stream().forEach(tn -> {
+                     sb.append(tn);
+                     sb.append(", ");
+-                }
++                });
+ 
+                 return sb.substring(0, Math.max(0, sb.length() - 2));
+             }
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/SetOperatorNode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/SetOperatorNode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/SetOperatorNode.java	2019-01-06 20:49:33.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/SetOperatorNode.java	2026-04-20 15:45:47.245211679 +0100
+@@ -206,15 +206,7 @@
+ 		this.accept(cnv);
+ 
+ 		// Now see if any of them have unpushed predicates.
+-		boolean genPRN = false;
+-        for (UnionNode node : cnv.getList())
+-		{
+-            if (node.hasUnPushedPredicates())
+-			{
+-				genPRN = true;
+-				break;
+-			}
+-		}
++		boolean genPRN = cnv.getList().stream().anyMatch(node -> node.hasUnPushedPredicates());
+ 
+ 		if (genPRN)
+ 		{
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/UpdateNode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/UpdateNode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/UpdateNode.java	2019-01-06 20:49:32.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/compile/UpdateNode.java	2026-04-20 15:45:47.247907417 +0100
+@@ -703,13 +703,12 @@
+     private void    associateAddedColumns()
+         throws StandardException
+     {
+-        for ( ColumnReference cr : collectAllResultSetColumns() )
+-        {
++        collectAllResultSetColumns().stream().forEach(cr -> {
+             if ( !cr.taggedWith( TagFilter.ORIG_UPDATE_COL ) )
+             {
+                 cr.setMergeTableID( ColumnReference.MERGE_TARGET );
+             }
+-        }
++        });
+     }
+ 
+     /**
+@@ -718,10 +717,9 @@
+     private void    tagOriginalResultSetColumns()
+         throws StandardException
+     {
+-        for ( ColumnReference cr : collectAllResultSetColumns() )
+-        {
++        collectAllResultSetColumns().stream().forEach(cr -> {
+             cr.addTag( TagFilter.ORIG_UPDATE_COL );
+-        }
++        });
+     }
+ 
+     /**
+@@ -789,10 +787,9 @@
+         }
+ 
+         // now tag all the nodes we collected
+-        for ( QueryTreeNode expr : result )
+-        {
++        result.stream().forEach(expr -> {
+             expr.addTag( TagFilter.NEED_PRIVS_FOR_UPDATE_STMT );
+-        }
++        });
+     }
+ 
+     /**
+@@ -833,11 +830,10 @@
+ 
+         cc.pushCurrentPrivType( Authorizer.UPDATE_PRIV );
+         try {
+-            for ( String columnName : explicitlySetColumns )
+-            {
++            explicitlySetColumns.stream().forEach(columnName -> {
+                 ColumnDescriptor    cd = targetTableDescriptor.getColumnDescriptor( columnName );
+                 cc.addRequiredColumnPriv( cd );
+-            }
++            });
+         }
+         finally
+         {
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/depend/BasicDependencyManager.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/depend/BasicDependencyManager.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/depend/BasicDependencyManager.java	2019-01-06 20:49:34.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/depend/BasicDependencyManager.java	2026-04-20 15:45:47.899653346 +0100
+@@ -575,7 +575,7 @@
+ 
+         List<ProviderInfo> pih = new ArrayList<ProviderInfo>();
+ 
+-        for (Provider p : provs) {
++        provs.stream().forEach(p -> {
+             if (p.isPersistent()) {
+ 				pih.add(new BasicProviderInfo(
+                                         p.getObjectID(),
+@@ -583,7 +583,7 @@
+                                         p.getObjectName()
+ 									));
+ 			}
+-		}
++		});
+ 
+ 		return (ProviderInfo[]) pih.toArray(EMPTY_PROVIDER_INFO);
+ 	}
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/execute/AggregatorInfoList.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/execute/AggregatorInfoList.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/execute/AggregatorInfoList.java	2019-01-06 20:49:35.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/execute/AggregatorInfoList.java	2026-04-20 15:45:48.195664032 +0100
+@@ -67,14 +67,7 @@
+ 	 */
+ 	public boolean hasDistinct()
+ 	{
+-        for (AggregatorInfo aggInfo : this)
+-		{
+-			if (aggInfo.isDistinct())
+-			{
+-				return true;
+-			}
+-		}
+-		return false;
++        return this.stream().anyMatch(aggInfo -> aggInfo.isDistinct());
+ 	}
+ 
+ 	//////////////////////////////////////////////
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/execute/GenericAggregateResultSet.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/execute/GenericAggregateResultSet.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/execute/GenericAggregateResultSet.java	2019-01-06 20:49:39.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/execute/GenericAggregateResultSet.java	2026-04-20 15:45:48.230771214 +0100
+@@ -129,14 +129,13 @@
+                 tmpAggregators = new Vector<GenericAggregator>();
+ 		ClassFactory		cf = lcc.getLanguageConnectionFactory().getClassFactory();
+ 
+-        for (AggregatorInfo aggInfo : list)
+-		{
++        list.stream().forEach(aggInfo -> {
+ 			if (! (eliminateDistincts && aggInfo.isDistinct()))
+ 			// if (eliminateDistincts == aggInfo.isDistinct())
+ 			{
+ 				tmpAggregators.addElement(new GenericAggregator(aggInfo, cf));
+ 			}
+-		}
++		});
+ 
+ 
+ 
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/execute/InternalTriggerExecutionContext.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/execute/InternalTriggerExecutionContext.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/execute/InternalTriggerExecutionContext.java	2019-01-06 20:49:36.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/sql/execute/InternalTriggerExecutionContext.java	2026-04-20 15:45:48.141701783 +0100
+@@ -241,12 +241,12 @@
+ 		** given out to the user.  
+ 	 	*/
+         if (resultSetVector != null) {
+-            for (ResultSet rs : resultSetVector) {
++            resultSetVector.stream().forEach(rs -> {
+                 try {
+                     rs.close();
+                 } catch (SQLException se) {
+                 }
+-            }
++            });
+ 		}
+ 		resultSetVector = null;
+ 	
+@@ -558,10 +558,9 @@
+ 
+ 		afterRow = null;
+ 
+-        for (AutoincrementCounter aic : aiCounters)
+-		{
++        aiCounters.stream().forEach(aic -> {
+ 			aic.reset(begin);
+-		}
++		});
+ 	}	
+ 	
+ 	/**
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/store/raw/xact/TransactionTable.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/store/raw/xact/TransactionTable.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/store/raw/xact/TransactionTable.java	2019-01-06 20:49:24.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/impl/store/raw/xact/TransactionTable.java	2026-04-20 15:45:48.989623687 +0100
+@@ -533,16 +533,9 @@
+ 	*/
+ 	public boolean hasRollbackFirstTransaction()
+ 	{
+-        for (TransactionTableEntry ent : trans.values())
+-		{
+-			if (ent != null && ent.isRecovery() && 
+-				(ent.getTransactionStatus() & 
+-                     Xact.RECOVERY_ROLLBACK_FIRST) != 0)
+-            {
+-				return true;
+-            }
+-		}
+-		return false;
++       return trans.values().stream().anyMatch(ent -> ent != null && ent.isRecovery() && 
++           (ent.getTransactionStatus() & 
++		          Xact.RECOVERY_ROLLBACK_FIRST) != 0);
+ 	}
+ 
+ 	/**
+@@ -712,10 +705,9 @@
+                 else
+                 {
+                     // all transactions in the table must be prepared.
+-                    for (TransactionTableEntry ent : trans.values())
+-                    {
++                    trans.values().stream().forEach(ent -> {
+                         SanityManager.ASSERT(ent.isPrepared());
+-                    }
++                    });
+                 }
+             }
+ 		}
+@@ -788,17 +780,16 @@
+                 if (found_ent == null)
+                 {
+                     // if no entry's were found then the transaction table
+-                    // should have the passed in idle tran, and the rest should
+-                    // be non-recover, prepared global transactions.
+-                    for (TransactionTableEntry ent : trans.values())
+-                    {
++                    // should have the passed in idle tran, and the rest should
++                    // be non-recover, prepared global transactions.
++                    trans.values().stream().forEach(ent -> {
+                         if (XactId.compare(ent.getXid(), tran.getId()) != 0)
+                         {
+                             SanityManager.ASSERT(
+                                 !ent.isRecovery() && ent.isPrepared());
+                             SanityManager.ASSERT(ent.getGid() != null);
+                         }
+-                    }
++                    });
+                 }
+             }
+ 
+@@ -913,9 +904,9 @@
+         final ArrayList<TransactionTableEntry> tinfo = new ArrayList<TransactionTableEntry>();
+ 
+         // Get clones of all the entries in the transaction table.
+-        for (TransactionTableEntry entry : trans.values()) {
++        trans.values().stream().forEach(entry -> {
+             tinfo.add((TransactionTableEntry) entry.clone());
+-        }
++        });
+ 
+         return tinfo.toArray(new TransactionTableEntry[tinfo.size()]);
+ 	}
+@@ -945,11 +936,11 @@
+ 			{
+ 				str.append("\n READ ONLY TRANSACTIONS \n");
+ 
+-                for (TransactionTableEntry entry : trans.values()) {
++                trans.values().stream().forEach(entry -> {
+                     if (!entry.isUpdate()) {
+                         str.append(entry);
+                     }
+-                }
++                });
+ 			}
+ 			str.append("---------------------------");
+ 			return str.toString();
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/security/DatabasePermission.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/security/DatabasePermission.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/security/DatabasePermission.java	2019-01-06 20:49:59.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.engine/org/apache/derby/security/DatabasePermission.java	2026-04-20 15:45:49.050383902 +0100
+@@ -236,13 +236,13 @@
+         Set<String> actionSet = SystemPermission.parseActions(actions);
+ 
+         // check for any illegal actions
+-        for (String action : actionSet) {
++        actionSet.stream().forEach(action -> {
+             if (!LEGAL_ACTIONS.contains(action)) {
+                 // report illegal action
+                 final String msg = "Illegal action '" + action + "'";
+                 throw new IllegalArgumentException(msg);
+             }
+-        }
++        });
+ 
+         // Get all the legal actions that are in actionSet, in the order
+         // of LEGAL_ACTIONS.
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.server/org/apache/derby/impl/drda/DRDAConnThread.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.server/org/apache/derby/impl/drda/DRDAConnThread.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.server/org/apache/derby/impl/drda/DRDAConnThread.java	2019-01-06 20:50:03.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.server/org/apache/derby/impl/drda/DRDAConnThread.java	2026-04-20 15:45:49.149327041 +0100
+@@ -1859,8 +1859,7 @@
+     private void writeMGRLEVELS() throws DRDAProtocolException
+     {
+         writer.startDdm(CodePoint.MGRLVLLS);
+-        for (int manager : knownManagers)
+-        {
++        knownManagers.stream().mapToInt(Integer::valueOf).forEach(manager -> {
+             int appLevel = appRequester.getManagerLevel(manager);
+             int serverLevel = server.getManagerLevel(manager);
+             if (serverLevel >= appLevel)
+@@ -1875,12 +1874,11 @@
+                 // reset application manager level to server level
+                 appRequester.setManagerLevel(manager, serverLevel);
+             }
+-        }
++        });
+         // write 0 for all unknown managers
+-        for (int manager : unknownManagers)
+-        {
++        unknownManagers.stream().mapToInt(Integer::valueOf).forEach(manager -> {
+             writer.writeCodePoint4Bytes(manager, 0);
+-        }
++        });
+         writer.endDdm();
+     }
+     /**
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.server/org/apache/derby/impl/drda/NetworkServerControlImpl.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.server/org/apache/derby/impl/drda/NetworkServerControlImpl.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.server/org/apache/derby/impl/drda/NetworkServerControlImpl.java	2019-01-06 20:50:03.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.server/org/apache/derby/impl/drda/NetworkServerControlImpl.java	2026-04-20 15:45:49.124071175 +0100
+@@ -951,14 +951,13 @@
+             
+             // Close out the sessions
+             synchronized(sessionTable) {
+-                for (Session session : sessionTable.values())
+-                {
++                sessionTable.values().stream().forEach(session -> {
+                     try {
+                         session.close();
+                     } catch (Exception exception) {
+                         consolePrintAndIgnore("DRDA_UnexpectedException.S", exception, true);
+                     }
+-                }
++                });
+             }
+ 
+             synchronized (threadList)
+@@ -3766,10 +3765,9 @@
+         }
+         // update the value in all the threads
+         synchronized(threadList) {
+-            for (DRDAConnThread thread : threadList)
+-            {
++            threadList.stream().forEach(thread -> {
+                 thread.setLogConnections(value);
+-            }
++            });
+         }
+     }
+ 
+@@ -4089,11 +4087,10 @@
+         if (!getTraceAll())
+         {
+             synchronized(sessionTable) {
+-                for (Session session : sessionTable.values())
+-                {
++                sessionTable.values().stream().forEach(session -> {
+                     if (session.isTraceOn())
+                         retval.put(Property.DRDA_PROP_TRACE+"."+session.getConnNum(), "true");
+-                }
++                });
+             }
+         }
+         return retval;
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/harness/Sed.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/harness/Sed.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/harness/Sed.java	2019-01-06 20:51:11.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/harness/Sed.java	2026-04-19 23:47:39.897481628 +0100
+@@ -333,8 +333,7 @@
+             Properties sedp = new Properties();
+ 
+             sedp.load(isSed);
+-            for (String key : sedp.stringPropertyNames())
+-            {
++            sedp.stringPropertyNames().stream().forEach(key -> {
+                 if (key.equals("substitute"))
+                 {
+                     String value = sedp.getProperty(key);
+@@ -370,7 +369,7 @@
+                         deleteLines.addElement(patternName);
+                     }
+                 }
+-            }
++            });
+         }
+         // ---------------------------------
+ 
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/tests/lang/GenericMode.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/tests/lang/GenericMode.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/tests/lang/GenericMode.java	2019-01-06 20:50:52.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/tests/lang/GenericMode.java	2026-04-19 23:47:39.897665031 +0100
+@@ -78,10 +78,9 @@
+     {
+         HashMap<B,Accumulator<B>>  otherAccumulators = otherAggregator._accumulators;
+         
+-        for ( B value : otherAccumulators.keySet() )
+-        {
++        otherAccumulators.keySet().stream().forEach(value -> {
+             getAccumulator( value ).add( otherAccumulators.get( value ).getCount() );
+-        }
++        });
+     }
+ 
+     public  B terminate()
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/tests/lang/ModeAggregate.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/tests/lang/ModeAggregate.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/tests/lang/ModeAggregate.java	2019-01-06 20:50:46.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/tests/lang/ModeAggregate.java	2026-04-19 23:47:39.897802545 +0100
+@@ -63,10 +63,9 @@
+     {
+         HashMap<Integer,Accumulator>  otherAccumulators = otherAggregator._accumulators;
+         
+-        for ( Integer value : otherAccumulators.keySet() )
+-        {
++        otherAccumulators.keySet().stream().forEach(value -> {
+             getAccumulator( value ).add( otherAccumulators.get( value ).getCount() );
+-        }
++        });
+     }
+ 
+     public  Integer terminate()
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/util/DbFile.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/util/DbFile.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/util/DbFile.java	2019-01-06 20:51:31.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/util/DbFile.java	2026-04-19 23:47:39.897951476 +0100
+@@ -73,11 +73,10 @@
+ 		BufferedReader br =
+ 			new BufferedReader(isr);
+ 		StringBuffer sb = new StringBuffer();
+-		String l;
+-		while((l = br.readLine()) != null) {
++		br.lines().forEach(l -> {
+ 			sb.append(l);
+ 			sb.append("<CR>");
+-		}
++		});
+ 		is.close();
+ 		return sb.toString();
+ 	}
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/util/ThreadDump.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/util/ThreadDump.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/util/ThreadDump.java	2019-01-06 20:51:31.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/functionTests/util/ThreadDump.java	2026-04-19 23:47:39.898114926 +0100
+@@ -32,7 +32,7 @@
+     public static String getStackDumpString() {
+         StringBuffer sb = new StringBuffer();
+         Map<Thread, StackTraceElement[]> st = Thread.getAllStackTraces();
+-        for (Map.Entry<Thread, StackTraceElement[]> e : st.entrySet()) {
++        st.entrySet().stream().forEach(e -> {
+             StackTraceElement[] lines = e.getValue();
+             Thread t = e.getKey();
+             sb.append("Thread name=" + t.getName() + " id=" + t.getId()
+@@ -43,7 +43,7 @@
+ 
+             }
+             sb.append("\n");
+-        }
++        });
+         return sb.toString();
+     }
+ 
 diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/client/Load.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/client/Load.java
---- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/client/Load.java	2018-03-10 16:30:56.000000000 +0000
-+++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/client/Load.java	2022-09-30 12:29:01.939875945 +0000
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/client/Load.java	2019-01-06 20:50:25.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/client/Load.java	2026-04-19 23:47:39.898258056 +0100
 @@ -44,11 +44,11 @@
       * 
       * see section 1.2.1 of TPC-C specification
@@ -17,8 +1209,8 @@ diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org
      public static final int NEWORDERS_COUNT_W = (CUSTOMER_COUNT_W * 9) / 30;
  
 diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/client/Submitter.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/client/Submitter.java
---- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/client/Submitter.java	2018-03-10 16:30:56.000000000 +0000
-+++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/client/Submitter.java	2022-09-30 12:29:01.939875945 +0000
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/client/Submitter.java	2019-01-06 20:50:25.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/client/Submitter.java	2026-04-19 23:47:39.898395295 +0100
 @@ -84,7 +84,26 @@
       * arrays with run information.
       */
@@ -57,8 +1249,8 @@ diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org
      /**
       * Generate a new random number generator
 diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/direct/Standard.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/direct/Standard.java
---- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/direct/Standard.java	2018-03-10 16:30:56.000000000 +0000
-+++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/direct/Standard.java	2022-09-30 12:29:01.939875945 +0000
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/direct/Standard.java	2019-01-06 20:50:25.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/direct/Standard.java	2026-04-19 23:47:39.903387364 +0100
 @@ -20,11 +20,7 @@
  package org.apache.derbyTesting.system.oe.direct;
  
@@ -259,8 +1451,8 @@ diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org
              
              
 diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/load/SimpleInsert.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/load/SimpleInsert.java
---- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/load/SimpleInsert.java	2018-03-10 16:30:56.000000000 +0000
-+++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/load/SimpleInsert.java	2022-09-30 12:29:01.939875945 +0000
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/load/SimpleInsert.java	2019-01-06 20:50:25.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/load/SimpleInsert.java	2026-04-19 23:47:39.905165641 +0100
 @@ -228,14 +228,16 @@
                  + "(S_I_ID, S_W_ID, S_QUANTITY,S_DIST_01, S_DIST_02,"
                  + " S_DIST_03,S_DIST_04,S_DIST_05,"
@@ -355,8 +1547,8 @@ diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org
                  }
                  psOL.setInt(8, 5);
 diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/schema/schema.sql ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/schema/schema.sql
---- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/schema/schema.sql	2018-03-10 16:30:56.000000000 +0000
-+++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/schema/schema.sql	2022-09-30 12:29:01.939875945 +0000
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/schema/schema.sql	2019-01-06 20:50:26.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/schema/schema.sql	2026-04-19 23:47:39.905475218 +0100
 @@ -71,7 +71,8 @@
   C_YTD_PAYMENT  DECIMAL(12,2) NOT NULL,
   C_PAYMENT_CNT  INTEGER       NOT NULL,
@@ -418,8 +1610,8 @@ diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org
  );
 \ No newline at end of file
 diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/util/OERandom.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/util/OERandom.java
---- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/util/OERandom.java	2018-03-10 16:30:56.000000000 +0000
-+++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/util/OERandom.java	2022-09-30 12:29:01.939875945 +0000
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/util/OERandom.java	2019-01-06 20:50:25.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/system/oe/util/OERandom.java	2026-04-19 23:47:39.905677245 +0100
 @@ -32,7 +32,7 @@
   */
  public class OERandom {
@@ -440,3 +1632,23 @@ diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org
      public OERandom(int last) {
          this(last, System.currentTimeMillis());
      }
+diff '--color=auto' -ur ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/unitTests/harness/T_Bomb.java ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/unitTests/harness/T_Bomb.java
+--- ./db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/unitTests/harness/T_Bomb.java	2019-01-06 20:50:23.000000000 +0000
++++ ../build/db-derby-10.15.2.0-src/java/org.apache.derby.tests/org/apache/derbyTesting/unitTests/harness/T_Bomb.java	2026-04-19 23:47:39.905896278 +0100
+@@ -135,7 +135,7 @@
+ 
+ 	private void performLastGasp()
+ 	{
+-        for (T_Bombable b : v) {
++        v.stream().forEach(b -> {
+ 			try{
+ 			 b.lastChance();
+ 			}
+@@ -146,6 +146,7 @@
+ 				exc.printStackTrace();
+ 			}
+ 		} //end for
++);
+ 
+ 	}
+     
