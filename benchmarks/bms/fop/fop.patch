@@ -1,6 +1,366 @@
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/accessibility/fo/Event.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/accessibility/fo/Event.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/accessibility/fo/Event.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/accessibility/fo/Event.java	2026-07-01 09:45:24.527425081 +0100
+@@ -39,20 +39,13 @@
+ 
+     public void run() {
+         if (hasContent()) {
+-            for (Event e : children) {
+-                e.run();
+-            }
++            children.stream().forEach(Event::run);
+         }
+         children.clear();
+     }
+ 
+     private boolean hasContent() {
+-        for (Event e : children) {
+-            if (e.hasContent()) {
+-                return true;
+-            }
+-        }
+-        return hasContent;
++        return children.stream().anyMatch(Event::hasContent) || hasContent;
+     }
+ 
+     public void add(Event child) {
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/afp/AFPGraphics2D.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/afp/AFPGraphics2D.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/afp/AFPGraphics2D.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/afp/AFPGraphics2D.java	2026-07-01 09:45:24.527663836 +0100
+@@ -496,9 +496,7 @@
+ 
+     private void flush(List<Integer> fillets) {
+         List<int[]> intList = listToIntLists(fillets);
+-        for (int[] ints : intList) {
+-            graphicsObj.addFillet(ints, true);
+-        }
++        intList.stream().forEach(ints -> graphicsObj.addFillet(ints, true));
+     }
+ 
+     private List<int[]> listToIntLists(List<Integer> input) {
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/afp/AFPResourceManager.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/afp/AFPResourceManager.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/afp/AFPResourceManager.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/afp/AFPResourceManager.java	2026-07-01 09:45:24.527900580 +0100
+@@ -304,12 +304,12 @@
+     public boolean includeCachedObject(AFPResourceInfo resourceInfo, AFPObjectAreaInfo areaInfo) {
+         List<AbstractCachedObject> cachedObjectList = includeObjectCache.get(resourceInfo);
+         if (cachedObjectList != null && includeCached) {
+-            for (AbstractCachedObject cachedObject : cachedObjectList) {
++            cachedObjectList.stream().forEach(cachedObject -> {
+                 if (areaInfo != null && cachedObjectList.size() == 1) {
+                     cachedObject.dataObjectInfo.setObjectAreaInfo(areaInfo);
+                 }
+                 cachedObject.includeObject();
+-            }
++            });
+             return true;
+         } else {
+             return false;
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/afp/fonts/AFPBase12FontCollection.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/afp/fonts/AFPBase12FontCollection.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/afp/fonts/AFPBase12FontCollection.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/afp/fonts/AFPBase12FontCollection.java	2026-07-01 09:45:24.528130828 +0100
+@@ -19,6 +19,8 @@
+ 
+ package org.apache.fop.afp.fonts;
+ 
++import java.util.stream.IntStream;
++
+ import org.apache.fop.afp.AFPEventProducer;
+ import org.apache.fop.fonts.Base14Font;
+ import org.apache.fop.fonts.Font;
+@@ -58,13 +60,14 @@
+         "60", "70", "80", "90", "00", "A0", "B0", "D0", "F0", "H0", "J0", "N0", "T0", "Z0"};
+ 
+     private void addCharacterSet(RasterFont font, String charsetName, Base14Font base14) {
+-        for (int i = 0; i < RASTER_SIZES.length; i++) {
+-            int size = RASTER_SIZES[i] * 1000;
+-            FopCharacterSet characterSet = new FopCharacterSet(
+-                    CharacterSet.DEFAULT_CODEPAGE, CharacterSet.DEFAULT_ENCODING,
+-                    charsetName + CHARSET_REF[i], base14, eventProducer);
+-            font.addCharacterSet(size, characterSet);
+-        }
++        IntStream.range(0, RASTER_SIZES.length)
++                 .forEach(i -> {
++                     int size = RASTER_SIZES[i] * 1000;
++                     FopCharacterSet characterSet = new FopCharacterSet(
++                             CharacterSet.DEFAULT_CODEPAGE, CharacterSet.DEFAULT_ENCODING,
++                             charsetName + CHARSET_REF[i], base14, eventProducer);
++                     font.addCharacterSet(size, characterSet);
++                 });
+     }
+ 
+     private int addFontProperties(FontInfo fontInfo, AFPFont font,
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/afp/modca/AbstractTripletStructuredObject.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/afp/modca/AbstractTripletStructuredObject.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/afp/modca/AbstractTripletStructuredObject.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/afp/modca/AbstractTripletStructuredObject.java	2026-07-01 09:45:24.528301158 +0100
+@@ -80,12 +80,7 @@
+      * @param tripletId the triplet identifier
+      */
+     private AbstractTriplet getTriplet(byte tripletId) {
+-        for (AbstractTriplet trip : triplets) {
+-            if (trip.getId() == tripletId) {
+-                return trip;
+-            }
+-        }
+-        return null;
++        return triplets.stream().filter(trip -> trip.getId() == tripletId).findFirst().orElse(null);
+     }
+ 
+     /**
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/afp/modca/GraphicsObject.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/afp/modca/GraphicsObject.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/afp/modca/GraphicsObject.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/afp/modca/GraphicsObject.java	2026-07-01 09:45:24.528475499 +0100
+@@ -382,9 +382,9 @@
+     /** {@inheritDoc} */
+     @Override
+     public void setComplete(boolean complete) {
+-        for (GraphicsData completedObject : objects) {
++        objects.stream().forEach(completedObject -> {
+             completedObject.setComplete(true);
+-        }
++        });
+         super.setComplete(complete);
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/area/AreaTreeHandler.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/AreaTreeHandler.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/area/AreaTreeHandler.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/AreaTreeHandler.java	2026-07-01 09:45:24.528678646 +0100
+@@ -241,9 +241,9 @@
+     }
+ 
+     private void wrapAndAddExtensionAttachments(List<ExtensionAttachment> list) {
+-        for (ExtensionAttachment attachment : list) {
++        list.stream().forEach(attachment -> {
+             addOffDocumentItem(new OffDocumentExtensionAttachment(attachment));
+-        }
++        });
+     }
+ 
+     /**
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/area/AreaTreeObject.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/AreaTreeObject.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/area/AreaTreeObject.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/AreaTreeObject.java	2026-07-01 09:45:24.528892357 +0100
+@@ -78,9 +78,9 @@
+         if (atts == null || atts.size() == 0) {
+             return;
+         }
+-        for (Map.Entry<QName, String> e : atts.entrySet()) {
++        atts.entrySet().stream().forEach(e -> {
+             setForeignAttribute(e.getKey(), e.getValue());
+-        }
++        });
+     }
+ 
+     /**
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/area/BlockParent.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/BlockParent.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/area/BlockParent.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/BlockParent.java	2026-07-01 09:45:24.529081208 +0100
+@@ -139,9 +139,9 @@
+ 
+     public void activateEffectiveIPD() {
+         if (children != null) {
+-            for (Area area : children) {
++            children.stream().forEach(area -> {
+                 area.activateEffectiveIPD();
+-            }
++            });
+         }
+     }
+ }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/area/BookmarkData.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/BookmarkData.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/area/BookmarkData.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/BookmarkData.java	2026-07-01 09:45:24.529270800 +0100
+@@ -229,9 +229,9 @@
+         //Notify all child bookmarks
+         List<Resolvable> refs = unresolvedIDRefs.get(id);
+         if (refs != null) {
+-            for (Resolvable res : refs) {
++            refs.stream().forEach(res -> {
+                 res.resolveIDRef(id, pages);
+-            }
++            });
+         }
+         unresolvedIDRefs.remove(id);
+     }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/area/IDTracker.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/IDTracker.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/area/IDTracker.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/IDTracker.java	2026-07-01 09:45:24.529476358 +0100
+@@ -120,9 +120,9 @@
+         List<PageViewport> idLocs = idLocations.get(id);
+         Set<Resolvable> todo = unresolvedIDRefs.get(id);
+         if (todo != null) {
+-            for (Resolvable res : todo) {
++            todo.stream().forEach(res -> {
+                 res.resolveIDRef(id, idLocs);
+-            }
++            });
+             unresolvedIDRefs.remove(id);
+         }
+     }
+@@ -247,13 +247,13 @@
+      */
+     public void replacePageViewPort(PageViewport oldPageViewPort, PageViewport newPageViewPort) {
+ 
+-        for (List<PageViewport> viewPortList : idLocations.values()) {
++        idLocations.values().stream().forEach(viewPortList -> {
+             for (int i = 0, len = viewPortList.size(); i < len; i++) {
+                 PageViewport currPV = viewPortList.get(i);
+                 if (currPV == oldPageViewPort) {
+                     viewPortList.set(i, newPageViewPort);
+                 }
+             }
+-        }
++        });
+     }
+ }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/area/inline/BasicLinkArea.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/inline/BasicLinkArea.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/area/inline/BasicLinkArea.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/inline/BasicLinkArea.java	2026-07-01 09:45:24.530671225 +0100
+@@ -47,9 +47,9 @@
+         /* Make this area start at its beforest child. */
+         setBlockProgressionOffset(getBlockProgressionOffset() + minChildOffset);
+         /* Update children offsets accordingly. */
+-        for (InlineArea inline : inlines) {
++        inlines.stream().forEach(inline -> {
+             inline.setBlockProgressionOffset(inline.getBlockProgressionOffset() - minChildOffset);
+-        }
++        });
+         setBPD(getVirtualBPD());
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/area/inline/InlineParent.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/inline/InlineParent.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/area/inline/InlineParent.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/inline/InlineParent.java	2026-07-01 09:45:24.530870243 +0100
+@@ -130,9 +130,9 @@
+      * signalling that they will inherit the level of their parent text area.
+      */
+     public void resetChildrenLevel() {
+-        for (InlineArea inline : inlines) {
++        inlines.stream().forEach(inline -> {
+             (inline).resetBidiLevel();
+-        }
++        });
+     }
+ 
+     private void updateLevel(int newLevel) {
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/area/inline/TextArea.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/inline/TextArea.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/area/inline/TextArea.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/inline/TextArea.java	2026-07-01 09:45:24.531056241 +0100
+@@ -152,14 +152,14 @@
+     public String getText() {
+         StringBuilder text = new StringBuilder();
+         // assemble the text
+-        for (InlineArea inline : inlines) {
++        inlines.stream().forEach(inline -> {
+             if (inline instanceof WordArea) {
+                 text.append(((WordArea) inline).getWord());
+             } else {
+                 assert (inline instanceof SpaceArea);
+                 text.append(((SpaceArea) inline).getSpace());
+             }
+-        }
++        });
+         return text.toString();
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/area/LinkResolver.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/LinkResolver.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/area/LinkResolver.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/LinkResolver.java	2026-07-01 09:45:24.529693902 +0100
+@@ -115,9 +115,9 @@
+         if (dependents != null) {
+             List<PageViewport> pages = new ArrayList<PageViewport>();
+             pages.add(pv);
+-            for (Resolvable r : dependents) {
++            dependents.stream().forEach(r -> {
+                 r.resolveIDRef(id, pages);
+-            }
++            });
+         }
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/area/MainReference.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/MainReference.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/area/MainReference.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/MainReference.java	2026-07-01 09:45:24.529905476 +0100
+@@ -132,9 +132,9 @@
+      */
+     public void setWritingModeTraits(WritingModeTraitsGetter wmtg) {
+         this.wmtg = wmtg;
+-        for (Span s : getSpans()) {
++        getSpans().stream().forEach(s -> {
+             s.setWritingModeTraits(wmtg);
+-        }
++        });
+     }
+ 
+ }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/area/PageViewport.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/PageViewport.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/area/PageViewport.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/PageViewport.java	2026-07-01 09:45:24.530096050 +0100
+@@ -344,9 +344,9 @@
+             if (unresolvedIDRefs != null) {
+                 List<Resolvable> todo = unresolvedIDRefs.get(id);
+                 if (todo != null) {
+-                    for (Resolvable res : todo) {
++                    todo.stream().forEach(res -> {
+                         res.resolveIDRef(id, pages);
+-                    }
++                    });
+                 }
+             }
+         }
+@@ -423,9 +423,9 @@
+         page = (Page) in.readObject();
+         unresolvedIDRefs = page.getUnresolvedReferences();
+         if (unresolvedIDRefs != null && pendingResolved != null) {
+-            for (Map.Entry<String, List<PageViewport>> e : pendingResolved.entrySet()) {
++            pendingResolved.entrySet().stream().forEach(e -> {
+                 resolveIDRef(e.getKey(), e.getValue());
+-            }
++            });
+             pendingResolved = null;
+         }
+     }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/area/RenderPagesModel.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/RenderPagesModel.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/area/RenderPagesModel.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/RenderPagesModel.java	2026-07-01 09:45:24.530308551 +0100
+@@ -234,9 +234,9 @@
+     }
+ 
+     private void processOffDocumentItems(List<OffDocumentItem> list) {
+-        for (OffDocumentItem oDI : list) {
++        list.stream().forEach(oDI -> {
+             renderer.processOffDocumentItem(oDI);
+-        }
++        });
+     }
+ 
+     /**
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/area/Span.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/Span.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/area/Span.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/area/Span.java	2026-07-01 09:45:24.530495377 +0100
+@@ -204,15 +204,15 @@
+         switch (wmtg.getColumnProgressionDirection().getEnumValue()) {
+         case Constants.EN_RL:
+             setBidiLevel(1);
+-            for (NormalFlow flowArea1 : flowAreas) {
++            flowAreas.stream().forEach(flowArea1 -> {
+                 flowArea1.setBidiLevel(1);
+-            }
++            });
+             break;
+         default:
+             resetBidiLevel();
+-            for (NormalFlow flowArea : flowAreas) {
++            flowAreas.stream().forEach(flowArea -> {
+                 flowArea.resetBidiLevel();
+-            }
++            });
+             break;
+         }
+         addTrait(Trait.INLINE_PROGRESSION_DIRECTION, wmtg.getInlineProgressionDirection());
 diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/cli/Main.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/cli/Main.java
 --- fop-2.8/fop-core/src/main/java/org/apache/fop/cli/Main.java	2022-11-02 12:18:41.000000000 +0000
-+++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/cli/Main.java	2022-11-28 06:16:41.281104870 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/cli/Main.java	2026-07-01 09:45:24.531238283 +0100
 @@ -191,9 +191,9 @@
              // System.exit(0) called to close AWT/SVG-created threads, if any.
              // AWTRenderer closes with window shutdown, so exit() should not
@@ -14,3 +374,3484 @@ diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/cli/Main.j
          } catch (Exception e) {
              if (options != null) {
                  options.getLogger().error("Exception", e);
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/bidi/UnflattenProcessor.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/bidi/UnflattenProcessor.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/bidi/UnflattenProcessor.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/bidi/UnflattenProcessor.java	2026-07-01 09:45:24.531443737 +0100
+@@ -60,9 +60,9 @@
+     }
+     List unflatten() {
+         if (il != null) {
+-            for (InlineArea anIl : il) {
++            il.stream().forEach(anIl -> {
+                 process(anIl);
+-            }
++            });
+         }
+         finishAll();
+         return ilNew;
+@@ -189,12 +189,7 @@
+         }
+     }
+     private boolean alreadyUnflattened(InlineArea ia) {
+-        for (InlineArea anIlNew : ilNew) {
+-            if (ia.isAncestorOrSelf(anIlNew)) {
+-                return true;
+-            }
+-        }
+-        return false;
++        return ilNew.stream().anyMatch(anIlNew -> ia.isAncestorOrSelf(anIlNew));
+     }
+     private void pushInlineContainers(List<InlineParent> ich) {
+         LinkedList<InlineParent> icl = new LinkedList<InlineParent>();
+@@ -205,10 +200,10 @@
+                 icl.addFirst(ic);
+             }
+         }
+-        for (InlineParent ic : icl) {
++        icl.stream().forEach(ic -> {
+             icOrig.push(ic);
+             icNew.push(generateInlineContainer(ic));
+-        }
++        });
+     }
+     private void pushTextContainer(TextArea tc, InlineArea ia) {
+         if (tc instanceof ResolvedPageNumber) {
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/fonts/GlyphTable.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/fonts/GlyphTable.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/fonts/GlyphTable.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/fonts/GlyphTable.java	2026-07-01 09:45:24.531715304 +0100
+@@ -121,10 +121,10 @@
+     public List<LookupTable> getLookupTables() {
+         TreeSet<String> lids = new TreeSet<String>(lookupTables.keySet());
+         List<LookupTable> ltl = new ArrayList<LookupTable>(lids.size());
+-        for (Object lid1 : lids) {
++        lids.stream().forEach(lid1 -> {
+             String lid = (String) lid1;
+             ltl.add(lookupTables.get(lid));
+-        }
++        });
+         return ltl;
+     }
+ 
+@@ -166,10 +166,10 @@
+      */
+     protected void freezeSubtables() {
+         if (!frozen) {
+-            for (Object o : lookupTables.values()) {
++            lookupTables.values().stream().forEach(o -> {
+                 LookupTable lt = (LookupTable) o;
+                 lt.freezeSubtables(lookupTables);
+-            }
++            });
+             frozen = true;
+         }
+     }
+@@ -243,13 +243,13 @@
+         TreeSet<LookupTable> lts = new TreeSet<LookupTable>();
+         List<String> ids;
+         if ((ids = lookups.get(ls)) != null) {
+-            for (Object id : ids) {
++            ids.stream().forEach(id -> {
+                 String lid = (String) id;
+                 LookupTable lt;
+                 if ((lt = lookupTables.get(lid)) != null) {
+                     lts.add(lt);
+                 }
+-            }
++            });
+         }
+         return new ArrayList<LookupTable>(lts);
+     }
+@@ -264,19 +264,19 @@
+     public UseSpec[] assembleLookups(String[] features, Map<LookupSpec, List<LookupTable>> lookups) {
+         TreeSet<UseSpec> uss = new TreeSet<UseSpec>();
+         for (String feature : features) {
+-            for (Object o : lookups.entrySet()) {
++            lookups.entrySet().stream().forEach(o -> {
+                 Map.Entry<LookupSpec, List<LookupTable>> e = (Map.Entry<LookupSpec, List<LookupTable>>) o;
+                 LookupSpec ls = e.getKey();
+                 if (ls.getFeature().equals(feature)) {
+                     List<LookupTable> ltl = e.getValue();
+                     if (ltl != null) {
+-                        for (Object aLtl : ltl) {
++                        ltl.stream().forEach(aLtl -> {
+                             LookupTable lt = (LookupTable) aLtl;
+                             uss.add(new UseSpec(lt, feature));
+-                        }
++                        });
+                     }
+                 }
+-            }
++            });
+         }
+         return uss.toArray(new UseSpec [ uss.size() ]);
+     }
+@@ -500,10 +500,10 @@
+             this.idOrdinal = Integer.parseInt(id.substring(2));
+             this.subtables = new LinkedList<GlyphSubtable>();
+             if (subtables != null) {
+-                for (Object subtable : subtables) {
++                subtables.stream().forEach(subtable -> {
+                     GlyphSubtable st = (GlyphSubtable) subtable;
+                     addSubtable(st);
+-                }
++                });
+             }
+         }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/fonts/OTFAdvancedTypographicTableReader.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/fonts/OTFAdvancedTypographicTableReader.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/fonts/OTFAdvancedTypographicTableReader.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/fonts/OTFAdvancedTypographicTableReader.java	2026-07-01 09:45:24.532264012 +0100
+@@ -3575,10 +3575,10 @@
+     }
+ 
+     private void constructLookupsFeatures(Map lookups, String st, String lt, List<String> fids) {
+-        for (Object fid1 : fids) {
++        fids.stream().forEach(fid1 -> {
+             String fid = (String) fid1;
+             constructLookupsFeature(lookups, st, lt, fid);
+-        }
++        });
+     }
+ 
+     private void constructLookupsLanguage(Map lookups, String st, String lt, Map<String, Object> languages) {
+@@ -3595,15 +3595,15 @@
+     }
+ 
+     private void constructLookupsLanguages(Map lookups, String st, List<String> ll, Map<String, Object> languages) {
+-        for (Object aLl : ll) {
++        ll.stream().forEach(aLl -> {
+             String lt = (String) aLl;
+             constructLookupsLanguage(lookups, st, lt, languages);
+-        }
++        });
+     }
+ 
+     private Map constructLookups() {
+         Map<GlyphTable.LookupSpec, List<String>> lookups = new java.util.LinkedHashMap();
+-        for (Object o : seScripts.keySet()) {
++        seScripts.keySet().stream().forEach(o -> {
+             String st = (String) o;
+             Object[] sp = (Object[]) seScripts.get(st);
+             if (sp != null) {
+@@ -3616,7 +3616,7 @@
+                     constructLookupsLanguages(lookups, st, (List) sp[1], languages);
+                 }
+             }
+-        }
++        });
+         return lookups;
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/util/CharAssociation.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/util/CharAssociation.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/util/CharAssociation.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/util/CharAssociation.java	2026-07-01 09:45:24.532873087 +0100
+@@ -216,9 +216,9 @@
+      */
+     public void mergePredications(CharAssociation ca) {
+         if (ca.predications != null) {
+-            for (Map.Entry<String, Object> e : ca.predications.entrySet()) {
++            ca.predications.entrySet().stream().forEach(e -> {
+                 mergePredication(e.getKey(), e.getValue());
+-            }
++            });
+         }
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/util/NumberConverter.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/util/NumberConverter.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/util/NumberConverter.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/complexscripts/util/NumberConverter.java	2026-07-01 09:45:24.533137589 +0100
+@@ -625,9 +625,9 @@
+ 
+     private static List<String> convertWordCase(List<String> words, int caseType) {
+         List<String> wl = new ArrayList<String>();
+-        for (String w : words) {
++        words.stream().forEach(w -> {
+             wl.add(convertWordCase(w, caseType));
+-        }
++        });
+         return wl;
+     }
+ 
+@@ -654,12 +654,12 @@
+ 
+     private static String joinWords(List<String> words, String separator) {
+         StringBuffer sb = new StringBuffer();
+-        for (String w : words) {
++        words.stream().forEach(w -> {
+             if (sb.length() > 0) {
+                 sb.append(separator);
+             }
+             sb.append(w);
+-        }
++        });
+         return sb.toString();
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/configuration/DefaultConfiguration.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/configuration/DefaultConfiguration.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/configuration/DefaultConfiguration.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/configuration/DefaultConfiguration.java	2026-07-01 09:45:24.533460036 +0100
+@@ -284,12 +284,12 @@
+         Collections.reverse(path);
+ 
+         StringBuilder sb = new StringBuilder();
+-        for (String s : path) {
++        path.stream().forEach(s -> {
+             if (sb.length() > 0) {
+                 sb.append("/");
+             }
+             sb.append(s);
+-        }
++        });
+         return sb.toString();
+     }
+ }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fo/flow/Markers.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fo/flow/Markers.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fo/flow/Markers.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fo/flow/Markers.java	2026-07-01 09:45:24.533663126 +0100
+@@ -82,7 +82,7 @@
+                 }
+                 // first on scope: only put in new values, leave current
+                 Set<Map.Entry<String, Marker>> entries = marks.entrySet();
+-                for (Map.Entry<String, Marker> entry : entries) {
++                entries.stream().forEach(entry -> {
+                     String key = entry.getKey();
+                     Marker marker = entry.getValue();
+                     if (!firstQualifyingIsFirst.containsKey(key)) {
+@@ -97,7 +97,7 @@
+                             log.trace("Adding marker " + key + " to firstQualifyingIsAny");
+                         }
+                     }
+-                }
++                });
+                 if (lastQualifyingIsFirst == null) {
+                     lastQualifyingIsFirst = new HashMap<String, Marker>();
+                 }
+@@ -109,7 +109,7 @@
+             } else {
+                 // first on scope: only put in new values, leave current
+                 Set<Map.Entry<String, Marker>> entries = marks.entrySet();
+-                for (Map.Entry<String, Marker> entry : entries) {
++                entries.stream().forEach(entry -> {
+                     String key = entry.getKey();
+                     Marker marker = entry.getValue();
+                     if (!firstQualifyingIsAny.containsKey(key)) {
+@@ -118,7 +118,7 @@
+                             log.trace("Adding marker " + key + " to firstQualifyingIsAny");
+                         }
+                     }
+-                }
++                });
+             }
+         } else {
+             // at the end of the area, register is-last and any areas
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fo/flow/table/CollapsingBorderResolver.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fo/flow/table/CollapsingBorderResolver.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fo/flow/table/CollapsingBorderResolver.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fo/flow/table/CollapsingBorderResolver.java	2026-07-01 09:45:24.533906368 +0100
+@@ -121,10 +121,10 @@
+         /** Integrates the border-after of the part. */
+         void resolveBordersLastRowInPart(List<GridUnit> row, boolean withNormal,
+                 boolean withLeadingTrailing, boolean withRest) {
+-            for (Object aRow : row) {
++            row.stream().forEach(aRow -> {
+                 ((GridUnit) aRow).integrateBorderSegment(CommonBorderPaddingBackground.AFTER,
+                         tablePart, withNormal, withLeadingTrailing, withRest);
+-            }
++            });
+         }
+ 
+         /**
+@@ -203,7 +203,7 @@
+             // Resolve before- and after-borders for the table-row
+             if (container instanceof TableRow) {
+                 TableRow tableRow = (TableRow) container;
+-                for (Object aRow : row) {
++                row.stream().forEach(aRow -> {
+                     GridUnit gu = (GridUnit) aRow;
+                     boolean first = (gu.getRowSpanIndex() == 0);
+                     boolean last = gu.isLastGridUnitRowSpan();
+@@ -211,7 +211,7 @@
+                             first, first, true);
+                     gu.integrateBorderSegment(CommonBorderPaddingBackground.AFTER, tableRow,
+                             last, last, true);
+-                }
++                });
+                 borderStart = collapsingBorderModel.determineWinner(borderStart,
+                         tableRow.borderStart);
+                 borderEnd = collapsingBorderModel.determineWinner(borderEnd,
+@@ -219,10 +219,10 @@
+             }
+             if (firstInPart) {
+                 // Integrate the border-before of the part
+-                for (Object aRow : row) {
++                row.stream().forEach(aRow -> {
+                     ((GridUnit) aRow).integrateBorderSegment(
+                             CommonBorderPaddingBackground.BEFORE, tablePart, true, true, true);
+-                }
++                });
+                 firstInPart = false;
+             }
+             // Resolve start/end borders in the row
+@@ -269,11 +269,11 @@
+                  * To represent those values we (ab)use the normal and the rest fields of
+                  * ConditionalBorder. But strictly speaking this is not their purposes.
+                  */
+-                for (Object aRow : row) {
++                row.stream().forEach(aRow -> {
+                     ConditionalBorder borderBefore = ((GridUnit) aRow).borderBefore;
+                     borderBefore.leadingTrailing = borderBefore.normal;
+                     borderBefore.rest = borderBefore.normal;
+-                }
++                });
+                 resolveBordersFirstRowInTable(row, true, false, true);
+             }
+             previousRow = row;
+@@ -291,12 +291,12 @@
+              * grid units from the body will always resolve against the same, normal
+              * header border.
+              */
+-            for (Object aPreviousRow : previousRow) {
++            previousRow.stream().forEach(aPreviousRow -> {
+                 ConditionalBorder borderAfter = ((GridUnit) aPreviousRow).borderAfter;
+                 borderAfter.leadingTrailing = borderAfter.normal;
+                 borderAfter.rest = borderAfter.normal;
+                 leadingBorders.add(borderAfter);
+-            }
++            });
+             /* TODO Temporary hack for resolved borders in header */
+             headerLastRow = previousRow;
+             /* End of temporary hack */
+@@ -324,12 +324,12 @@
+             resolveBordersLastRowInPart(footerLastRow, true, true, true);
+             trailingBorders = new ArrayList(table.getNumberOfColumns());
+             // See same method in ResolverInHeader for an explanation of the hack
+-            for (Object aFooterFirstRow : footerFirstRow) {
++            footerFirstRow.stream().forEach(aFooterFirstRow -> {
+                 ConditionalBorder borderBefore = ((GridUnit) aFooterFirstRow).borderBefore;
+                 borderBefore.leadingTrailing = borderBefore.normal;
+                 borderBefore.rest = borderBefore.normal;
+                 trailingBorders.add(borderBefore);
+-            }
++            });
+         }
+ 
+         void endTable() {
+@@ -337,11 +337,11 @@
+             // first row of table-footer
+             resolveBordersBetweenRows(previousRow, footerFirstRow);
+             // See endRow method in ResolverInHeader for an explanation of the hack
+-            for (Object aFooterLastRow : footerLastRow) {
++            footerLastRow.stream().forEach(aFooterLastRow -> {
+                 ConditionalBorder borderAfter = ((GridUnit) aFooterLastRow).borderAfter;
+                 borderAfter.leadingTrailing = borderAfter.normal;
+                 borderAfter.rest = borderAfter.normal;
+-            }
++            });
+             resolveBordersLastRowInTable(footerLastRow, true, false, true);
+         }
+     }
+@@ -364,10 +364,10 @@
+             previousRow = row;
+             if (firstInBody) {
+                 firstInBody = false;
+-                for (Object aRow : row) {
++                row.stream().forEach(aRow -> {
+                     GridUnit gu = (GridUnit) aRow;
+                     gu.borderBefore.leadingTrailing = gu.borderBefore.normal;
+-                }
++                });
+             }
+         }
+ 
+@@ -378,10 +378,10 @@
+                 // Trailing and rest borders already resolved with integrateTrailingBorders
+                 resolveBordersLastRowInTable(previousRow, true, false, false);
+             }
+-            for (Object aPreviousRow : previousRow) {
++            previousRow.stream().forEach(aPreviousRow -> {
+                 GridUnit gu = (GridUnit) aPreviousRow;
+                 gu.borderAfter.leadingTrailing = gu.borderAfter.normal;
+-            }
++            });
+         }
+     }
+ 
+@@ -456,16 +456,16 @@
+         delegate = null;
+         /* TODO Temporary hack for resolved borders in header */
+         if (headerLastRow != null) {
+-            for (Object aHeaderLastRow : headerLastRow) {
++            headerLastRow.stream().forEach(aHeaderLastRow -> {
+                 GridUnit gu = (GridUnit) aHeaderLastRow;
+                 gu.borderAfter.leadingTrailing = gu.borderAfter.normal;
+-            }
++            });
+         }
+         if (footerLastRow != null) {
+-            for (Object aFooterLastRow : footerLastRow) {
++            footerLastRow.stream().forEach(aFooterLastRow -> {
+                 GridUnit gu = (GridUnit) aFooterLastRow;
+                 gu.borderAfter.leadingTrailing = gu.borderAfter.normal;
+-            }
++            });
+         }
+         /* End of temporary hack */
+     }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fo/flow/table/PrimaryGridUnit.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fo/flow/table/PrimaryGridUnit.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fo/flow/table/PrimaryGridUnit.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fo/flow/table/PrimaryGridUnit.java	2026-07-01 09:45:24.534206078 +0100
+@@ -307,12 +307,12 @@
+             widths[0] = getCell().getCommonBorderPaddingBackground().getBorderStartWidth(false);
+             widths[1] = getCell().getCommonBorderPaddingBackground().getBorderEndWidth(false);
+         } else {
+-            for (GridUnit[] gridUnits : rows) {
++            rows.stream().forEach(gridUnits -> {
+                 widths[0] = Math.max(widths[0],
+                         gridUnits[0].borderStart.getBorderInfo().getRetainedWidth());
+                 widths[1] = Math.max(widths[1], gridUnits[gridUnits.length - 1].borderEnd
+                         .getBorderInfo().getRetainedWidth());
+-            }
++            });
+         }
+         return widths;
+     }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/LayoutMasterSet.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/LayoutMasterSet.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/LayoutMasterSet.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/LayoutMasterSet.java	2026-07-01 09:45:24.534410752 +0100
+@@ -197,12 +197,7 @@
+      * @return true when the region name specified has a region in this LayoutMasterSet
+      */
+     public boolean regionNameExists(String regionName) {
+-        for (SimplePageMaster spm : simplePageMasters.values()) {
+-            if (spm.regionNameExists(regionName)) {
+-                return true;
+-            }
+-        }
+-        return false;
++        return simplePageMasters.values().stream().anyMatch(spm -> spm.regionNameExists(regionName));
+     }
+ 
+     /** {@inheritDoc} */
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/PageSequenceMaster.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/PageSequenceMaster.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/PageSequenceMaster.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/PageSequenceMaster.java	2026-07-01 09:45:24.534597350 +0100
+@@ -146,9 +146,9 @@
+         currentSubSequenceNumber = -1;
+         currentSubSequence = null;
+         if (subSequenceSpecifiers != null) {
+-            for (SubSequenceSpecifier subSequenceSpecifier : subSequenceSpecifiers) {
++            subSequenceSpecifiers.stream().forEach(subSequenceSpecifier -> {
+                 subSequenceSpecifier.reset();
+-            }
++            });
+         }
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/RepeatablePageMasterAlternatives.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/RepeatablePageMasterAlternatives.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/RepeatablePageMasterAlternatives.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/RepeatablePageMasterAlternatives.java	2026-07-01 09:45:24.534802929 +0100
+@@ -226,13 +226,12 @@
+         //Look for rest spm that cannot terminate
+         ArrayList<ConditionalPageMasterReference> rest
+                 = new ArrayList<ConditionalPageMasterReference>();
+-        for (ConditionalPageMasterReference cpmr
+-                : conditionalPageMasterRefs) {
++        conditionalPageMasterRefs.stream().forEach(cpmr -> {
+             if (cpmr.isValid(true, false, false, false)
+                     || cpmr.isValid(false, false, false, false)) {
+                 rest.add(cpmr);
+             }
+-        }
++        });
+         if (!rest.isEmpty()) {
+             willTerminate = false;
+             for (ConditionalPageMasterReference cpmr : rest) {
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/SimplePageMaster.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/SimplePageMaster.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/SimplePageMaster.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fo/pagination/SimplePageMaster.java	2026-07-01 09:45:24.534992605 +0100
+@@ -257,12 +257,7 @@
+      * @return True if a region with this name exists
+      */
+     protected boolean regionNameExists(String regionName) {
+-        for (Region r : regions.values()) {
+-            if (r.getRegionName().equals(regionName)) {
+-                return true;
+-            }
+-        }
+-        return false;
++        return regions.values().stream().anyMatch(r -> r.getRegionName().equals(regionName));
+     }
+ 
+     /** @return the Common Margin Properties-Block. */
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/autodetect/FontInfoFinder.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/autodetect/FontInfoFinder.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/autodetect/FontInfoFinder.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/autodetect/FontInfoFinder.java	2026-07-01 09:45:24.536705276 +0100
+@@ -101,7 +101,7 @@
+             triplets.add(new FontTriplet(strippedName, Font.STYLE_NORMAL, Font.WEIGHT_NORMAL));
+         }
+         Set<String> familyNames = customFont.getFamilyNames();
+-        for (String familyName : familyNames) {
++        familyNames.stream().forEach(familyName -> {
+             familyName = stripQuotes(familyName);
+             if (!fullName.equals(familyName)) {
+                 /* Heuristic:
+@@ -113,7 +113,7 @@
+                     : fullName.length();
+                 triplets.add(new FontTriplet(familyName, style, weight, priority));
+             }
+-        }
++        });
+     }
+ 
+     private final Pattern quotePattern = Pattern.compile("'");
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/CFFToType1Font.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/CFFToType1Font.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/CFFToType1Font.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/CFFToType1Font.java	2026-07-01 09:45:24.535182718 +0100
+@@ -69,7 +69,7 @@
+ 
+     private List<Map<Integer, Integer>> splitGlyphs(Map<Integer, Integer> glyphs) {
+         List<Map<Integer, Integer>> allGlyphs = new ArrayList<Map<Integer, Integer>>();
+-        for (Map.Entry<Integer, Integer> x : glyphs.entrySet()) {
++        glyphs.entrySet().stream().forEach(x -> {
+             int k = x.getKey();
+             int v = x.getValue();
+             int pot = v / 256;
+@@ -80,7 +80,7 @@
+                 allGlyphs.add(glyphsPerFont);
+             }
+             allGlyphs.get(pot).put(k, v);
+-        }
++        });
+         return allGlyphs;
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/CIDSubset.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/CIDSubset.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/CIDSubset.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/CIDSubset.java	2026-07-01 09:45:24.535343709 +0100
+@@ -152,9 +152,9 @@
+     /** {@inheritDoc} */
+     public BitSet getGlyphIndices() {
+         BitSet bitset = new BitSet();
+-        for (Integer cid : usedGlyphs.keySet()) {
++        usedGlyphs.keySet().stream().forEach(cid -> {
+             bitset.set(cid);
+-        }
++        });
+         return bitset;
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/DefaultFontConfigurator.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/DefaultFontConfigurator.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/DefaultFontConfigurator.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/DefaultFontConfigurator.java	2026-07-01 09:45:24.535523633 +0100
+@@ -179,12 +179,12 @@
+             URI embedFile = embedFontInfo.getEmbedURI();
+             log.debug("Adding font " + (embedFile != null ? embedFile + ", " : "")
+                     + "metrics URI " + embedFontInfo.getMetricsURI());
+-            for (FontTriplet triplet : tripletList) {
++            tripletList.stream().forEach(triplet -> {
+                 log.debug("  Font triplet "
+                         + triplet.getName() + ", "
+                         + triplet.getStyle() + ", "
+                         + triplet.getWeight());
+-            }
++            });
+         }
+         return embedFontInfo;
+     }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/FontInfo.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/FontInfo.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/FontInfo.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/FontInfo.java	2026-07-01 09:45:24.535961327 +0100
+@@ -318,12 +318,12 @@
+ 
+     private List<FontTriplet> getTripletsForName(String fontName) {
+         List<FontTriplet> matchedTriplets = new ArrayList<FontTriplet>();
+-        for (FontTriplet triplet : triplets.keySet()) {
++        triplets.keySet().stream().forEach(triplet -> {
+             String tripletName = triplet.getName();
+             if (tripletName.toLowerCase().equals(fontName.toLowerCase())) {
+                 matchedTriplets.add(triplet);
+             }
+-        }
++        });
+         return matchedTriplets;
+     }
+ 
+@@ -582,11 +582,11 @@
+      */
+     public List<FontTriplet> getTripletsFor(String fontName) {
+         List<FontTriplet> foundTriplets = new ArrayList<FontTriplet>();
+-        for (Map.Entry<FontTriplet, String> tripletEntry : triplets.entrySet()) {
++        triplets.entrySet().stream().forEach(tripletEntry -> {
+             if (fontName.equals((tripletEntry.getValue()))) {
+                 foundTriplets.add(tripletEntry.getKey());
+             }
+-        }
++        });
+         return foundTriplets;
+     }
+ 
+@@ -645,15 +645,15 @@
+      */
+     public void dumpAllTripletsToSystemOut() {
+         SortedSet<String> entries = new TreeSet<String>();
+-        for (FontTriplet triplet : this.triplets.keySet()) {
++        this.triplets.keySet().stream().forEach(triplet -> {
+             String key = getInternalFontKey(triplet);
+             FontMetrics metrics = getMetricsFor(key);
+             entries.add(triplet.toString() + " -> " + key + " -> " + metrics.getFontName() + "\n");
+-        }
++        });
+         StringBuffer stringBuffer = new StringBuffer();
+-        for (String str : entries) {
++        entries.stream().forEach(str -> {
+             stringBuffer.append(str);
+-        }
++        });
+         System.out.println(stringBuffer.toString());
+     }
+ }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/Font.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/Font.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/Font.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/Font.java	2026-07-01 09:45:24.535723861 +0100
+@@ -22,6 +22,7 @@
+ import java.util.Collections;
+ import java.util.List;
+ import java.util.Map;
++import java.util.stream.IntStream;
+ 
+ import org.apache.commons.logging.Log;
+ import org.apache.commons.logging.LogFactory;
+@@ -444,13 +445,9 @@
+             return 0;
+         }
+         int wordLength = word.length();
+-        int width = 0;
+         char[] characters = new char[wordLength];
+         word.getChars(0, wordLength, characters, 0);
+-        for (int i = 0; i < wordLength; i++) {
+-            width += getCharWidth(characters[i]);
+-        }
+-        return width;
++        return IntStream.range(0, wordLength).map(i -> getCharWidth(characters[i])).sum();
+     }
+ 
+     /** {@inheritDoc} */
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/FontManagerConfigurator.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/FontManagerConfigurator.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/FontManagerConfigurator.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/FontManagerConfigurator.java	2026-07-01 09:45:24.536221625 +0100
+@@ -171,9 +171,9 @@
+     public static FontTriplet.Matcher createFontsMatcher(
+             List<String> fontFamilies, boolean strict) throws FOPException {
+         List<FontTriplet.Matcher> matcherList = new java.util.ArrayList<FontTriplet.Matcher>();
+-        for (String fontFamily : fontFamilies) {
++        fontFamilies.stream().forEach(fontFamily -> {
+                 matcherList.add(new FontFamilyRegExFontTripletMatcher(fontFamily));
+-        }
++        });
+         FontTriplet.Matcher orMatcher = new OrFontTripletMatcher(
+                 matcherList.toArray(new FontTriplet.Matcher[matcherList.size()]));
+         return orMatcher;
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/GlyphMapping.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/GlyphMapping.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/GlyphMapping.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/GlyphMapping.java	2026-07-01 10:55:21.568016542 +0100
+@@ -238,7 +238,6 @@
+             final Font font, MinOptMax letterSpaceIPD, MinOptMax[] letterSpaceAdjustArray,
+             char precedingChar, final char breakOpportunityChar, final boolean endsWithHyphen, int level) {
+         boolean kerning = font.hasKerning();
+-        MinOptMax wordIPD = MinOptMax.ZERO;
+ 
+         if (LOG.isDebugEnabled()) {
+             LOG.debug("PW: [" + startIndex + "," + endIndex + "]: {"
+@@ -248,29 +247,37 @@
+         }
+ 
+         CharSequence ics = text.subSequence(startIndex, endIndex);
+-        int offset = 0;
+-        for (int currentChar : CharUtilities.codepointsIter(ics)) {
++
++        final class StreamState {
++            private MinOptMax wordIPD = MinOptMax.ZERO;
++            private int offset = 0;
++        }
++
++        final StreamState s = new StreamState();
++        ics.codePoints().forEach(currentChar -> {
+ 
+             // character width
+             int charWidth = font.getCharWidth(currentChar);
+-            wordIPD = wordIPD.plus(charWidth);
++            s.wordIPD = s.wordIPD.plus(charWidth);
+ 
+             // kerning
+             if (kerning) {
+                 int kern = 0;
+-                if (offset > 0) {
+-                    int previousChar = Character.codePointAt(ics, offset - 1);
++                if (s.offset > 0) {
++                    int previousChar = Character.codePointAt(ics, s.offset - 1);
+                     kern = font.getKernValue(previousChar, currentChar);
+                 } else if (precedingChar != 0) {
+                     kern = font.getKernValue(precedingChar, currentChar);
+                 }
+                 if (kern != 0) {
+-                    addToLetterAdjust(letterSpaceAdjustArray, startIndex + offset, kern);
+-                    wordIPD = wordIPD.plus(kern);
++                    addToLetterAdjust(letterSpaceAdjustArray, startIndex + s.offset, kern);
++                    s.wordIPD = s.wordIPD.plus(kern);
+                 }
+             }
+-            offset++;
+-        }
++
++            ++s.offset;
++        });
++
+         if (kerning
+                 && (breakOpportunityChar != 0)
+                 && !isSpace(breakOpportunityChar)
+@@ -303,10 +310,10 @@
+             }
+         }
+         assert letterSpaces >= 0;
+-        wordIPD = wordIPD.plus(letterSpaceIPD.mult(letterSpaces));
++        s.wordIPD = s.wordIPD.plus(letterSpaceIPD.mult(letterSpaces));
+ 
+         // create and return the AreaInfo object
+-        return new GlyphMapping(startIndex, endIndex, 0, letterSpaces, wordIPD, endsWithHyphen, false,
++        return new GlyphMapping(startIndex, endIndex, 0, letterSpaces, s.wordIPD, endsWithHyphen, false,
+                 (breakOpportunityChar != 0) && !isSpace(breakOpportunityChar), font, level, null);
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/MultiByteFont.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/MultiByteFont.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/MultiByteFont.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/MultiByteFont.java	2026-07-01 09:45:24.536455345 +0100
+@@ -334,28 +334,28 @@
+         bitset.set(0);
+         bitset.set(1);
+         bitset.set(2);
+-        for (CMapSegment i : cmap) {
++        cmap.stream().forEach(i -> {
+             int start = i.getUnicodeStart();
+             int end = i.getUnicodeEnd();
+             int glyphIndex = i.getGlyphStartIndex();
+             while (start++ < end + 1) {
+                 bitset.set(glyphIndex++);
+             }
+-        }
++        });
+         return bitset;
+     }
+ 
+     protected char[] getChars() {
+         // the width array is set when the font is built
+         char[] chars = new char[width.length];
+-        for (CMapSegment i : cmap) {
++        cmap.stream().forEach(i -> {
+             int start = i.getUnicodeStart();
+             int end = i.getUnicodeEnd();
+             int glyphIndex = i.getGlyphStartIndex();
+             while (start < end + 1) {
+                 chars[glyphIndex++] = (char) start++;
+             }
+-        }
++        });
+         return chars;
+     }
+ 
+@@ -728,9 +728,9 @@
+ 
+         CharBuffer cb = CharBuffer.allocate(chars.size());
+ 
+-        for (char c : chars) {
++        chars.stream().forEach(c -> {
+             cb.put(c);
+-        }
++        });
+ 
+         cb.flip();
+         return cb;
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/substitute/FontQualifier.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/substitute/FontQualifier.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/substitute/FontQualifier.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/substitute/FontQualifier.java	2026-07-01 09:45:24.536949918 +0100
+@@ -155,12 +155,12 @@
+         List<FontTriplet> matchingTriplets = new java.util.ArrayList<FontTriplet>();
+ 
+         // try to find matching destination font triplet
+-        for (Object aFontFamilyValue : fontFamilyValue) {
++        fontFamilyValue.stream().forEach(aFontFamilyValue -> {
+             String fontFamilyString = (String) aFontFamilyValue;
+             Map<FontTriplet, String> triplets = fontInfo.getFontTriplets();
+             if (triplets != null) {
+                 Set<FontTriplet> tripletSet = triplets.keySet();
+-                for (Object aTripletSet : tripletSet) {
++                tripletSet.stream().forEach(aTripletSet -> {
+                     FontTriplet triplet = (FontTriplet) aTripletSet;
+                     String fontName = triplet.getName();
+ 
+@@ -206,9 +206,9 @@
+                             matchingTriplets.add(triplet);
+                         }
+                     }
+-                }
++                });
+             }
+-        }
++        });
+         return matchingTriplets;
+     }
+ 
+@@ -245,15 +245,15 @@
+         List<FontTriplet> triplets = new java.util.ArrayList<FontTriplet>();
+ 
+         AttributeValue fontFamilyValue = getFontFamily();
+-        for (Object aFontFamilyValue : fontFamilyValue) {
++        fontFamilyValue.stream().forEach(aFontFamilyValue -> {
+             String name = (String) aFontFamilyValue;
+ 
+             AttributeValue styleValue = getFontStyle();
+-            for (Object aStyleValue : styleValue) {
++            styleValue.stream().forEach(aStyleValue -> {
+                 String style = (String) aStyleValue;
+ 
+                 AttributeValue weightValue = getFontWeight();
+-                for (Object weightObj : weightValue) {
++                weightValue.stream().forEach(weightObj -> {
+                     if (weightObj instanceof FontWeightRange) {
+                         FontWeightRange fontWeightRange = (FontWeightRange) weightObj;
+                         int[] weightRange = fontWeightRange.toArray();
+@@ -269,9 +269,9 @@
+                         int weight = weightInteger;
+                         triplets.add(new FontTriplet(name, style, weight));
+                     }
+-                }
+-            }
+-        }
++                });
++            });
++        });
+         return triplets;
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/substitute/FontSubstitutions.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/substitute/FontSubstitutions.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/substitute/FontSubstitutions.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/substitute/FontSubstitutions.java	2026-07-01 09:45:24.537153501 +0100
+@@ -58,10 +58,10 @@
+ 
+             FontQualifier fromQualifier = substitution.getFromQualifier();
+             List<FontTriplet> tripletList = fromQualifier.getTriplets();
+-            for (Object aTripletList : tripletList) {
++            tripletList.stream().forEach(aTripletList -> {
+                 FontTriplet triplet = (FontTriplet) aTripletList;
+                 fontInfo.addFontProperties(internalFontKey, triplet);
+-            }
++            });
+         }
+     }
+ }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/OFFontLoader.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/OFFontLoader.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/OFFontLoader.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/OFFontLoader.java	2026-07-01 09:45:24.537332491 +0100
+@@ -240,7 +240,7 @@
+                         new Rectangle(bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]));
+             }
+         }
+-        for (CMapSegment segment : otf.getCMaps()) {
++        otf.getCMaps().stream().forEach(segment -> {
+             if (segment.getUnicodeStart() < 0xFFFE) {
+                 for (char u = (char)segment.getUnicodeStart(); u <= segment.getUnicodeEnd(); u++) {
+                     int codePoint = 0;
+@@ -261,7 +261,7 @@
+                     }
+                 }
+             }
+-        }
++        });
+     }
+ 
+     /**
+@@ -277,7 +277,7 @@
+             kerningSet = otf.getAnsiKerning().keySet();
+         }
+ 
+-        for (Integer kpx1 : kerningSet) {
++        kerningSet.stream().forEach(kpx1 -> {
+             Map<Integer, Integer> h2;
+             if (isCid) {
+                 h2 = otf.getKerning().get(kpx1);
+@@ -285,7 +285,7 @@
+                 h2 = otf.getAnsiKerning().get(kpx1);
+             }
+             returnFont.putKerningEntry(kpx1, h2);
+-        }
++        });
+     }
+ 
+     /**
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/OpenFont.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/OpenFont.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/OpenFont.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/OpenFont.java	2026-07-01 09:45:24.538035933 +0100
+@@ -615,9 +615,9 @@
+                             // Also add winAnsiWidth
+                             List<Integer> v = ansiIndex.get(j);
+                             if (v != null) {
+-                                for (Integer aIdx : v) {
++                                v.stream().forEach(aIdx -> {
+                                     ansiWidth[aIdx] = mtxTab[glyphIdx].getWx();
+-                                }
++                                });
+                             }
+ 
+                             //getLogger().debug("IIdx: " +
+@@ -1767,23 +1767,23 @@
+                     Integer cidKey2 = unicodeToGlyph(unicodeKey2);
+                     Integer kern = e.getValue();
+ 
+-                    for (Object o : mtxTab[cidKey2].getUnicodeIndex()) {
++                    mtxTab[cidKey2].getUnicodeIndex().stream().forEach(o -> {
+                         Integer unicodeKey = (Integer) o;
+                         Integer[] ansiKeys = unicodeToWinAnsi(unicodeKey);
+                         for (Integer ansiKey : ansiKeys) {
+                             akpx.put(ansiKey, kern);
+                         }
+-                    }
++                    });
+                 }
+ 
+                 if (akpx.size() > 0) {
+-                    for (Object o : mtxTab[cidKey1].getUnicodeIndex()) {
++                    mtxTab[cidKey1].getUnicodeIndex().stream().forEach(o -> {
+                         Integer unicodeKey = (Integer) o;
+                         Integer[] ansiKeys = unicodeToWinAnsi(unicodeKey);
+                         for (Integer ansiKey : ansiKeys) {
+                             ansiKerningTab.put(ansiKey, akpx);
+                         }
+-                    }
++                    });
+                 }
+             }
+         }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/OTFSubSetFile.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/OTFSubSetFile.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/OTFSubSetFile.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/OTFSubSetFile.java	2026-07-01 09:45:24.537582743 +0100
+@@ -153,7 +153,7 @@
+             for (int gid : subsetGlyphs.keySet()) {
+                 Type2CharString type2CharString = cffType1Font.getType2CharString(gid);
+                 List<Number> stack = new ArrayList<Number>();
+-                for (Object obj : type2CharString.getType1Sequence()) {
++                type2CharString.getType1Sequence().stream().forEach(obj -> {
+                     if (obj instanceof CharStringCommand) {
+                         String name = CharStringCommand.TYPE1_VOCABULARY.get(((CharStringCommand) obj).getKey());
+                         if (ACCENT_CMD.equals(name)) {
+@@ -166,7 +166,7 @@
+                     } else {
+                         stack.add((Number) obj);
+                     }
+-                }
++                });
+             }
+         }
+     }
+@@ -180,9 +180,9 @@
+         });
+ 
+        Map<Integer, Integer> result = new LinkedHashMap<Integer, Integer>();
+-       for (Entry<Integer, Integer> entry : list) {
++       list.stream().forEach(entry -> {
+            result.put(entry.getKey(), entry.getValue());
+-       }
++       });
+        return result;
+     }
+ 
+@@ -424,7 +424,7 @@
+             List<Integer> uniqueGroups = new ArrayList<Integer>();
+             Map<Integer, Integer> rangeMap = fdSelect.getRanges();
+             Integer[] ranges = rangeMap.keySet().toArray(new Integer[rangeMap.size()]);
+-            for (int gid : subsetGlyphs.keySet()) {
++            subsetGlyphs.keySet().stream().mapToInt(Integer::intValue).forEach(gid -> {
+                 int i = 0;
+                 for (Entry<Integer, Integer> entry : rangeMap.entrySet()) {
+                     int nextRange;
+@@ -442,7 +442,7 @@
+                     }
+                     i++;
+                 }
+-            }
++            });
+ 
+             //Prepare resources
+             globalIndexSubr = cffReader.getGlobalIndexSubr();
+@@ -455,9 +455,9 @@
+             subsetFDSelect = new LinkedHashMap<Integer, FDIndexReference>();
+ 
+             List<List<Integer>> foundLocalUniques = new ArrayList<List<Integer>>();
+-            for (int u : uniqueGroups) {
++            uniqueGroups.stream().mapToInt(Integer::intValue).forEach(u -> {
+                 foundLocalUniques.add(new ArrayList<Integer>());
+-            }
++            });
+             Map<Integer, Integer> gidHintMaskLengths = new HashMap<Integer, Integer>();
+             for (Entry<Integer, Integer> subsetGlyph : subsetGlyphs.entrySet()) {
+                 int gid = subsetGlyph.getKey();
+@@ -481,13 +481,13 @@
+             globalUniques.clear();
+             localUniques = null;
+ 
+-            for (List<Integer> foundLocalUnique : foundLocalUniques) {
++            foundLocalUniques.stream().forEach(foundLocalUnique -> {
+                 fdSubrs.add(new ArrayList<byte[]>());
+-            }
++            });
+             List<List<Integer>> foundLocalUniquesB = new ArrayList<List<Integer>>();
+-            for (int u : uniqueGroups) {
++            uniqueGroups.stream().mapToInt(Integer::intValue).forEach(u -> {
+                 foundLocalUniquesB.add(new ArrayList<Integer>());
+-            }
++            });
+             for (Entry<Integer, Integer> subsetGlyph : subsetGlyphs.entrySet()) {
+                 int gid = subsetGlyph.getKey();
+                 int value = subsetGlyph.getValue();
+@@ -520,9 +520,9 @@
+             writeCard16(subsetFDSelect.size());
+         } else {
+             writeByte(0); //Format
+-            for (FDIndexReference e : subsetFDSelect.values()) {
++            subsetFDSelect.values().stream().forEach(e -> {
+                 writeByte(e.getNewFDIndex());
+-            }
++            });
+         }
+     }
+ 
+@@ -545,12 +545,12 @@
+ 
+     protected List<Integer> getUsedFDFonts() {
+         List<Integer> uniqueNewRefs = new ArrayList<Integer>();
+-        for (FDIndexReference e : subsetFDSelect.values()) {
++        subsetFDSelect.values().stream().forEach(e -> {
+             int fdIndex = e.getOldFDIndex();
+             if (!uniqueNewRefs.contains(fdIndex)) {
+                 uniqueNewRefs.add(fdIndex);
+             }
+-        }
++        });
+         return uniqueNewRefs;
+     }
+ 
+@@ -1027,9 +1027,9 @@
+             }
+             i++;
+         }
+-        for (byte[] aDataArray : dataArray) {
++        dataArray.stream().forEach(aDataArray -> {
+             writeBytes(aDataArray);
+-        }
++        });
+         return hdrTotal + total;
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/TTFSubSetFile.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/TTFSubSetFile.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/TTFSubSetFile.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/truetype/TTFSubSetFile.java	2026-07-01 09:45:24.538445486 +0100
+@@ -403,13 +403,13 @@
+ 
+     protected int[] buildSubsetIndexToOrigIndexMap(Map<Integer, Integer> glyphs) {
+         int[] origIndexes = new int[glyphs.size()];
+-        for (Map.Entry<Integer, Integer> glyph : glyphs.entrySet()) {
++        glyphs.entrySet().stream().forEach(glyph -> {
+             int origIndex = glyph.getKey();
+             int subsetIndex = glyph.getValue();
+             if (origIndexes.length > subsetIndex) {
+                 origIndexes[subsetIndex] = origIndex;
+             }
+-        }
++        });
+         return origIndexes;
+     }
+ 
+@@ -431,7 +431,7 @@
+         if (entry != null) {
+             pad4();
+             //int offset = (int)entry.offset;
+-            for (Map.Entry<Integer, Integer> glyph : glyphs.entrySet()) {
++            glyphs.entrySet().stream().forEach(glyph -> {
+                 Integer origIndex = glyph.getKey();
+                 Integer subsetIndex = glyph.getValue();
+ 
+@@ -439,7 +439,7 @@
+                             mtxTab[origIndex].getWx());
+                 writeUShort(currentPos + subsetIndex * 4 + 2,
+                             mtxTab[origIndex].getLsb());
+-            }
++            });
+ 
+             updateCheckSum(currentPos, hmtxSize, hmtx);
+             currentPos += hmtxSize;
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/AdobeStandardEncoding.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/AdobeStandardEncoding.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/AdobeStandardEncoding.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/AdobeStandardEncoding.java	2026-07-01 09:45:24.538952941 +0100
+@@ -409,20 +409,11 @@
+     }
+ 
+     public static String getCharFromCodePoint(int codePoint) {
+-        for (AdobeStandardEncoding encoding : CACHE.values()) {
+-            if (encoding.getAdobeCodePoint() == codePoint) {
+-                return encoding.getAdobeName();
+-            }
+-        }
+-        return "";
++        return CACHE.values().stream().filter(encoding -> encoding.getAdobeCodePoint() == codePoint).findFirst().map(encoding -> encoding.getAdobeName()).orElse("");
+     }
+ 
+     public static char getUnicodeFromCodePoint(int codePoint) {
+-        for (AdobeStandardEncoding encoding : CACHE.values()) {
+-            if (encoding.getAdobeCodePoint() == codePoint) {
+-                return (char) encoding.getUnicodeIndex();
+-            }
+-        }
+-        return (char) -1;
++        return CACHE.values().stream().filter(encoding -> encoding.getAdobeCodePoint() == codePoint).findFirst().map(encoding -> (char) encoding.getUnicodeIndex())
++                .orElse((char) -1);
+     }
+ }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/AFMFile.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/AFMFile.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/AFMFile.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/AFMFile.java	2026-07-01 09:45:24.538728322 +0100
+@@ -455,7 +455,7 @@
+             LOG.debug("Overriding primary encoding of " + getFontName() + " with: " + encoding);
+         }
+         AFMCharMetrics[] mapped = new AFMCharMetrics[256];
+-        for (AFMCharMetrics cm : this.charMetrics) {
++        this.charMetrics.stream().forEach(cm -> {
+             NamedCharacter nc = cm.getCharacter();
+             if (nc.hasSingleUnicodeValue()) {
+                 int codePoint = encoding.mapChar(nc.getSingleUnicodeValue());
+@@ -493,7 +493,7 @@
+                 //No Unicode equivalent
+                 cm.setCharCode(-1);
+             }
+-        }
++        });
+     }
+ 
+     /** {@inheritDoc} */
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/PostscriptParser.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/PostscriptParser.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/PostscriptParser.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/PostscriptParser.java	2026-07-01 09:45:24.539171394 +0100
+@@ -139,12 +139,7 @@
+     }
+ 
+     private boolean hasMatch(String operator, List<PSElement> elements) {
+-        for (PSElement element : elements) {
+-            if (element.getOperator().equals(operator)) {
+-                return true;
+-            }
+-        }
+-        return false;
++        return elements.stream().anyMatch(element -> element.getOperator().equals(operator));
+     }
+ 
+     public PSElement createElement(String operator, String elementID, int startPoint) {
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/Type1FontLoader.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/Type1FontLoader.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/Type1FontLoader.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/Type1FontLoader.java	2026-07-01 09:45:24.539399309 +0100
+@@ -28,6 +28,7 @@
+ import java.util.HashSet;
+ import java.util.List;
+ import java.util.Set;
++import java.util.stream.IntStream;
+ 
+ import org.apache.commons.io.IOUtils;
+ import org.apache.commons.logging.Log;
+@@ -230,12 +231,12 @@
+         SingleByteEncoding encoding = singleFont.getEncoding();
+         Set<String> glyphNames = toGlyphSet(encoding.getCharNameMap());
+         List<AFMCharMetrics> charMetrics = afm.getCharMetrics();
+-        for (AFMCharMetrics metrics : charMetrics) {
++        charMetrics.stream().forEach(metrics -> {
+             String charName = metrics.getCharName();
+             if (charName != null && !glyphNames.contains(charName)) {
+                 addUnencodedCharacter(singleFont, metrics);
+             }
+-        }
++        });
+     }
+ 
+     private static void addUnencodedCharacter(SingleByteFont font, AFMCharMetrics metrics) {
+@@ -251,12 +252,10 @@
+      */
+     private void addUnencodedBasedOnAFM(AFMFile afm) {
+         List charMetrics = afm.getCharMetrics();
+-        for (int i = 0, c = afm.getCharCount(); i < c; i++) {
+-            AFMCharMetrics metrics = (AFMCharMetrics)charMetrics.get(i);
+-            if (!metrics.hasCharCode() && metrics.getCharacter() != null) {
+-                addUnencodedCharacter(singleFont, metrics);
+-            }
+-        }
++        IntStream.range(0, afm.getCharCount())
++                 .mapToObj(i -> (AFMCharMetrics) charMetrics.get(i))
++                 .filter(metrics -> !metrics.hasCharCode() && metrics.getCharacter() != null)
++                 .forEach(metrics -> addUnencodedCharacter(singleFont, metrics));
+     }
+ 
+     private void handleFontName(AFMFile afm, PFMFile pfm) {
+@@ -402,12 +401,10 @@
+ 
+             returnFont.setFirstChar(afm.getFirstChar());
+             returnFont.setLastChar(afm.getLastChar());
+-            for (AFMCharMetrics chm : afm.getCharMetrics()) {
+-                if (chm.hasCharCode()) {
+-                    singleFont.setWidth(chm.getCharCode(), (int) Math.round(chm.getWidthX()));
+-                    singleFont.setBoundingBox(chm.getCharCode(), chm.getBBox());
+-                }
+-            }
++            afm.getCharMetrics().stream().filter(AFMCharMetrics::hasCharCode).forEach(chm -> {
++                singleFont.setWidth(chm.getCharCode(), (int) Math.round(chm.getWidthX()));
++                singleFont.setBoundingBox(chm.getCharCode(), chm.getBBox());
++            });
+             if (useKerning) {
+                 returnFont.replaceKerningMap(afm.createXKerningMapEncoded());
+             }
+@@ -428,14 +425,11 @@
+     }
+ 
+     private CodePointMapping buildCustomEncoding(String encodingName, AFMFile afm) {
+-        int mappingCount = 0;
+         // Just count the first time...
+         List<AFMCharMetrics> chars = afm.getCharMetrics();
+-        for (AFMCharMetrics charMetrics : chars) {
+-            if (charMetrics.getCharCode() >= 0) {
+-                mappingCount++;
+-            }
+-        }
++        int mappingCount = (int) chars.stream()
++                                      .filter(charMetrics -> charMetrics.getCharCode() >= 0)
++                                      .count();
+         // ...and now build the table.
+         int[] table = new int[mappingCount * 2];
+         String[] charNameMap = new String[256];
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/Type1SubsetFile.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/Type1SubsetFile.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/Type1SubsetFile.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/fonts/type1/Type1SubsetFile.java	2026-07-01 09:45:24.539654787 +0100
+@@ -192,7 +192,7 @@
+         //Handle custom encoding
+         if (encoding instanceof PSFixedArray) {
+             PSFixedArray encodingArray = (PSFixedArray)encoding;
+-            for (int glyph : glyphs) {
++            glyphs.stream().mapToInt(Integer::intValue).forEach(glyph -> {
+                 /* Search for matching entries in the original font encoding table to add
+                  * to the subset. As there may be more than one entry for a character (as
+                  * was the case in a font where some glyphs were duplicated), a name search is
+@@ -209,23 +209,23 @@
+                                 sbfont.getGlyphName(glyph)));
+                     }
+                 }
+-                for (String match : matches) {
++                matches.stream().forEach(match -> {
+                     subsetEncodingEntries.add(match);
+                     addToCharNames(match);
+-                }
+-            }
++                });
++            });
+         //Handle fixed encoding
+         } else if (encoding instanceof PSVariable) {
+             if (((PSVariable) encoding).getValue().equals("StandardEncoding")) {
+                 standardEncoding = true;
+                 sbfont.mapUsedGlyphName(0, "/.notdef");
+-                for (int glyph : glyphs) {
++                glyphs.stream().mapToInt(Integer::intValue).forEach(glyph -> {
+                     //Retrieve the character name and alternates for the given glyph
+                     String name = sbfont.getGlyphName(glyph);
+                     if (glyph != 0 && name != null && !name.trim().equals("")) {
+                         sbfont.mapUsedGlyphName(glyph, "/" + name);
+                     }
+-                }
++                });
+             } else {
+                 LOG.warn("Only Custom or StandardEncoding is supported when creating a Type 1 subset.");
+             }
+@@ -235,13 +235,13 @@
+ 
+     protected List<String> searchEntries(HashMap<Integer, String> encodingEntries, int glyph) {
+         List<String> matches = new ArrayList<String>();
+-        for (Entry<Integer, String> entry : encodingEntries.entrySet()) {
++        encodingEntries.entrySet().stream().forEach(entry -> {
+             String tag = getEntryPart(entry.getValue(), 3);
+             String name = sbfont.getGlyphName(sbfont.getUsedGlyphs().get(glyph));
+             if (name.equals(tag)) {
+                 matches.add(entry.getValue());
+             }
+-        }
++        });
+         return matches;
+     }
+ 
+@@ -705,12 +705,7 @@
+     }
+ 
+     protected PSElement getElement(String elementID, List<PSElement> elements) {
+-        for (PSElement element : elements) {
+-            if (element.getOperator().equals(elementID)) {
+-                return element;
+-            }
+-        }
+-        return null;
++        return elements.stream().filter(element -> element.getOperator().equals(elementID)).findFirst().orElse(null);
+     }
+ 
+     /**
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/AbstractLayoutManager.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/AbstractLayoutManager.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/AbstractLayoutManager.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/AbstractLayoutManager.java	2026-07-01 09:45:24.539958719 +0100
+@@ -494,9 +494,9 @@
+         curChildLM = null;
+         childLMiter = new LMiter(this);
+         /* Reset all the children LM that have been created so far. */
+-        for (LayoutManager childLM : getChildLMs()) {
++        getChildLMs().stream().forEach(childLM -> {
+             childLM.reset();
+-        }
++        });
+         if (fobj != null) {
+             markers = fobj.getMarkers();
+         }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/BlockStackingLayoutManager.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/BlockStackingLayoutManager.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/BlockStackingLayoutManager.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/BlockStackingLayoutManager.java	2026-07-01 09:45:24.540212197 +0100
+@@ -769,10 +769,10 @@
+ 
+         // "wrap" the Position stored in each element of returnedList
+         // and add elements to returnList
+-        for (KnuthElement el : returnedList) {
++        returnedList.stream().forEach(el -> {
+             el.setPosition(new NonLeafPosition(this, el.getPosition()));
+             returnList.add(el);
+-        }
++        });
+ 
+         // append elements representing space-after
+         boolean spaceAfterIsConditional = true;
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/BreakingAlgorithm.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/BreakingAlgorithm.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/BreakingAlgorithm.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/BreakingAlgorithm.java	2026-07-01 12:03:36.688597192 +0100
+@@ -19,10 +19,15 @@
+ 
+ package org.apache.fop.layoutmgr;
+ 
++import java.util.Objects;
++import java.util.stream.IntStream;
++import java.util.stream.Stream;
++
+ import org.apache.commons.logging.Log;
+ import org.apache.commons.logging.LogFactory;
+ 
+ import org.apache.fop.fo.Constants;
++import org.apache.fop.util.StreamExtensions;
+ 
+ /**
+  * The set of nodes is sorted into lines indexed into activeLines.
+@@ -597,12 +602,12 @@
+         int line = filterActiveNodes();
+ 
+         // for each active node, create a set of breaking points
+-        for (int i = startLine; i < endLine; i++) {
+-            for (KnuthNode node = getNode(i); node != null; node = node.next) {
++        IntStream.range(startLine, endLine).forEach(i -> {
++            StreamExtensions.iterate(getNode(i), Objects::nonNull, node -> node.next).forEach(node -> {
+                 updateData1(node.line, node.totalDemerits);
+                 calculateBreakPoints(node, par, node.line);
+-            }
+-        }
++            });
++        });
+ 
+         activeLines = null;
+         return line;
+@@ -928,15 +933,15 @@
+ 
+         lastDeactivated = null;
+         lastTooLong = null;
+-        for (int line = startLine; line < endLine; line++) {
+-            for (KnuthNode node = getNode(line); node != null; node = node.next) {
++        IntStream.range(startLine, endLine).forEach(line -> {
++            StreamExtensions.iterate(getNode(line), Objects::nonNull, node -> node.next).anyMatch(node -> {
+                 if (node.position == elementIdx) {
+-                    continue;
++                    return false;
+                 }
+                 int difference = computeDifference(node, element, elementIdx);
+                 if (!elementCanEndLine(element, endLine, difference)) {
+                     log.trace("Skipping legal break");
+-                    break;
++                    return true; // break
+                 }
+ 
+                 double r = computeAdjustmentRatio(node, difference);
+@@ -970,9 +975,12 @@
+                     forceNode(node, line, elementIdx, difference, r,
+                             demerits, fitnessClass, availableShrink, availableStretch);
+                 }
+-            }
++
++                return false;
++            });
++
+             addBreaks(line, elementIdx);
+-        }
++        });
+     }
+ 
+     /**
+@@ -1011,9 +1019,17 @@
+                              int availableShrink,
+                              int availableStretch) {
+ 
+-        int newWidth = totalWidth;
+-        int newStretch = totalStretch;
+-        int newShrink = totalShrink;
++        final class StreamState {
++            private int newWidth = totalWidth;
++            private int newStretch = totalStretch;
++            private int newShrink = totalShrink;
++
++            private void accumulate(KnuthElement element) {
++                newWidth += element.getWidth();
++                newStretch += element.getStretch();
++                newShrink += element.getShrink();
++            }
++        }
+ 
+         // add the width, stretch and shrink of glue elements after
+         // the break
+@@ -1021,21 +1037,22 @@
+         // the values stored in the node; these would be as if the break
+         // was just before the next box element, thus ignoring glues and
+         // penalties between the "real" break and the following box
+-        for (int i = elementIdx; i < par.size(); i++) {
++        final StreamState s = new StreamState();
++        IntStream.range(elementIdx, par.size()).anyMatch(i -> {
+             KnuthElement tempElement = getElement(i);
+             if (tempElement.isBox()) {
+-                break;
++                return true; // break
+             } else if (tempElement.isGlue()) {
+-                newWidth += tempElement.getWidth();
+-                newStretch += tempElement.getStretch();
+-                newShrink += tempElement.getShrink();
++                s.accumulate(tempElement);
+             } else if (tempElement.isForcedBreak() && i != elementIdx) {
+-                break;
++                return true; // break
+             }
+-        }
++
++            return false; // continue
++        });
+ 
+         createForcedNodes(node, line, elementIdx, difference, r, demerits, fitnessClass, availableShrink,
+-                availableStretch, newWidth, newStretch, newShrink);
++                availableStretch, s.newWidth, s.newStretch, s.newShrink);
+     }
+ 
+     protected void createForcedNodes(KnuthNode node, int line, int elementIdx, int difference, double r,
+@@ -1130,9 +1147,17 @@
+             return;
+         }
+ 
+-        int newWidth = totalWidth;
+-        int newStretch = totalStretch;
+-        int newShrink = totalShrink;
++        final class StreamState {
++            private int newWidth = totalWidth;
++            private int newStretch = totalStretch;
++            private int newShrink = totalShrink;
++
++            private void accumulate(KnuthElement element) {
++                newWidth += element.getWidth();
++                newStretch += element.getStretch();
++                newShrink += element.getShrink();
++            }
++        }
+ 
+         // add the width, stretch and shrink of glue elements after
+         // the break
+@@ -1140,34 +1165,36 @@
+         // the values stored in the node; these would be as if the break
+         // was just before the next box element, thus ignoring glues and
+         // penalties between the "real" break and the following box
+-        for (int i = elementIdx; i < par.size(); i++) {
++        final StreamState s = new StreamState();
++        IntStream.range(elementIdx, par.size()).anyMatch(i -> {
+             KnuthElement tempElement = getElement(i);
+             if (tempElement.isBox()) {
+-                break;
++                return true; // break
+             } else if (tempElement.isGlue()) {
+-                newWidth += tempElement.getWidth();
+-                newStretch += tempElement.getStretch();
+-                newShrink += tempElement.getShrink();
++                s.accumulate(tempElement);
+             } else if (tempElement.isForcedBreak() && i != elementIdx) {
+-                break;
++                return true; // break
+             }
+-        }
++
++            return false; // continue
++        });
+ 
+         // add nodes to the active nodes list
+         double minimumDemerits = best.getMinDemerits() + incompatibleFitnessDemerit;
+-        for (int i = 0; i <= 3; i++) {
+-            if (best.notInfiniteDemerits(i) && best.getDemerits(i) <= minimumDemerits) {
+-                // the nodes in activeList must be ordered
+-                // by line number and position;
+-                if (log.isTraceEnabled()) {
+-                    log.trace("\tInsert new break in list of " + activeNodeCount
+-                            + " from fitness class " + FitnessClasses.NAMES[i]);
+-                }
+-                KnuthNode newNode = createNode(elementIdx, line + 1, i,
+-                                               newWidth, newStretch, newShrink);
+-                addNode(line + 1, newNode);
+-            }
+-        }
++        IntStream.rangeClosed(0, 3)
++                .filter(i -> best.notInfiniteDemerits(i) && best.getDemerits(i) <= minimumDemerits)
++                .forEach(i -> {
++                    // the nodes in activeList must be ordered
++                    // by line number and position;
++                    if (log.isTraceEnabled()) {
++                        log.trace("\tInsert new break in list of " + activeNodeCount
++                                + " from fitness class " + FitnessClasses.NAMES[i]);
++                    }
++                    KnuthNode newNode = createNode(elementIdx, line + 1, i,
++                            s.newWidth, s.newStretch, s.newShrink);
++                    addNode(line + 1, newNode);
++                });
++
+         best.reset();
+     }
+ 
+@@ -1369,11 +1396,9 @@
+         KnuthNode n = getNode(line);
+         if (n != node) {
+             // nodes could be rightly deactivated in a different order
+-            KnuthNode prevNode = null;
+-            while (n != node) {
+-                prevNode = n;
+-                n = n.next;
+-            }
++            KnuthNode prevNode = StreamExtensions.iterate(n, curr -> curr != node, curr -> curr.next)
++                    .reduce(null, (prev, curr) -> curr);
++
+             prevNode.next = n.next;
+             if (prevNode.next == null) {
+                 activeLines[headIdx + 1] = prevNode;
+@@ -1383,9 +1408,10 @@
+             if (node.next == null) {
+                 activeLines[headIdx + 1] = null;
+             }
+-            while (startLine < endLine && getNode(startLine) == null) {
+-                startLine++;
+-            }
++            StreamExtensions.takeWhile(
++                    Stream.generate(() -> startLine < endLine && getNode(startLine) == null),
++                    Boolean.TRUE::equals
++            ).forEach(ignored -> startLine++);
+         }
+         activeNodeCount--;
+     }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/inline/InlineContainerLayoutManager.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/inline/InlineContainerLayoutManager.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/inline/InlineContainerLayoutManager.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/inline/InlineContainerLayoutManager.java	2026-07-01 09:45:24.541429986 +0100
+@@ -173,11 +173,11 @@
+     }
+ 
+     private void wrapPositions(List<ListElement> elements) {
+-        for (ListElement element : elements) {
++        elements.stream().forEach(element -> {
+             Position position = new NonLeafPosition(this, element.getPosition());
+             notifyPos(position);
+             element.setPosition(position);
+-        }
++        });
+     }
+ 
+     private BlockLevelEventProducer getBlockLevelEventProducer() {
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/inline/InlineLayoutManager.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/inline/InlineLayoutManager.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/inline/InlineLayoutManager.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/inline/InlineLayoutManager.java	2026-07-01 09:45:24.541662765 +0100
+@@ -342,9 +342,9 @@
+             if (curLM instanceof InlineLevelLayoutManager) {
+                 context.clearKeepWithNextPending();
+                 // "wrap" the Position stored in each element of returnedList
+-                for (KnuthSequence sequence : returnedList) {
++                returnedList.stream().forEach(sequence -> {
+                     sequence.wrapPositions(this);
+-                }
++                });
+                 int insertionStartIndex = 0;
+                 if (lastSequence != null
+                         && lastSequence.appendSequenceOrClose(returnedList.get(0))) {
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/inline/LineLayoutManager.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/inline/LineLayoutManager.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/inline/LineLayoutManager.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/inline/LineLayoutManager.java	2026-07-01 10:24:04.272886061 +0100
+@@ -25,6 +25,7 @@
+ import java.util.LinkedList;
+ import java.util.List;
+ import java.util.ListIterator;
++import java.util.stream.IntStream;
+ 
+ import org.apache.commons.logging.Log;
+ import org.apache.commons.logging.LogFactory;
+@@ -823,19 +824,21 @@
+         // find the optimal line breaking points for each paragraph
+         Iterator<KnuthSequence> paragraphsIterator = knuthParagraphs.iterator();
+         lineLayoutsList = new LineLayoutPossibilities[knuthParagraphs.size()];
+-        LineLayoutPossibilities llPoss;
+-        for (int i = 0; paragraphsIterator.hasNext(); i++) {
+-            KnuthSequence seq = paragraphsIterator.next();
++
++        IntStream.range(0, knuthParagraphs.size()).forEach(i -> {
++            final KnuthSequence seq = paragraphsIterator.next();
++            final LineLayoutPossibilities llPoss;
++
+             if (!seq.isInlineSequence()) {
+                 // This set of line layout possibilities does not matter;
+                 // we only need an entry in lineLayoutsList.
+                 llPoss = new LineLayoutPossibilities();
+             } else {
+                 llPoss = findOptimalBreakingPoints(alignment, (Paragraph) seq,
+-                                                   !paragraphsIterator.hasNext());
++                        !paragraphsIterator.hasNext());
+             }
+             lineLayoutsList[i] = llPoss;
+-        }
++        });
+ 
+         setFinished(true);
+ 
+@@ -952,7 +955,7 @@
+ 
+             if (!seq.isInlineSequence()) {
+                 List<ListElement> targetList = new LinkedList<ListElement>();
+-                for (Object aSeq : seq) {
++                seq.stream().forEach(aSeq -> {
+                     ListElement tempElement;
+                     tempElement = (ListElement) aSeq;
+                     LayoutManager lm = tempElement.getLayoutManager();
+@@ -964,7 +967,7 @@
+                                 tempElement.getPosition())));
+                     }
+                     targetList.add(tempElement);
+-                }
++                });
+                 returnList.addAll(targetList);
+             } else if (seq.isInlineSequence() && alignment == EN_JUSTIFY) {
+                 /* justified vertical alignment (not in the XSL FO recommendation):
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/MultiSwitchLayoutManager.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/MultiSwitchLayoutManager.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/MultiSwitchLayoutManager.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/MultiSwitchLayoutManager.java	2026-07-01 09:45:24.540493229 +0100
+@@ -39,11 +39,11 @@
+             List<Position> positions = new LinkedList<Position>();
+             if (knuthList != null && !knuthList.isEmpty()) {
+                 SpaceResolver.performConditionalsNotification(knuthList, 0, knuthList.size() - 1, -1);
+-                for (ListElement el : knuthList) {
++                knuthList.stream().forEach(el -> {
+                     if (el.getPosition() != null) {
+                         positions.add(el.getPosition());
+                     }
+-                }
++                });
+             }
+             return positions;
+         }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/PageBreaker.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/PageBreaker.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/PageBreaker.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/PageBreaker.java	2026-07-01 09:45:24.540708758 +0100
+@@ -192,9 +192,9 @@
+                     KnuthBlockBox box = (KnuthBlockBox) element;
+                     List<List<KnuthElement>> footnotes = getFootnoteKnuthElements(childFLM, context,
+                             box.getFootnoteBodyLMs());
+-                    for (List<KnuthElement> footnote : footnotes) {
++                    footnotes.stream().forEach(footnote -> {
+                         box.addElementList(footnote);
+-                    }
++                    });
+                 }
+             }
+         }
+@@ -208,14 +208,14 @@
+         footnoteContext.setStackLimitBP(context.getStackLimitBP());
+         footnoteContext.setRefIPD(flowLM.getPSLM()
+                 .getCurrentPV().getRegionReference(Constants.FO_REGION_BODY).getIPD());
+-        for (FootnoteBodyLayoutManager fblm : footnoteBodyLMs) {
++        footnoteBodyLMs.stream().forEach(fblm -> {
+             fblm.setParent(flowLM);
+             fblm.initialize();
+             List<KnuthElement> footnote = fblm.getNextKnuthElements(footnoteContext, Constants.EN_START);
+             // TODO this does not respect possible stacking constraints between footnotes
+             SpaceResolver.resolveElementList(footnote);
+             footnotes.add(footnote);
+-        }
++        });
+         return footnotes;
+     }
+ 
+@@ -535,9 +535,9 @@
+                 || pbp.footnoteFirstListIndex < pbp.footnoteLastListIndex
+                 || pbp.footnoteFirstElementIndex <= pbp.footnoteLastElementIndex
+                 || !pslm.getTableFooterFootnotes().isEmpty()) {
+-            for (List<KnuthElement> footnote : pslm.getTableHeaderFootnotes()) {
++            pslm.getTableHeaderFootnotes().stream().forEach(footnote -> {
+                 addFootnoteAreas(footnote);
+-            }
++            });
+             // call addAreas() for each FootnoteBodyLM
+             for (int i = pbp.footnoteFirstListIndex; i <= pbp.footnoteLastListIndex; i++) {
+                 List elementList = alg.getFootnoteList(i);
+@@ -547,9 +547,9 @@
+                         ? pbp.footnoteLastElementIndex : elementList.size() - 1);
+                 addFootnoteAreas(elementList, firstIndex, lastIndex + 1);
+             }
+-            for (List<KnuthElement> footnote : pslm.getTableFooterFootnotes()) {
++            pslm.getTableFooterFootnotes().stream().forEach(footnote -> {
+                 addFootnoteAreas(footnote);
+-            }
++            });
+             // set the offset from the top margin
+             Footnote parentArea = pslm.getCurrentPV().getBodyRegion().getFootnote();
+             int topOffset = pslm.getCurrentPV().getBodyRegion().getBPD() - parentArea.getBPD();
+@@ -897,13 +897,13 @@
+                     ListElement le = effectiveList.getElement(k);
+                     if (le instanceof KnuthBlockBox) {
+                         KnuthBlockBox kbb = (KnuthBlockBox) le;
+-                        for (FloatContentLayoutManager fclm : kbb.getFloatContentLMs()) {
++                        kbb.getFloatContentLMs().stream().forEach(fclm -> {
+                             fclm.processAreas(childLC);
+                             int floatHeight = fclm.getFloatHeight();
+                             int floatYOffset = fclm.getFloatYOffset();
+                             PageSequenceLayoutManager pslm = (PageSequenceLayoutManager) getTopLevelLM();
+                             pslm.recordStartOfFloat(floatHeight, floatYOffset);
+-                        }
++                        });
+                     }
+                 }
+             }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/PageBreakingAlgorithm.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/PageBreakingAlgorithm.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/PageBreakingAlgorithm.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/PageBreakingAlgorithm.java	2026-07-01 09:45:24.541092702 +0100
+@@ -427,7 +427,7 @@
+         }
+ 
+         // compute the total length of the footnotes
+-        for (List<KnuthElement> noteList : elementLists) {
++        elementLists.stream().forEach(noteList -> {
+             int noteLength = 0;
+             footnotesList.add(noteList);
+             for (KnuthElement element : noteList) {
+@@ -442,7 +442,7 @@
+                 lengthList.add(prevLength + noteLength);
+             }
+             totalFootnotesLength += noteLength;
+-        }
++        });
+     }
+ 
+     /** {@inheritDoc} */
+@@ -1053,14 +1053,14 @@
+         // Check if the given node has an attached variant of a dynamic content
+         KnuthPageNode pageNode = (KnuthPageNode) bestActiveNode;
+         KnuthPageNode previousPageNode = ((KnuthPageNode) pageNode.previous);
+-        for (Variant var : previousPageNode.pendingVariants) {
++        previousPageNode.pendingVariants.stream().forEach(var -> {
+             WhitespaceManagementPenalty penalty = var.getWhitespaceManagementPenalty();
+             // A WMPenalty should not be activated more than once. The reason is simply
+             // because a dynamic content cannot occupy multiple pages at the same time.
+             if (!penalty.hasActiveVariant()) {
+                 penalty.setActiveVariant(var);
+             }
+-        }
++        });
+         int difference = bestActiveNode.difference;
+         if (difference + bestActiveNode.availableShrink < 0) {
+             if (!autoHeight) {
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/table/OverPaintBorders.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/table/OverPaintBorders.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/table/OverPaintBorders.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/table/OverPaintBorders.java	2026-07-01 09:45:24.542331376 +0100
+@@ -41,9 +41,9 @@
+         mergeBordersOfType(newBlocks, childAreas, new int[]{Trait.BORDER_BEFORE, Trait.BORDER_AFTER});
+         Collections.sort(childAreas, new SortBlocksByYOffset());
+         mergeBordersOfType(newBlocks, childAreas, new int[]{Trait.BORDER_START, Trait.BORDER_END});
+-        for (Block borderBlock : newBlocks) {
++        newBlocks.stream().forEach(borderBlock -> {
+             curBlockArea.addBlock(borderBlock);
+-        }
++        });
+     }
+ 
+      static class SortBlocksByXOffset implements Comparator<Object>, Serializable {
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/table/TableLayoutManager.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/table/TableLayoutManager.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/table/TableLayoutManager.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/layoutmgr/table/TableLayoutManager.java	2026-07-01 09:45:24.542556415 +0100
+@@ -583,12 +583,12 @@
+         // if we get to this stage then we are at the footer of the table fragment; this means that no more
+         // different TCLM need to be saved (we already have all); we flag the list as being complete then
+         areAllTCLMsSaved = true;
+-        for (TableCellLayoutManager tclm : savedTCLMs) {
++        savedTCLMs.stream().forEach(tclm -> {
+             if (this.repeatedHeader) {
+                 tclm.setHasRepeatedHeader(true);
+             }
+             tclm.repeatAddAreas();
+-        }
++        });
+     }
+ 
+     /**
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFArray.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFArray.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFArray.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFArray.java	2026-07-01 11:47:21.709904789 +0100
+@@ -21,10 +21,12 @@
+ 
+ import java.io.IOException;
+ import java.io.OutputStream;
++import java.io.UncheckedIOException;
+ import java.util.ArrayList;
+ import java.util.Collections;
+ import java.util.List;
+ import java.util.Set;
++import java.util.stream.Collector;
+ 
+ import org.apache.commons.io.output.CountingOutputStream;
+ 
+@@ -199,29 +201,64 @@
+     /** {@inheritDoc} */
+     @Override
+     public int output(OutputStream stream) throws IOException {
+-        CountingOutputStream cout = new CountingOutputStream(stream);
+-        StringBuilder textBuffer = new StringBuilder(64);
+-        textBuffer.append('[');
+-        for (int i = 0; i < values.size(); i++) {
+-            if (i > 0) {
+-                textBuffer.append(' ');
+-            }
+-            Object obj = this.values.get(i);
+-            formatObject(obj, cout, textBuffer);
++        try {
++            OutputState outputState = collectOutput(stream);
++            return outputState.cout.getCount();
++        } catch (UncheckedIOException e) {
++            throw e.getCause();
+         }
+-        textBuffer.append(']');
+-        PDFDocument.flushTextBuffer(textBuffer, cout);
+-        return cout.getCount();
+     }
+ 
+     @Override
+     public void getChildren(Set<PDFObject> children) {
+         List<Object> contents = new ArrayList<Object>();
+-        for (Object c : values) {
++        values.stream().forEach(c -> {
+             if (!(c instanceof PDFReference)) {
+                 contents.add(c);
+             }
+-        }
++        });
+         PDFDictionary.getChildren(contents, children);
+     }
++
++    private OutputState collectOutput(OutputStream stream) throws UncheckedIOException {
++        return values.stream().collect(Collector.of(
++                () -> new OutputState(stream),
++                (state, obj) -> {
++                    if (!state.first) {
++                        state.textBuffer.append(' ');
++                    }
++
++                    state.first = false;
++                    try {
++                        formatObject(obj, state.cout, state.textBuffer);
++                    } catch (IOException e) {
++                        throw new UncheckedIOException(e);
++                    }
++                },
++                (a, b) -> {
++                    throw new UnsupportedOperationException();
++                },
++                state -> {
++                    state.textBuffer.append(']');
++                    try {
++                        PDFDocument.flushTextBuffer(state.textBuffer, state.cout);
++                    } catch (IOException e) {
++                        throw new UncheckedIOException(e);
++                    }
++                    return state;
++                }
++        ));
++    }
++
++    private static final class OutputState {
++        private final CountingOutputStream cout;
++        private final StringBuilder textBuffer;
++        private boolean first;
++
++        private OutputState(OutputStream stream) {
++            this.cout = new CountingOutputStream(stream);
++            this.textBuffer = new StringBuilder(64).append('[');
++            this.first = true;
++        }
++    }
+ }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFDictionary.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFDictionary.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFDictionary.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFDictionary.java	2026-07-01 09:45:24.543007623 +0100
+@@ -149,7 +149,7 @@
+     }
+ 
+     public static void getChildren(Collection<Object> values, Set<PDFObject> children) {
+-        for (Object x : values) {
++        values.stream().forEach(x -> {
+             if (x instanceof PDFReference) {
+                 x = ((PDFReference) x).getObject();
+             }
+@@ -159,7 +159,7 @@
+                 }
+                 ((PDFObject) x).getChildren(children);
+             }
+-        }
++        });
+     }
+ 
+     public Set<String> keySet() {
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFDocument.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFDocument.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFDocument.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFDocument.java	2026-07-01 09:45:24.543234690 +0100
+@@ -1222,9 +1222,9 @@
+                 throws IOException {
+             assert structureTreeElements.size() > 0;
+             structureTreeObjectStreams = new ObjectStreamManager(PDFDocument.this);
+-            for (PDFStructElem structElem : structureTreeElements) {
++            structureTreeElements.stream().forEach(structElem -> {
+                 structureTreeObjectStreams.add(structElem);
+-            }
++            });
+         }
+ 
+         public long outputCrossReferenceObject(OutputStream stream,
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFFactory.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFFactory.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFFactory.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFFactory.java	2026-07-01 09:45:24.543570696 +0100
+@@ -37,6 +37,7 @@
+ import java.util.Map;
+ import java.util.SortedSet;
+ import java.util.TreeSet;
++import java.util.stream.IntStream;
+ 
+ import org.apache.commons.io.IOUtils;
+ import org.apache.commons.io.output.ByteArrayOutputStream;
+@@ -1251,9 +1252,9 @@
+         PDFWArray warray = new PDFWArray();
+         if (cidFont instanceof MultiByteFont && ((MultiByteFont)cidFont).getWidthsMap() != null) {
+             Map<Integer, Integer> map = ((MultiByteFont)cidFont).getWidthsMap();
+-            for (Map.Entry<Integer, Integer> cid : map.entrySet()) {
+-                warray.addEntry(cid.getKey(), new int[] {cid.getValue()});
+-            }
++            map.entrySet().stream().forEach(cid ->
++                warray.addEntry(cid.getKey(), new int[]{cid.getValue()})
++            );
+ //            List<Integer> l = new ArrayList<Integer>(map.keySet());
+ //            for (int i=0; i<map.size(); i++) {
+ //                int cid = l.get(i);
+@@ -1284,10 +1285,10 @@
+         // Subset prefix as described in chapter 5.5.3 of PDF 1.4
+         StringBuffer sb = new StringBuffer("E");
+ 
+-        for (char c : counterString.toCharArray()) {
+-            // translate numbers to uppercase characters
+-            sb.append((char) (c + ('A' - '0')));
+-        }
++        char[] chars = counterString.toCharArray();
++        IntStream.range(0, chars.length)
++                 .mapToObj(i -> (char) (chars[i] + ('A' - '0')))
++                 .forEach(sb::append);
+         sb.append("+");
+         return sb.toString();
+     }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFLinearization.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFLinearization.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFLinearization.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFLinearization.java	2026-07-01 09:45:24.543940466 +0100
+@@ -192,32 +192,32 @@
+             for (int i = 1; i < doc.pageObjs.size(); i++) {
+                 PDFPage page = doc.pageObjs.get(i);
+                 Set<PDFObject> children = pageObjsMap.get(page);
+-                for (PDFObject c : children) {
++                children.stream().forEach(c -> {
+                     if (!page1Children.contains(c) && c.hasObjectNumber()) {
+                         c.getObjectNumber().getNumber();
+                     }
+-                }
++                });
+             }
+-            for (PDFObject o : doc.objects) {
++            doc.objects.stream().forEach(o -> {
+                 if (o instanceof PDFDests || o instanceof PDFOutline) {
+-                    for (PDFObject c : getChildren(o)) {
++                    getChildren(o).stream().forEach(c -> {
+                         c.getObjectNumber().getNumber();
+-                    }
++                    });
+                 }
+                 if (o instanceof PDFInfo || o instanceof PDFPageLabels) {
+                     o.getObjectNumber().getNumber();
+                 }
+-            }
+-            for (PDFObject o : doc.objects) {
++            });
++            doc.objects.stream().forEach(o -> {
+                 if (!page1Children.contains(o)) {
+                     o.getObjectNumber().getNumber();
+                 }
+-            }
++            });
+         }
+         linearDict = new LinearPDFDictionary(doc);
+-        for (PDFObject o : page1Children) {
++        page1Children.stream().forEach(o -> {
+             o.getObjectNumber().getNumber();
+-        }
++        });
+         sort(doc.objects);
+         return page1Children;
+     }
+@@ -254,9 +254,9 @@
+         }
+         Set<PDFObject> page1Children = assignNumbers();
+         doc.streamIndirectObject(linearDict, new ByteArrayOutputStream());
+-        for (PDFObject o : page1Children) {
++        page1Children.stream().forEach(o -> {
+             doc.objects.remove(o);
+-        }
++        });
+         int sizeOfRest = doc.objects.size();
+ 
+         ByteArrayOutputStream fakeHeaderTrailerStream = new ByteArrayOutputStream();
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFResources.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFResources.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFResources.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFResources.java	2026-07-01 09:45:24.544199859 +0100
+@@ -119,7 +119,7 @@
+      */
+    public void addFonts(PDFDocument doc, FontInfo fontInfo) {
+         Map<String, Typeface> usedFonts = fontInfo.getUsedFonts();
+-        for (Map.Entry<String, Typeface> e : usedFonts.entrySet()) {
++        usedFonts.entrySet().stream().forEach(e -> {
+             String f = e.getKey();
+             Typeface font = e.getValue();
+ 
+@@ -128,16 +128,16 @@
+             if (font.hadMappingOperations()) {
+                 FontDescriptor desc = null;
+                 if (font instanceof FontDescriptor) {
+-                    desc = (FontDescriptor)font;
++                    desc = (FontDescriptor) font;
+                 }
+                 String encoding = font.getEncodingName();
+                 if (font instanceof Symbol || font instanceof ZapfDingbats) {
+                     encoding = null; //Symbolic fonts shouldn't specify an encoding value in PDF
+                 }
+                 addFont(doc.getFactory().makeFont(
+-                    f, font.getEmbedFontName(), encoding, font, desc));
++                        f, font.getEmbedFontName(), encoding, font, desc));
+             }
+-        }
++       });
+    }
+ 
+     /**
+@@ -189,12 +189,12 @@
+      * @return the requested color space or null if it wasn't found
+      */
+     public PDFColorSpace getColorSpace(PDFName name) {
+-        for (Map.Entry<LazyName, PDFColorSpace> x : colorSpaces.entrySet()) {
+-            if (x.getKey().getName().equals(name)) {
+-                return x.getValue();
+-            }
+-        }
+-        return null;
++        return colorSpaces.entrySet()
++                          .stream()
++                          .filter(x -> x.getKey().getName().equals(name))
++                          .findFirst()
++                          .map(Map.Entry::getValue)
++                          .orElse(null);
+     }
+ 
+     /**
+@@ -229,16 +229,16 @@
+         if (!this.fonts.isEmpty() || (parent != null && !parent.fonts.isEmpty())) {
+             PDFDictionary dict = new PDFDictionary(this);
+             /* construct PDF dictionary of font object references */
+-            for (Map.Entry<String, PDFDictionary> entry : fonts.entrySet()) {
+-                dict.put(entry.getKey(), entry.getValue());
+-            }
++            fonts.entrySet().stream().forEach(entry ->
++                dict.put(entry.getKey(), entry.getValue())
++            );
+             if (parent != null) {
+-                for (Map.Entry<String, PDFDictionary> entry : parent.fonts.entrySet()) {
+-                    dict.put(entry.getKey(), entry.getValue());
+-                }
+-                for (Map.Entry<String, PDFDictionary> entry : parent.fontsObjDict.entrySet()) {
+-                    dict.put(entry.getKey(), entry.getValue());
+-                }
++                parent.fonts.entrySet().stream().forEach(entry ->
++                    dict.put(entry.getKey(), entry.getValue())
++                );
++                parent.fontsObjDict.entrySet().stream().forEach(entry ->
++                    dict.put(entry.getKey(), entry.getValue())
++                );
+             }
+             put("Font", dict);
+         }
+@@ -246,19 +246,19 @@
+         Set<PDFPattern> patterns = new LinkedHashSet<PDFPattern>();
+         Set<PDFShading> shadings = new LinkedHashSet<PDFShading>();
+         Set<PDFGState> gstates = new LinkedHashSet<PDFGState>();
+-        for (PDFResourceContext c : contexts) {
++        contexts.stream().forEach(c -> {
+             xObjects.addAll(c.getXObjects());
+             patterns.addAll(c.getPatterns());
+             shadings.addAll(c.getShadings());
+             gstates.addAll(c.getGStates());
+-        }
++        });
+         if (parent != null) {
+             xObjects.addAll(parent.xObjects);
+-            for (PDFResourceContext c : parent.contexts) {
++            parent.contexts.stream().forEach(c -> {
+                 patterns.addAll(c.getPatterns());
+                 shadings.addAll(c.getShadings());
+                 gstates.addAll(c.getGStates());
+-            }
++            });
+         }
+ 
+         if (!shadings.isEmpty()) {
+@@ -330,9 +330,9 @@
+ 
+         if (!properties.isEmpty()) {
+             PDFDictionary dict = new PDFDictionary(this);
+-            for (Map.Entry<String, PDFReference> stringPDFReferenceEntry : properties.entrySet()) {
+-                dict.put(stringPDFReferenceEntry.getKey(), stringPDFReferenceEntry.getValue());
+-            }
++            properties.entrySet().stream().forEach(stringPDFReferenceEntry ->
++                dict.put(stringPDFReferenceEntry.getKey(), stringPDFReferenceEntry.getValue())
++            );
+             put("Properties", dict);
+         }
+     }
+@@ -344,33 +344,33 @@
+ 
+     private void getChildren(Set<PDFObject> children, boolean isParent) {
+         super.getChildren(children);
+-        for (PDFDictionary f : fonts.values()) {
++        fonts.values().stream().forEach(f -> {
+             children.add(f);
+             f.getChildren(children);
+-        }
+-        for (PDFResourceContext c : contexts) {
+-            for (PDFXObject x : c.getXObjects()) {
++        });
++        contexts.stream().forEach(c -> {
++            c.getXObjects().stream().forEach(x -> {
+                 children.add(x);
+                 x.getChildren(children);
+-            }
+-            for (PDFPattern x : c.getPatterns()) {
++            });
++            c.getPatterns().stream().forEach(x -> {
+                 children.add(x);
+                 x.getChildren(children);
+-            }
+-            for (PDFShading x : c.getShadings()) {
++            });
++            c.getShadings().stream().forEach(x -> {
+                 children.add(x);
+                 x.getChildren(children);
+-            }
+-            for (PDFGState x : c.getGStates()) {
++            });
++            c.getGStates().stream().forEach(x -> {
+                 children.add(x);
+                 x.getChildren(children);
+-            }
+-        }
++            });
++        });
+         if (!isParent) {
+-            for (PDFColorSpace x : colorSpaces.values()) {
+-                children.add((PDFObject)x);
+-                ((PDFObject)x).getChildren(children);
+-            }
++            colorSpaces.values().stream().forEach(x -> {
++                children.add((PDFObject) x);
++                ((PDFObject) x).getChildren(children);
++            });
+         }
+         if (parent != null) {
+             parent.getChildren(children, true);
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFStructElem.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFStructElem.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFStructElem.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/PDFStructElem.java	2026-07-01 09:45:24.544502632 +0100
+@@ -206,7 +206,7 @@
+     protected boolean attachKids() {
+         List<PDFObject> validKids = new ArrayList<PDFObject>();
+         if (kids != null) {
+-            for (PDFObject kid : kids) {
++            kids.stream().forEach(kid -> {
+                 if (kid instanceof Placeholder)  {
+                     if (((Placeholder) kid).attachKids()) {
+                         validKids.add(kid);
+@@ -214,14 +214,14 @@
+                 } else {
+                     validKids.add(kid);
+                 }
+-            }
++            });
+         }
+         boolean kidsAttached = !validKids.isEmpty();
+         if (kidsAttached) {
+             PDFArray array = new PDFArray();
+-            for (PDFObject ob : validKids) {
++            validKids.stream().forEach(ob -> {
+                 array.add(ob);
+-            }
++            });
+             put("K", array);
+         }
+         return kidsAttached;
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/xref/CrossReferenceStream.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/xref/CrossReferenceStream.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/xref/CrossReferenceStream.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/pdf/xref/CrossReferenceStream.java	2026-07-01 09:45:24.544711200 +0100
+@@ -57,15 +57,15 @@
+         this.document = document;
+         this.objectNumber = objectNumber;
+         this.objectReferences = new ArrayList<ObjectReference>(uncompressedObjectReferences.size());
+-        for (Long offset : uncompressedObjectReferences) {
++        uncompressedObjectReferences.stream().forEach(offset -> {
+             objectReferences.add(offset == null ? null : new UncompressedObjectReference(offset));
+-        }
+-        for (CompressedObjectReference ref : compressedObjectReferences) {
++        });
++        compressedObjectReferences.stream().forEach(ref -> {
+             while (ref.getObjectNumber().getNumber() > objectReferences.size()) {
+                 objectReferences.add(null);
+             }
+             this.objectReferences.set(ref.getObjectNumber().getNumber() - 1, ref);
+-        }
++        });
+     }
+ 
+     /** {@inheritDoc} */
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/AbstractRenderer.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/AbstractRenderer.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/AbstractRenderer.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/AbstractRenderer.java	2026-07-01 10:14:30.178448474 +0100
+@@ -681,7 +681,7 @@
+         containingBPPosition = currentBPPosition;
+         containingIPPosition = currentIPPosition;
+ 
+-        for (Object obj : blocks) {
++        blocks.stream().forEach(obj -> {
+             if (obj instanceof Block) {
+                 currentIPPosition = contIP;
+                 containingBPPosition = contBP;
+@@ -705,7 +705,7 @@
+                 currentBPPosition += line.getAllocBPD();
+             }
+             currentIPPosition = saveIP;
+-        }
++        });
+     }
+ 
+     /**
+@@ -840,10 +840,10 @@
+         } else {
+             currentIPPosition += line.getStartIndent();
+         }
+-        for (Object aChildren : children) {
++        children.stream().forEach(aChildren -> {
+             InlineArea inline = (InlineArea) aChildren;
+             renderInlineArea(inline);
+-        }
++        });
+         currentBPPosition = saveBP;
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/afp/AFPFontConfig.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/afp/AFPFontConfig.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/afp/AFPFontConfig.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/afp/AFPFontConfig.java	2026-07-01 09:45:24.545319070 +0100
+@@ -115,12 +115,7 @@
+         }
+ 
+         public boolean matches(FontTriplet triplet) {
+-            for (Matcher matcher : matchers) {
+-                if (matcher.matches(triplet)) {
+-                    return true;
+-                }
+-            }
+-            return false;
++            return matchers.stream().anyMatch(matcher -> matcher.matches(triplet));
+         }
+ 
+     }
+@@ -301,12 +296,7 @@
+         }
+ 
+         private boolean isEmbbedable(List<FontTriplet> triplets) {
+-            for (FontTriplet triplet : triplets) {
+-                if (matcher.matches(triplet)) {
+-                    return false;
+-                }
+-            }
+-            return true;
++            return triplets.stream().noneMatch(triplet -> matcher.matches(triplet));
+         }
+ 
+     }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/gradient/Function.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/gradient/Function.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/gradient/Function.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/gradient/Function.java	2026-07-01 09:45:24.545551395 +0100
+@@ -321,10 +321,10 @@
+             }
+             out.append(">\n");
+             out.append("/Size [");
+-            for (Integer i : size) {
++            size.stream().forEach(i -> {
+                 out.append(i);
+                 out.append(" ");
+-            }
++            });
+             out.append("]\n");
+             out.append(">>");
+         } else if (functionType == 2) {
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/gradient/GradientMaker.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/gradient/GradientMaker.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/gradient/GradientMaker.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/gradient/GradientMaker.java	2026-07-01 09:45:24.545744294 +0100
+@@ -162,10 +162,10 @@
+     static void outputDoubles(StringBuilder out, DoubleFormatter doubleFormatter,
+             List<? extends Number> numbers) {
+         out.append("[ ");
+-        for (Number n : numbers) {
++        numbers.stream().forEach((Number n) -> {
+             out.append(doubleFormatter.formatDouble(n.doubleValue()));
+             out.append(" ");
+-        }
++        });
+         out.append("]");
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/gradient/Shading.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/gradient/Shading.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/gradient/Shading.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/gradient/Shading.java	2026-07-01 09:45:24.545951298 +0100
+@@ -198,10 +198,10 @@
+         }
+ 
+         out.append("/Extend [ ");
+-        for (Boolean b : extend) {
++        extend.stream().forEach(b -> {
+             out.append(b);
+             out.append(" ");
+-        }
++        });
+         out.append("]\n");
+ 
+         outputFunction(out, functionRenderer);
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/ImageHandlerRegistry.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/ImageHandlerRegistry.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/ImageHandlerRegistry.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/ImageHandlerRegistry.java	2026-07-01 09:45:24.544927078 +0100
+@@ -127,13 +127,8 @@
+      * @return the image handler responsible for handling the image or null if none is available
+      */
+     public ImageHandler getHandler(RenderingContext targetContext, Image image) {
+-        for (ImageHandler h : this.handlerList) {
+-            if (h.isCompatible(targetContext, image)) {
+-                //Return the first handler in the prioritized list that is compatible
+-                return h;
+-            }
+-        }
+-        return null;
++        //Return the first handler in the prioritized list that is compatible
++        return this.handlerList.stream().filter(h -> h.isCompatible(targetContext, image)).findFirst().orElse(null);
+     }
+ 
+     /**
+@@ -145,12 +140,12 @@
+     public synchronized ImageFlavor[] getSupportedFlavors(RenderingContext context) {
+         //Extract all ImageFlavors into a single array
+         List<ImageFlavor> flavors = new java.util.ArrayList<ImageFlavor>();
+-        for (ImageHandler handler : this.handlerList) {
++        this.handlerList.stream().forEach(handler -> {
+             if (handler.isCompatible(context, null)) {
+                 ImageFlavor[] f = handler.getSupportedImageFlavors();
+                 Collections.addAll(flavors, f);
+             }
+-        }
++        });
+         return flavors.toArray(new ImageFlavor[flavors.size()]);
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/pcl/fonts/PCLSoftFontManager.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/pcl/fonts/PCLSoftFontManager.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/pcl/fonts/PCLSoftFontManager.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/pcl/fonts/PCLSoftFontManager.java	2026-07-01 09:45:24.546156497 +0100
+@@ -249,13 +249,8 @@
+      * @return Returns the PCLSoftFont with available capacity
+      */
+     public PCLSoftFont getSoftFont(Typeface font, String text) {
+-        for (PCLSoftFont sftFont : fonts) {
+-            if (sftFont.getTypeface().equals(font)
+-                    && sftFont.getCharCount() + countNonMatches(sftFont, text) < SOFT_FONT_SIZE) {
+-                return sftFont;
+-            }
+-        }
+-        return null;
++        return fonts.stream().filter(sftFont -> sftFont.getTypeface().equals(font)
++                && sftFont.getCharCount() + countNonMatches(sftFont, text) < SOFT_FONT_SIZE).findFirst().orElse(null);
+     }
+ 
+     public PCLSoftFont getSoftFontFromID(int index) {
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/pcl/fonts/truetype/PCLTTFFontReader.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/pcl/fonts/truetype/PCLTTFFontReader.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/pcl/fonts/truetype/PCLTTFFontReader.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/pcl/fonts/truetype/PCLTTFFontReader.java	2026-07-01 09:45:24.546379632 +0100
+@@ -604,9 +604,9 @@
+     private ByteArrayOutputStream updateOffsets(ByteArrayOutputStream baos, Map<Integer, byte[]> offsets)
+             throws IOException {
+         byte[] softFont = baos.toByteArray();
+-        for (Entry<Integer, byte[]> integerEntry : offsets.entrySet()) {
++        offsets.entrySet().stream().forEach(integerEntry -> {
+             PCLByteWriterUtil.updateDataAtLocation(softFont, integerEntry.getValue(), integerEntry.getKey());
+-        }
++        });
+         baos = new ByteArrayOutputStream();
+         baos.write(softFont);
+         return baos;
+@@ -698,7 +698,7 @@
+         byte[] hmtxTable = new byte[((mappedGlyphs.size() + 32) * 4)];
+         OFDirTabEntry entry = ttfFont.getDirectoryEntry(OFTableName.HMTX);
+         if (entry != null) {
+-            for (Entry<Character, Integer> glyphSubset : mappedGlyphs.entrySet()) {
++            mappedGlyphs.entrySet().stream().forEach(glyphSubset -> {
+                 char unicode = glyphSubset.getKey();
+                 int softFontGlyphIndex = glyphSubset.getValue();
+                 if (font instanceof MultiByteFont) {
+@@ -713,7 +713,7 @@
+                             font.getWidth(originalIndex, 1));
+                     writeUShort(hmtxTable, softFontGlyphIndex * 4 + 2, 0);
+                 }
+-            }
++            });
+         }
+         return hmtxTable;
+     }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/pdf/PageSequenceStructElem.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/pdf/PageSequenceStructElem.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/pdf/PageSequenceStructElem.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/pdf/PageSequenceStructElem.java	2026-07-01 09:45:24.546957044 +0100
+@@ -76,9 +76,9 @@
+ 
+     private void addRegions(PDFArray k, List<? extends PDFObject> regions) {
+         if (!regions.isEmpty()) {
+-            for (PDFObject kid : regions) {
++            regions.stream().forEach((PDFObject kid) -> {
+                 k.add(kid);
+-            }
++            });
+         }
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/pdf/PDFRenderingUtil.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/pdf/PDFRenderingUtil.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/pdf/PDFRenderingUtil.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/pdf/PDFRenderingUtil.java	2026-07-01 09:45:24.546643105 +0100
+@@ -376,7 +376,7 @@
+     }
+ 
+     private Object populateArray(PDFArray array, List<?> entries) {
+-        for (PDFCollectionEntryExtension entry : (List<PDFCollectionEntryExtension>) entries) {
++        ((List<PDFCollectionEntryExtension>) entries).forEach(entry -> {
+             PDFObjectType type = entry.getType();
+             if (type == PDFObjectType.Array) {
+                 array.add(makeArray(entry.getValue()));
+@@ -394,7 +394,7 @@
+             } else if (type == PDFObjectType.String) {
+                 array.add(entry.getValue());
+             }
+-        }
++        });
+         return array;
+     }
+ 
+@@ -411,7 +411,7 @@
+     }
+ 
+     private Object populateDictionary(PDFDictionary dictionary, List<?> entries) {
+-        for (PDFCollectionEntryExtension entry : (List<PDFCollectionEntryExtension>) entries) {
++        ((List<PDFCollectionEntryExtension>) entries).stream().forEach(entry -> {
+             PDFObjectType type = entry.getType();
+             String key = entry.getKey();
+             if (type == PDFObjectType.Array) {
+@@ -430,7 +430,7 @@
+             } else if (type == PDFObjectType.String) {
+                 dictionary.put(key, entry.getValue());
+             }
+-        }
++        });
+         return dictionary;
+     }
+ 
+@@ -451,12 +451,7 @@
+     }
+ 
+     private boolean hasKeyedEntry(List<?> entries) {
+-        for (PDFCollectionEntryExtension entry : (List<PDFCollectionEntryExtension>) entries) {
+-            if (entry.getKey() != null) {
+-                return true;
+-            }
+-        }
+-        return false;
++        return ((List<PDFCollectionEntryExtension>) entries).stream().anyMatch(entry -> entry.getKey() != null);
+     }
+ 
+     public void renderDictionaryExtension(PDFDictionaryExtension extension, PDFPage currentPage) {
+@@ -470,9 +465,9 @@
+             }
+         } else if (type == PDFDictionaryType.Info) {
+             PDFInfo info = pdfDoc.getInfo();
+-            for (PDFCollectionEntryExtension entry : extension.getEntries()) {
++            extension.getEntries().stream().forEach(entry -> {
+                 info.put(entry.getKey(), entry.getValueAsString());
+-            }
++            });
+         } else if (type == PDFDictionaryType.VT) {
+             if (currentPage.get("DPart") != null) {
+                 augmentDictionary((PDFDictionary)currentPage.get("DPart"), extension);
+@@ -548,7 +543,7 @@
+     }
+ 
+     private PDFArray augmentArray(PDFArray array, PDFArrayExtension extension) {
+-        for (PDFCollectionEntryExtension entry : extension.getEntries()) {
++        extension.getEntries().stream().forEach(entry -> {
+             if (entry instanceof PDFDictionaryExtension) {
+                 array.add(augmentDictionary(new PDFDictionary(array), (PDFDictionaryExtension) entry));
+             } else if (entry instanceof PDFArrayExtension) {
+@@ -556,7 +551,7 @@
+             } else {
+                 augmentArray(array, entry);
+             }
+-        }
++        });
+         return array;
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/Gradient.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/Gradient.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/Gradient.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/Gradient.java	2026-07-01 09:45:24.547129573 +0100
+@@ -52,10 +52,10 @@
+             p.append("matrix ");
+         } else {
+             p.append("[ ");
+-            for (double m : pattern.getMatrix()) {
++            pattern.getMatrix().stream().mapToDouble(Double::valueOf).forEach(m -> {
+                 p.append(doubleFormatter.formatDouble(m));
+                 p.append(" ");
+-            }
++            });
+             p.append("] ");
+         }
+         p.append("makepattern setcolor\n");
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/PSFontUtils.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/PSFontUtils.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/PSFontUtils.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/PSFontUtils.java	2026-07-01 09:45:24.547322138 +0100
+@@ -768,7 +768,7 @@
+     public static Map determineSuppliedFonts(ResourceTracker resTracker,
+             FontInfo fontInfo, Map<String, Typeface> fonts) {
+         Map fontResources = new java.util.HashMap();
+-        for (String key : fonts.keySet()) {
++        fonts.keySet().stream().forEach(key -> {
+             Typeface tf = getTypeFace(fontInfo, fonts, key);
+             PSResource fontRes = new PSResource("font", tf.getEmbedFontName());
+             fontResources.put(key, fontRes);
+@@ -800,7 +800,7 @@
+                     }
+                 }
+             }
+-        }
++        });
+         return fontResources;
+     }
+ 
+@@ -911,10 +911,10 @@
+     }
+ 
+     public static void addFallbackFonts(FontInfo fontInfo, GeneralGraphics2DImagePainter painter) throws IOException {
+-        for (Map.Entry<FontTriplet, String> x : fontInfo.getFontTriplets().entrySet()) {
++        fontInfo.getFontTriplets().entrySet().stream().forEach(x -> {
+             String name = x.getKey().getName();
+             Typeface typeface = fontInfo.getFonts().get(x.getValue());
+             painter.addFallbackFont(name, typeface);
+-        }
++        });
+     }
+ }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/svg/PSSVGGraphics2D.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/svg/PSSVGGraphics2D.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/svg/PSSVGGraphics2D.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/svg/PSSVGGraphics2D.java	2026-07-01 09:45:24.547760735 +0100
+@@ -107,10 +107,10 @@
+         }
+         p.append(">> \n");
+         p.append("[ ");
+-        for (double m : pattern.getMatrix()) {
++        pattern.getMatrix().stream().mapToDouble(Double::valueOf).forEach(m -> {
+             p.append(getPSGenerator().formatDouble(m));
+             p.append(" ");
+-        }
++        });
+         p.append("] ");
+         p.append("makepattern setcolor\n");
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/Type1CharStringFormatter.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/Type1CharStringFormatter.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/Type1CharStringFormatter.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/ps/Type1CharStringFormatter.java	2026-07-01 09:45:24.547588812 +0100
+@@ -38,7 +38,7 @@
+     public byte[] format(List<Object> sequence) {
+         output = new ByteArrayOutputStream();
+ 
+-        for (Object object : sequence) {
++        sequence.stream().forEach(object -> {
+             if (object instanceof CharStringCommand) {
+                 writeCommand((CharStringCommand) object);
+             } else if (object instanceof Number) {
+@@ -46,7 +46,7 @@
+             } else {
+                 throw new IllegalArgumentException();
+             }
+-        }
++        });
+         return output.toByteArray();
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/render/RendererContext.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/RendererContext.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/render/RendererContext.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/render/RendererContext.java	2026-07-01 09:45:24.545120674 +0100
+@@ -116,11 +116,11 @@
+     /** {@inheritDoc} **/
+     public String toString() {
+         StringBuffer stringBuffer = new StringBuffer("RendererContext{\n");
+-        for (Object o : props.keySet()) {
++        props.keySet().stream().forEach(o -> {
+             String key = (String) o;
+             Object value = props.get(key);
+             stringBuffer.append("\t" + key + "=" + value + "\n");
+-        }
++        });
+         stringBuffer.append("}");
+         return stringBuffer.toString();
+     }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/svg/ACIUtils.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/svg/ACIUtils.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/svg/ACIUtils.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/svg/ACIUtils.java	2026-07-01 09:45:24.547960075 +0100
+@@ -155,11 +155,11 @@
+     public static void dumpAttrs(AttributedCharacterIterator aci) {
+         aci.first();
+         Set<Entry<Attribute, Object>> entries = aci.getAttributes().entrySet();
+-        for (Map.Entry<Attribute, Object> entry : entries) {
++        entries.stream().forEach(entry -> {
+             if (entry.getValue() != null) {
+                 System.out.println(entry.getKey() + ": " + entry.getValue());
+             }
+-        }
++        });
+         int start = aci.getBeginIndex();
+         System.out.print("AttrRuns: ");
+         while (aci.current() != CharacterIterator.DONE) {
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/svg/NativeTextPainter.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/svg/NativeTextPainter.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/svg/NativeTextPainter.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/svg/NativeTextPainter.java	2026-07-01 09:45:24.548156258 +0100
+@@ -311,9 +311,9 @@
+     }
+ 
+     private void reverseGlyphs(List runs, boolean mirror) {
+-        for (TextRun r : (List<TextRun>) runs) {
++        ((List<TextRun>) runs).stream().forEach(r -> {
+             r.maybeReverseGlyphs(mirror);
+-        }
++        });
+     }
+ 
+     protected abstract void preparePainting(Graphics2D g2d);
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/svg/PDFGraphics2D.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/svg/PDFGraphics2D.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/svg/PDFGraphics2D.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/svg/PDFGraphics2D.java	2026-07-01 09:45:24.548413562 +0100
+@@ -848,9 +848,9 @@
+         Shading shading = pattern.getShading();
+         Function function = shading.getFunction();
+         List<PDFFunction> pdfFunctions = new ArrayList<PDFFunction>(function.getFunctions().size());
+-        for (Function f : function.getFunctions()) {
++        function.getFunctions().stream().forEach(f -> {
+             pdfFunctions.add(registerFunction(new PDFFunction(f)));
+-        }
++        });
+         PDFFunction pdfFunction = registerFunction(new PDFFunction(function, pdfFunctions));
+         PDFShading pdfShading = new PDFShading(shading.getShadingType(), shading.getColorSpace(), shading.getCoords(),
+                 pdfFunction);
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/tools/fontlist/FontListGenerator.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/tools/fontlist/FontListGenerator.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/tools/fontlist/FontListGenerator.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/tools/fontlist/FontListGenerator.java	2026-07-01 09:45:24.548735698 +0100
+@@ -81,7 +81,7 @@
+         SortedMap fontFamilies = new java.util.TreeMap();
+         //SortedMap<String/font-family, List<FontSpec>>
+ 
+-        for (Object o : fontInfo.getFontTriplets().entrySet()) {
++        fontInfo.getFontTriplets().entrySet().stream().forEach(o -> {
+             Map.Entry entry = (Map.Entry) o;
+             FontTriplet triplet = (FontTriplet) entry.getKey();
+             String key = (String) entry.getValue();
+@@ -107,7 +107,7 @@
+                 container = (FontSpec) keys.get(key);
+             }
+             container.addTriplet(triplet);
+-        }
++        });
+ 
+         return fontFamilies;
+     }
+diff '--color=auto' -ur fop-2.8/fop-core/src/main/java/org/apache/fop/util/AbstractPaintingState.java ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/util/AbstractPaintingState.java
+--- fop-2.8/fop-core/src/main/java/org/apache/fop/util/AbstractPaintingState.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/main/java/org/apache/fop/util/AbstractPaintingState.java	2026-07-01 09:45:24.548960785 +0100
+@@ -215,10 +215,10 @@
+      */
+     public AffineTransform getTransform() {
+        AffineTransform at = new AffineTransform();
+-       for (AbstractData data : stateStack) {
++       stateStack.stream().forEach(data -> {
+            AffineTransform stackTrans = data.getTransform();
+            at.concatenate(stackTrans);
+-       }
++       });
+        AffineTransform currentTrans = getData().getTransform();
+        at.concatenate(currentTrans);
+        return at;
+@@ -309,11 +309,11 @@
+      * @param dataList a state data list
+      */
+     public void saveAll(List<AbstractData> dataList) {
+-        for (AbstractData data : dataList) {
++        dataList.stream().forEach(data -> {
+             // save current data on stack
+             save();
+             setData(data);
+-        }
++        });
+     }
+ 
+     /**
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/afp/modca/AbstractTripletStructuredObjectTest.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/afp/modca/AbstractTripletStructuredObjectTest.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/afp/modca/AbstractTripletStructuredObjectTest.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/afp/modca/AbstractTripletStructuredObjectTest.java	2026-07-01 09:45:24.549210020 +0100
+@@ -66,9 +66,9 @@
+     public void setUp() throws Exception {
+         AbstractTripletStructuredObject sut = getSut();
+ 
+-        for (AbstractTriplet triplet : TRIPLETS) {
++        TRIPLETS.stream().forEach(triplet -> {
+             sut.addTriplet(triplet);
+-        }
++        });
+     }
+ 
+ 
+@@ -119,10 +119,10 @@
+      * Test hasTriplet() - ensure both positive and negative values are returned.
+      */
+     public void testHasTriplet() {
+-        for (AbstractTriplet triplet : TRIPLETS) {
++        TRIPLETS.stream().forEach(triplet -> {
+             assertTrue(getSut().hasTriplet(triplet.getId()));
+             assertFalse(emptyStructuredObject.hasTriplet(triplet.getId()));
+-        }
++        });
+         CommentTriplet notInSystem = new CommentTriplet((byte) 0x30, "This should return false");
+         assertFalse(getSut().hasTriplet(notInSystem.getId()));
+     }
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/apps/AFPRendererConfBuilder.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/apps/AFPRendererConfBuilder.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/apps/AFPRendererConfBuilder.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/apps/AFPRendererConfBuilder.java	2026-07-01 09:45:24.549390520 +0100
+@@ -108,9 +108,9 @@
+ 
+     public AFPRendererConfBuilder setDefaultResourceLevels(Map<String, String> levels) {
+         Element e = createElement(DEFAULT_RESOURCE_LEVELS.getName());
+-        for (Map.Entry<String, String> stringStringEntry : levels.entrySet()) {
++        levels.entrySet().stream().forEach(stringStringEntry -> {
+             e.setAttribute(stringStringEntry.getKey(), stringStringEntry.getValue());
+-        }
++        });
+         return this;
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/complexscripts/fonts/ttx/TTXFile.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/complexscripts/fonts/ttx/TTXFile.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/complexscripts/fonts/ttx/TTXFile.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/complexscripts/fonts/ttx/TTXFile.java	2026-07-01 09:45:24.549741211 +0100
+@@ -2595,20 +2595,20 @@
+         }
+         private Map<Integer, Integer> getCMAP() {
+             Map<Integer, Integer> cmap = new TreeMap();
+-            for (int[] cme : cmapEntries) {
++            cmapEntries.stream().forEach(cme -> {
+                 Integer c = cme[0];
+                 Integer g = cme[1];
+                 cmap.put(c, g);
+-            }
++            });
+             return cmap;
+         }
+         private Map<Integer, Integer> getGMAP() {
+             Map<Integer, Integer> gmap = new TreeMap();
+-            for (int[] cme : cmapEntries) {
++            cmapEntries.stream().forEach(cme -> {
+                 Integer c = cme[0];
+                 Integer g = cme[1];
+                 gmap.put(g, c);
+-            }
++            });
+             return gmap;
+         }
+         private int[][] getHMTX() {
+@@ -2806,14 +2806,14 @@
+                 }
+             }
+             GlyphCoverageTable[] gca = new GlyphCoverageTable [ mi + 1 ];
+-            for (Map.Entry<String, GlyphCoverageTable> stringGlyphCoverageTableEntry : coverages.entrySet()) {
++            coverages.entrySet().stream().forEach(stringGlyphCoverageTableEntry -> {
+                 if (stringGlyphCoverageTableEntry.getKey().startsWith(prefix)) {
+                     int i = Integer.parseInt(stringGlyphCoverageTableEntry.getKey().substring(prefixLength));
+                     if (i >= 0) {
+                         gca [ i ] = stringGlyphCoverageTableEntry.getValue();
+                     }
+                 }
+-            }
++            });
+             return gca;
+         }
+         private boolean hasMissingCoverage(GlyphCoverageTable[] gca) {
+@@ -2917,13 +2917,13 @@
+         }
+         private Map<GlyphTable.LookupSpec, List<String>> extractLookups() {
+             Map<GlyphTable.LookupSpec, List<String>> lookups = new LinkedHashMap<GlyphTable.LookupSpec, List<String>>();
+-            for (Map.Entry<String, Map<String, List<String>>> stringMapEntry : scripts.entrySet()) {
++            scripts.entrySet().stream().forEach(stringMapEntry -> {
+                 Map<String, List<String>> lm = stringMapEntry.getValue();
+                 if (lm != null) {
+-                    for (Map.Entry<String, List<String>> stringListEntry : lm.entrySet()) {
++                    lm.entrySet().stream().forEach(stringListEntry -> {
+                         List<String> fids = stringListEntry.getValue();
+                         if (fids != null) {
+-                            for (String fid : fids) {
++                            fids.stream().forEach(fid -> {
+                                 if (fid != null) {
+                                     Object[] fa = features.get(fid);
+                                     if (fa != null) {
+@@ -2936,11 +2936,11 @@
+                                         }
+                                     }
+                                 }
+-                            }
++                            });
+                         }
+-                    }
++                    });
+                 }
+-            }
++            });
+             clearScripts();
+             clearLanguages();
+             clearFeatures();
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/complexscripts/layout/ComplexScriptsLayoutTestCase.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/complexscripts/layout/ComplexScriptsLayoutTestCase.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/complexscripts/layout/ComplexScriptsLayoutTestCase.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/complexscripts/layout/ComplexScriptsLayoutTestCase.java	2026-07-01 09:45:24.550284217 +0100
+@@ -259,9 +259,9 @@
+         if (checks.size() == 0) {
+             throw new RuntimeException("No available area tree check");
+         }
+-        for (LayoutEngineCheck check : checks) {
++        checks.stream().forEach(check -> {
+             check.check(result);
+-        }
++        });
+     }
+ 
+     private void doEventChecks(Element eventChecks, EventsChecker eventsChecker) {
+@@ -311,7 +311,7 @@
+         Collection<Object[]> parametersForJUnit4 = new ArrayList<Object[]>();
+         int index = 0;
+         for (File f : files) {
+-            parametersForJUnit4.add(new Object[] { testConfig, f });
++            parametersForJUnit4.add(new Object[]{testConfig, f});
+             if (DEBUG) {
+                 System.out.println(String.format("%3d %s", index++, f));
+             }
+@@ -366,7 +366,7 @@
+ 
+         private void checkParameters(Event event, Map<String, String> expectedParams) {
+             Map<String, Object> actualParams = event.getParams();
+-            for (Map.Entry<String, String> expectedParam : expectedParams.entrySet()) {
++            expectedParams.entrySet().stream().forEach(expectedParam -> {
+                 assertTrue("Event \"" + event.getEventKey()
+                         + "\" is missing parameter \"" + expectedParam.getKey() + '"',
+                         actualParams.containsKey(expectedParam.getKey()));
+@@ -374,13 +374,13 @@
+                         + "\" has wrong value for parameter \"" + expectedParam.getKey() + "\";",
+                         actualParams.get(expectedParam.getKey()).toString(),
+                         expectedParam.getValue());
+-            }
++            });
+         }
+ 
+         public void emitUncheckedEvents() {
+-            for (Event event : events) {
++            events.stream().forEach(event -> {
+                 defaultListener.processEvent(event);
+-            }
++            });
+         }
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/events/EventChecker.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/events/EventChecker.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/events/EventChecker.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/events/EventChecker.java	2026-07-01 09:45:24.550531392 +0100
+@@ -45,9 +45,9 @@
+         String id = event.getEventID();
+         if (id.equals(expectedEventID)) {
+             eventReceived = true;
+-            for (Map.Entry<String, Object> param : expectedParams.entrySet()) {
++            expectedParams.entrySet().stream().forEach(param -> {
+                 assertEquals(param.getValue(), event.getParam(param.getKey()));
+-            }
++            });
+         }
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/fo/DelegatingFOEventHandlerTestCase.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/fo/DelegatingFOEventHandlerTestCase.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/fo/DelegatingFOEventHandlerTestCase.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/fo/DelegatingFOEventHandlerTestCase.java	2026-07-01 09:45:24.550710228 +0100
+@@ -523,9 +523,9 @@
+      * @param list a list
+      */
+     public void printList(List<?> list) {
+-        for (Object element : list) {
++        list.stream().forEach((Object element) -> {
+             System.out.println(element);
+-        }
++        });
+     }
+ 
+ }
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/CIDFullTestCase.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/CIDFullTestCase.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/CIDFullTestCase.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/CIDFullTestCase.java	2026-07-01 09:45:24.550971971 +0100
+@@ -98,9 +98,9 @@
+     @Test
+     public void testGetGlyphs() {
+         Map<Integer, Integer> fontGlyphs = cidFull.getGlyphs();
+-        for (Map.Entry<Integer, Integer> integerIntegerEntry : fontGlyphs.entrySet()) {
++        fontGlyphs.entrySet().stream().forEach(integerIntegerEntry -> {
+             assertEquals(integerIntegerEntry.getValue(), glyphs.get(integerIntegerEntry.getKey()));
+-        }
++        });
+         assertTrue(fontGlyphs.size() == glyphs.size());
+     }
+ 
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/CIDSubsetTestCase.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/CIDSubsetTestCase.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/CIDSubsetTestCase.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/CIDSubsetTestCase.java	2026-07-01 09:45:24.551144806 +0100
+@@ -118,24 +118,24 @@
+ 
+     @Test
+     public void testMapChar() {
+-        for (Map.Entry<Integer, Integer> entry : glyphToSelector.entrySet()) {
++        glyphToSelector.entrySet().stream().forEach(entry -> {
+             int glyphIndex = entry.getKey();
+             int subsetCharSelector = entry.getValue();
+             // the value of codepoint is not relevant for the purpose of this test: safe to take a random value.
+             int codepoint = 'a';
+             assertEquals(subsetCharSelector, cidSub.mapChar(glyphIndex, (char) codepoint));
+-        }
++        });
+     }
+ 
+     @Test
+     public void testMapCodePoint() {
+-        for (Map.Entry<Integer, Integer> entry : glyphToSelector.entrySet()) {
++        glyphToSelector.entrySet().stream().forEach(entry -> {
+             int glyphIndex = entry.getKey();
+             int subsetCharSelector = entry.getValue();
+             // the value of codepoint is not relevant for the purpose of this test: safe to take a random value.
+             int codepoint = 'a';
+             assertEquals(subsetCharSelector, cidSub.mapCodePoint(glyphIndex, codepoint));
+-        }
++        });
+     }
+ 
+     @Test
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/truetype/TTFFileTestCase.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/truetype/TTFFileTestCase.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/truetype/TTFFileTestCase.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/truetype/TTFFileTestCase.java	2026-07-01 09:45:24.551342851 +0100
+@@ -220,9 +220,9 @@
+     public void testGetCMaps() {
+         List<CMapSegment> cmaps = androidEmojiTTFFile.getCMaps();
+ 
+-        for (CMapSegment seg : cmaps) {
++        cmaps.stream().forEach(seg -> {
+             System.out.println(seg.getUnicodeStart() + "-" + seg.getUnicodeEnd() + " -> " + seg.getGlyphStartIndex());
+-        }
++        });
+     }
+ 
+     /**
+@@ -231,17 +231,17 @@
+     @Test
+     public void testGetFamilyNames() {
+         assertEquals(1, dejavuTTFFile.getFamilyNames().size());
+-        for (String name : dejavuTTFFile.getFamilyNames()) {
++        dejavuTTFFile.getFamilyNames().stream().forEach(name -> {
+             assertEquals("DejaVu LGC Serif", name);
+-        }
++        });
+         assertEquals(1, droidmonoTTFFile.getFamilyNames().size());
+-        for (String name : droidmonoTTFFile.getFamilyNames()) {
++        droidmonoTTFFile.getFamilyNames().stream().forEach(name -> {
+             assertEquals("Droid Sans Mono", name);
+-        }
++        });
+         assertEquals(1, androidEmojiTTFFile.getFamilyNames().size());
+-        for (String name : androidEmojiTTFFile.getFamilyNames()) {
++        androidEmojiTTFFile.getFamilyNames().stream().forEach(name -> {
+             assertEquals("Android Emoji", name);
+-        }
++        });
+     }
+ 
+     /**
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/type1/Type1SubsetFileTestCase.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/type1/Type1SubsetFileTestCase.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/type1/Type1SubsetFileTestCase.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/fonts/type1/Type1SubsetFileTestCase.java	2026-07-01 09:45:24.551589009 +0100
+@@ -220,12 +220,7 @@
+     }
+ 
+     private PSElement findElement(List<PSElement> elements, String operator) {
+-        for (PSElement element : elements) {
+-            if (element.getOperator().equals(operator)) {
+-                return element;
+-            }
+-        }
+-        return null;
++        return elements.stream().filter(element -> element.getOperator().equals(operator)).findFirst().orElse(null);
+     }
+ 
+     private byte[] readFullCharString(byte[] decoded, byte[] data, PSFixedArray subroutines) {
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/fotreetest/FOTreeTestCase.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/fotreetest/FOTreeTestCase.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/fotreetest/FOTreeTestCase.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/fotreetest/FOTreeTestCase.java	2026-07-01 09:45:24.551801149 +0100
+@@ -140,9 +140,9 @@
+ 
+             List<String> results = collector.getResults();
+             if (results.size() > 0) {
+-                for (String result : results) {
++                results.stream().forEach(result -> {
+                     System.out.println(result);
+-                }
++                });
+                 throw new IllegalStateException(results.get(0));
+             }
+         } catch (Exception e) {
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/intermediate/IFTester.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/intermediate/IFTester.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/intermediate/IFTester.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/intermediate/IFTester.java	2026-07-01 09:45:24.551982879 +0100
+@@ -76,9 +76,9 @@
+         if (checks.size() == 0) {
+             throw new RuntimeException("No available IF check");
+         }
+-        for (IFCheck check : checks) {
++        checks.stream().forEach(check -> {
+             check.check(ifDocument);
+-        }
++        });
+     }
+ 
+ }
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/layoutengine/LayoutEngineTestCase.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/layoutengine/LayoutEngineTestCase.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/layoutengine/LayoutEngineTestCase.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/layoutengine/LayoutEngineTestCase.java	2026-07-01 09:45:24.552155818 +0100
+@@ -218,7 +218,7 @@
+ 
+         private void checkParameters(Event event, Map<String, String> expectedParams) {
+             Map<String, Object> actualParams = event.getParams();
+-            for (Map.Entry<String, String> expectedParam : expectedParams.entrySet()) {
++            expectedParams.entrySet().stream().forEach(expectedParam -> {
+                 assertTrue("Event \"" + event.getEventKey()
+                         + "\" is missing parameter \"" + expectedParam.getKey() + '"',
+                         actualParams.containsKey(expectedParam.getKey()));
+@@ -226,13 +226,13 @@
+                         + "\" has wrong value for parameter \"" + expectedParam.getKey() + "\";",
+                         actualParams.get(expectedParam.getKey()).toString(),
+                         expectedParam.getValue());
+-            }
++            });
+         }
+ 
+         public void emitUncheckedEvents() {
+-            for (Event event : events) {
++            events.stream().forEach(event -> {
+                 defaultListener.processEvent(event);
+-            }
++            });
+         }
+     }
+ 
+@@ -322,7 +322,7 @@
+         if (checks.size() == 0) {
+             throw new RuntimeException("No available area tree check");
+         }
+-        for (LayoutEngineCheck check : checks) {
++        checks.stream().forEach(check -> {
+             try {
+                 check.check(result);
+             } catch (AssertionError ae) {
+@@ -330,7 +330,7 @@
+             } catch (RuntimeException rte) {
+                 throw new RuntimeException("Layout test (" + testFile.getName() + "): " + rte.getMessage());
+             }
+-        }
++        });
+     }
+ 
+     private void doEventChecks(Element eventChecks, EventsChecker eventsChecker) {
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/layoutengine/LayoutEngineTestUtils.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/layoutengine/LayoutEngineTestUtils.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/layoutengine/LayoutEngineTestUtils.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/layoutengine/LayoutEngineTestUtils.java	2026-07-01 09:45:24.552367991 +0100
+@@ -162,7 +162,7 @@
+         Collection<File[]> parametersForJUnit4 = new ArrayList<File[]>();
+         int index = 0;
+         for (File f : files) {
+-            parametersForJUnit4.add(new File[] {f});
++            parametersForJUnit4.add(new File[]{f});
+             if (DEBUG) {
+                 System.out.println(String.format("%3d %s", index++, f));
+             }
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/ObjectStreamTestCase.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/ObjectStreamTestCase.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/ObjectStreamTestCase.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/ObjectStreamTestCase.java	2026-07-01 09:45:24.552562160 +0100
+@@ -78,10 +78,10 @@
+     }
+ 
+     private void populateObjectStream() {
+-        for (MockCompressedObject obj : compressedObjects) {
++        compressedObjects.stream().forEach(obj -> {
+             pdfDocument.assignObjectNumber(obj);
+             objectStream.addObject(obj);
+-        }
++        });
+     }
+ 
+     private String getExpectedOutput() {
+@@ -107,9 +107,9 @@
+             expected.append(objectStreamNumber + num++).append(' ').append(offset).append('\n');
+             offset += ob.toPDFString().length();
+         }
+-        for (PDFObject ob : compressedObjects) {
++        compressedObjects.stream().forEach(ob -> {
+             expected.append(ob.toPDFString());
+-        }
++        });
+         expected.append("\nendstream");
+         return expected.toString();
+     }
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/PDFUATestCase.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/PDFUATestCase.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/PDFUATestCase.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/PDFUATestCase.java	2026-07-01 09:45:24.552730402 +0100
+@@ -74,11 +74,6 @@
+     }
+ 
+     private String getObj(Collection<StringBuilder> objs, String x) {
+-        for (StringBuilder s : objs) {
+-            if (s.toString().contains(x)) {
+-                return s.toString();
+-            }
+-        }
+-        return null;
++        return objs.stream().filter(s -> s.toString().contains(x)).findFirst().map(s -> s.toString()).orElse(null);
+     }
+ }
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/PDFVTTestCase.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/PDFVTTestCase.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/PDFVTTestCase.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/PDFVTTestCase.java	2026-07-01 09:45:24.552904467 +0100
+@@ -184,11 +184,6 @@
+     }
+ 
+     public static String getObj(Collection<StringBuilder> objs, String x) {
+-        for (StringBuilder s : objs) {
+-            if (s.toString().contains(x)) {
+-                return s.toString();
+-            }
+-        }
+-        return null;
++        return objs.stream().filter(s -> s.toString().contains(x)).findFirst().map(s -> s.toString()).orElse(null);
+     }
+ }
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/xref/CrossReferenceStreamTestCase.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/xref/CrossReferenceStreamTestCase.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/xref/CrossReferenceStreamTestCase.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/xref/CrossReferenceStreamTestCase.java	2026-07-01 09:45:24.553095247 +0100
+@@ -106,12 +106,12 @@
+     protected byte[] createExpectedCrossReferenceData() throws IOException {
+         List<ObjectReference> objectReferences
+                 = new ArrayList<ObjectReference>(uncompressedObjectOffsets.size());
+-        for (Long offset : uncompressedObjectOffsets) {
++        uncompressedObjectOffsets.stream().forEach(offset -> {
+             objectReferences.add(offset == null ? null : new UncompressedObjectReference(offset));
+-        }
+-        for (CompressedObjectReference ref : compressedObjectReferences) {
++        });
++        compressedObjectReferences.stream().forEach(ref -> {
+             objectReferences.set(ref.getObjectNumber().getNumber() - 1, ref);
+-        }
++        });
+         int maxObjectNumber = objectReferences.size() + 1;
+         ByteArrayOutputStream stream = new ByteArrayOutputStream();
+         StringBuilder expected = new StringBuilder(256);
+diff '--color=auto' -ur fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/xref/CrossReferenceTableTestCase.java ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/xref/CrossReferenceTableTestCase.java
+--- fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/xref/CrossReferenceTableTestCase.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-core/src/test/java/org/apache/fop/pdf/xref/CrossReferenceTableTestCase.java	2026-07-01 09:45:24.553267343 +0100
+@@ -62,12 +62,12 @@
+         expected.append("xref\n0 ")
+                 .append(offsets.size() + 1)
+                 .append("\n0000000000 65535 f \n");
+-        for (Long objectReference : offsets) {
++        offsets.stream().forEach(objectReference -> {
+             final String padding = "0000000000";
+             String s = String.valueOf(objectReference);
+             String loc = padding.substring(s.length()) + s;
+             expected.append(loc).append(" 00000 n \n");
+-        }
++        });
+         expected.append("trailer\n<<\n")
+                 .append("  /Root 1 0 R\n")
+                 .append("  /Info 2 0 R\n")
+diff '--color=auto' -ur fop-2.8/fop-events/src/main/java/org/apache/fop/events/CompositeEventListener.java ../build/fop-2.8/fop-events/src/main/java/org/apache/fop/events/CompositeEventListener.java
+--- fop-2.8/fop-events/src/main/java/org/apache/fop/events/CompositeEventListener.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-events/src/main/java/org/apache/fop/events/CompositeEventListener.java	2026-07-01 09:45:24.553449163 +0100
+@@ -57,9 +57,9 @@
+ 
+     /** {@inheritDoc } */
+     public synchronized void processEvent(Event event) {
+-        for (EventListener listener : listeners) {
++        listeners.stream().forEach(listener -> {
+             listener.processEvent(event);
+-        }
++        });
+     }
+ 
+ }
+diff '--color=auto' -ur fop-2.8/fop-events/src/main/java/org/apache/fop/events/EventExceptionManager.java ../build/fop-2.8/fop-events/src/main/java/org/apache/fop/events/EventExceptionManager.java
+--- fop-2.8/fop-events/src/main/java/org/apache/fop/events/EventExceptionManager.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-events/src/main/java/org/apache/fop/events/EventExceptionManager.java	2026-07-01 09:45:24.553607042 +0100
+@@ -63,13 +63,8 @@
+         } else {
+             String msg = EventFormatter.format(event);
+             //Get original exception as cause if it is given as one of the parameters
+-            Throwable t = null;
+-            for (Object o : event.getParams().values()) {
+-                if (o instanceof Throwable) {
+-                    t = (Throwable) o;
+-                    break;
+-                }
+-            }
++            Throwable t = event.getParams().values().stream().filter(o -> o instanceof Throwable).findFirst().map(o -> (Throwable) o)
++                    .orElse(null);
+             if (t != null) {
+                 throw new RuntimeException(msg, t);
+             } else {
+diff '--color=auto' -ur fop-2.8/fop-util/src/main/java/org/apache/fop/util/text/AdvancedMessageFormat.java ../build/fop-2.8/fop-util/src/main/java/org/apache/fop/util/text/AdvancedMessageFormat.java
+--- fop-2.8/fop-util/src/main/java/org/apache/fop/util/text/AdvancedMessageFormat.java	2022-11-02 12:18:41.000000000 +0000
++++ ../build/fop-2.8/fop-util/src/main/java/org/apache/fop/util/text/AdvancedMessageFormat.java	2026-07-01 09:45:24.553851097 +0100
+@@ -443,21 +443,16 @@
+                 }
+             } else {
+                 if (isGenerated(params)) {
+-                    for (Part part : this.parts) {
++                    this.parts.stream().forEach(part -> {
+                         part.write(sb, params);
+-                    }
++                    });
+                 }
+             }
+         }
+ 
+         public boolean isGenerated(Map<String, Object> params) {
+             if (hasSections) {
+-                for (Part part : this.parts) {
+-                    if (part.isGenerated(params)) {
+-                        return true;
+-                    }
+-                }
+-                return false;
++                return this.parts.stream().anyMatch(part -> part.isGenerated(params));
+             } else {
+                 if (conditional) {
+                     for (Part part : this.parts) {
+--- ./fop-2.8/fop-util/src/main/java/org/apache/fop/util/StreamExtensions.java	1970-01-01 01:00:00.000000000 +0100
++++ ../build/fop-2.8/fop-util/src/main/java/org/apache/fop/util/StreamExtensions.java	2026-07-01 12:03:36.675597610 +0100
+@@ -0,0 +1,147 @@
++package org.apache.fop.util;
++
++import java.util.Comparator;
++import java.util.Objects;
++import java.util.Spliterator;
++import java.util.Spliterators;
++import java.util.function.Consumer;
++import java.util.function.Predicate;
++import java.util.function.UnaryOperator;
++import java.util.stream.Stream;
++import java.util.stream.StreamSupport;
++
++public final class StreamExtensions {
++
++    private StreamExtensions() {
++    }
++
++    public static <T> Stream<T> iterate(T seed, Predicate<? super T> hasNext, UnaryOperator<T> next) {
++        Objects.requireNonNull(hasNext, "hasNext must not be null");
++        Objects.requireNonNull(next, "next must not be null");
++        return StreamSupport.stream(new IterateSpliterator<>(seed, hasNext, next), false);
++    }
++
++    public static <T> Stream<T> takeWhile(Stream<T> stream, Predicate<? super T> predicate) {
++        Objects.requireNonNull(stream, "stream must not be null");
++        Objects.requireNonNull(predicate, "predicate must not be null");
++        Spliterator<T> source = stream.spliterator();
++        Spliterator<T> takeWhileSpliterator = new TakeWhileSpliterator<>(source, predicate);
++        return StreamSupport.stream(takeWhileSpliterator, stream.isParallel()).onClose(stream::close);
++    }
++
++    private static final class IterateSpliterator<T> extends Spliterators.AbstractSpliterator<T> {
++        private final T seed;
++        private final Predicate<? super T> hasNext;
++        private final UnaryOperator<T> next;
++
++        private T prev;
++        private boolean started;
++        private boolean finished;
++
++        private IterateSpliterator(T seed, Predicate<? super T> hasNext, UnaryOperator<T> next) {
++            super(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL);
++            this.seed = seed;
++            this.hasNext = hasNext;
++            this.next = next;
++            this.prev = null;
++            this.started = false;
++            this.finished = false;
++        }
++
++        @Override
++        public boolean tryAdvance(Consumer<? super T> action) {
++            Objects.requireNonNull(action, "action must not be null");
++            if (finished) {
++                return false;
++            }
++
++            T t;
++            if (started) {
++                t = next.apply(prev);
++            } else {
++                t = seed;
++                started = true;
++            }
++
++            if (!hasNext.test(t)) {
++                prev = null;
++                finished = true;
++                return false;
++            } else {
++                action.accept(t);
++                prev = t;
++                return true;
++            }
++        }
++
++        @Override
++        public void forEachRemaining(Consumer<? super T> action) {
++            Objects.requireNonNull(action, "action must not be null");
++            if (finished) {
++                return;
++            }
++
++            finished = true;
++            T t = started ? next.apply(prev) : seed;
++            prev = null;
++            while (hasNext.test(t)) {
++                action.accept(t);
++                t = next.apply(t);
++            }
++        }
++    }
++
++    private static final class TakeWhileSpliterator<T> implements Spliterator<T>, Consumer<T> {
++        private final Spliterator<T> source;
++        private final Predicate<? super T> predicate;
++
++        private boolean taking = true;
++        private T currentElement = null;
++
++        public TakeWhileSpliterator(Spliterator<T> source, Predicate<? super T> predicate) {
++            this.source = source;
++            this.predicate = predicate;
++        }
++
++        @Override
++        public void accept(T t) {
++            this.currentElement = t;
++        }
++
++        @Override
++        public boolean tryAdvance(Consumer<? super T> action) {
++            Objects.requireNonNull(action, "action must not be null");
++            if (!taking) {
++                return false;
++            }
++
++            taking = source.tryAdvance(this) && predicate.test(currentElement);
++            if (taking) {
++                action.accept(currentElement);
++            }
++
++            currentElement = null;  // allow GC of the processed element (if any)
++            return taking;
++        }
++
++        @Override
++        public Spliterator<T> trySplit() {
++            return null; // preserve ordered takeWhile semantics
++        }
++
++        @Override
++        public long estimateSize() {
++            return taking ? source.estimateSize() : 0;
++        }
++
++        @Override
++        public int characteristics() {
++            return source.characteristics() & ~(Spliterator.SIZED | Spliterator.SUBSIZED);
++        }
++
++        @Override
++        public Comparator<? super T> getComparator() {
++            return source.getComparator();
++        }
++    }
++}
