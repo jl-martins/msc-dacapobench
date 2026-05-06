@@ -1,6 +1,6 @@
 diff '--color=auto' -ur ./Python-2.7/Tools/pybench/CommandLine.py ../build/Python-2.7/Tools/pybench/CommandLine.py
---- ./Python-2.7/Tools/pybench/CommandLine.py	2006-06-13 18:56:56.000000000 +0000
-+++ ../build/Python-2.7/Tools/pybench/CommandLine.py	2022-12-27 05:02:06.017187280 +0000
+--- ./Python-2.7/Tools/pybench/CommandLine.py   2006-06-13 18:56:56.000000000 +0000
++++ ../build/Python-2.7/Tools/pybench/CommandLine.py    2022-12-27 05:02:06.017187280 +0000
 @@ -367,7 +367,7 @@
              print
              rc = 1
@@ -11,8 +11,8 @@ diff '--color=auto' -ur ./Python-2.7/Tools/pybench/CommandLine.py ../build/Pytho
      def add_option(self, option):
  
 diff '--color=auto' -ur ./Python-2.7/Tools/pybench/pybench.py ../build/Python-2.7/Tools/pybench/pybench.py
---- ./Python-2.7/Tools/pybench/pybench.py	2009-10-09 14:32:19.000000000 +0000
-+++ ../build/Python-2.7/Tools/pybench/pybench.py	2022-12-27 05:02:06.017187280 +0000
+--- ./Python-2.7/Tools/pybench/pybench.py   2009-10-09 14:32:19.000000000 +0000
++++ ../build/Python-2.7/Tools/pybench/pybench.py    2022-12-27 05:02:06.017187280 +0000
 @@ -325,9 +325,9 @@
          t = timer()
          test()
@@ -76,8 +76,8 @@ diff '--color=auto' -ur ./Python-2.7/Tools/pybench/pybench.py ../build/Python-2.
          if reportfile:
              try:
 diff '--color=auto' -ur ./src/org/python/core/imp.java ../build/src/org/python/core/imp.java
---- ./src/org/python/core/imp.java	2022-11-29 11:19:10.000000000 +0000
-+++ ../build/src/org/python/core/imp.java	2022-12-27 05:12:01.409009086 +0000
+--- ./src/org/python/core/imp.java  2022-11-29 11:19:10.000000000 +0000
++++ ../build/src/org/python/core/imp.java   2022-12-27 05:12:01.409009086 +0000
 @@ -923,22 +923,31 @@
                  long pyTime = sourceFile.lastModified();
  
@@ -121,17 +121,4194 @@ diff '--color=auto' -ur ./src/org/python/core/imp.java ../build/src/org/python/c
  
                  // The compiled class is not present, is out of date, or using it failed somehow.
 diff '--color=auto' -ur ./src/org/python/core/PySystemState.java ../build/src/org/python/core/PySystemState.java
---- ./src/org/python/core/PySystemState.java	2022-11-29 11:19:10.000000000 +0000
-+++ ../build/src/org/python/core/PySystemState.java	2022-12-27 05:02:06.017187280 +0000
+--- ./src/org/python/core/PySystemState.java    2022-11-29 11:19:10.000000000 +0000
++++ ../build/src/org/python/core/PySystemState.java 2022-12-27 05:02:06.017187280 +0000
 @@ -1296,6 +1296,11 @@
          packageManager = new SysPackageManager(pkgdir, props);
      }
  
 +    public static void setArgv(String[] args) {
-+	defaultArgv = initArgv(args);
-+	Py.defaultSystemState.argv = (PyList)defaultArgv.repeat(1);
++   defaultArgv = initArgv(args);
++   Py.defaultSystemState.argv = (PyList)defaultArgv.repeat(1);
 +    }
 +
      private static PyList initArgv(String[] args) {
          PyList argv = new PyList();
          if (args != null) {
+diff '--color=auto' -ur ./src/com/ziclix/python/sql/Fetch.java ../build/src/com/ziclix/python/sql/Fetch.java
+--- ./src/com/ziclix/python/sql/Fetch.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/com/ziclix/python/sql/Fetch.java	2026-06-29 11:43:51.566951100 +0100
+@@ -450,13 +450,13 @@
+     protected void fireWarning(SQLWarning warning) {
+         WarningEvent event = new WarningEvent(this, warning);
+ 
+-        for (WarningListener listener : listeners) {
++        listeners.stream().forEach(listener -> {
+             try {
+                 listener.warning(event);
+             } catch (Throwable t) {
+                 // ok
+             }
+-        }
++        });
+     }
+ 
+     public void addWarningListener(WarningListener listener) {
+diff '--color=auto' -ur ./src/com/ziclix/python/sql/PyConnection.java ../build/src/com/ziclix/python/sql/PyConnection.java
+--- ./src/com/ziclix/python/sql/PyConnection.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/com/ziclix/python/sql/PyConnection.java	2026-06-29 11:43:51.567238772 +0100
+@@ -249,16 +249,12 @@
+         this.closed = true;
+ 
+         synchronized (this.cursors) {
+-            for (PyCursor cursor: cursors) {
+-                cursor.close();
+-            }
++            cursors.stream().forEach(PyCursor::close);
+             this.cursors.clear();
+         }
+ 
+         synchronized (this.statements) {
+-            for (PyStatement statement : statements) {
+-                statement.close();
+-            }
++            statements.stream().forEach(PyStatement::close);
+             this.statements.clear();
+         }
+ 
+diff '--color=auto' -ur ./src/org/python/antlr/ast/arguments.java ../build/src/org/python/antlr/ast/arguments.java
+--- ./src/org/python/antlr/ast/arguments.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/arguments.java	2026-06-29 11:43:51.573841254 +0100
+@@ -120,18 +120,14 @@
+         if (args == null) {
+             this.args = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.args) {
+-            addChild(t);
+-        }
++        this.args.stream().forEach(this::addChild);
+         this.vararg = vararg;
+         this.kwarg = kwarg;
+         this.defaults = defaults;
+         if (defaults == null) {
+             this.defaults = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.defaults) {
+-            addChild(t);
+-        }
++        this.defaults.stream().forEach(this::addChild);
+     }
+ 
+     public arguments(Integer ttype, Token token, java.util.List<expr> args, String vararg, String
+@@ -141,18 +137,14 @@
+         if (args == null) {
+             this.args = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.args) {
+-            addChild(t);
+-        }
++        this.args.stream().forEach(this::addChild);
+         this.vararg = vararg;
+         this.kwarg = kwarg;
+         this.defaults = defaults;
+         if (defaults == null) {
+             this.defaults = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.defaults) {
+-            addChild(t);
+-        }
++        this.defaults.stream().forEach(this::addChild);
+     }
+ 
+     public arguments(PythonTree tree, java.util.List<expr> args, String vararg, String kwarg,
+@@ -162,18 +154,14 @@
+         if (args == null) {
+             this.args = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.args) {
+-            addChild(t);
+-        }
++        this.args.stream().forEach(this::addChild);
+         this.vararg = vararg;
+         this.kwarg = kwarg;
+         this.defaults = defaults;
+         if (defaults == null) {
+             this.defaults = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.defaults) {
+-            addChild(t);
+-        }
++        this.defaults.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+@@ -258,9 +246,7 @@
+         if (args == null) {
+             this.args = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.args) {
+-            addChild(t);
+-        }
++        this.args.stream().forEach(this::addChild);
+         this.vararg = vararg == null ? null : vararg.getText();
+         this.varargName = vararg;
+         this.kwarg = kwarg == null ? null : kwarg.getText();
+@@ -269,9 +255,7 @@
+         if (defaults == null) {
+             this.defaults = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.defaults) {
+-            addChild(t);
+-        }
++        this.defaults.stream().forEach(this::addChild);
+     }
+     // End indexer support
+ 
+diff '--color=auto' -ur ./src/org/python/antlr/ast/Assign.java ../build/src/org/python/antlr/ast/Assign.java
+--- ./src/org/python/antlr/ast/Assign.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/Assign.java	2026-06-29 11:43:51.568042776 +0100
+@@ -96,9 +96,7 @@
+         if (targets == null) {
+             this.targets = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.targets) {
+-            addChild(t);
+-        }
++        this.targets.stream().forEach(this::addChild);
+         this.value = value;
+         addChild(value);
+     }
+@@ -109,9 +107,7 @@
+         if (targets == null) {
+             this.targets = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.targets) {
+-            addChild(t);
+-        }
++        this.targets.stream().forEach(this::addChild);
+         this.value = value;
+         addChild(value);
+     }
+@@ -122,9 +118,7 @@
+         if (targets == null) {
+             this.targets = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.targets) {
+-            addChild(t);
+-        }
++        this.targets.stream().forEach(this::addChild);
+         this.value = value;
+         addChild(value);
+     }
+diff '--color=auto' -ur ./src/org/python/antlr/ast/BoolOp.java ../build/src/org/python/antlr/ast/BoolOp.java
+--- ./src/org/python/antlr/ast/BoolOp.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/BoolOp.java	2026-06-29 11:43:51.568225341 +0100
+@@ -96,9 +96,7 @@
+         if (values == null) {
+             this.values = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.values) {
+-            addChild(t);
+-        }
++        this.values.stream().forEach(this::addChild);
+     }
+ 
+     public BoolOp(Integer ttype, Token token, boolopType op, java.util.List<expr> values) {
+@@ -108,9 +106,7 @@
+         if (values == null) {
+             this.values = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.values) {
+-            addChild(t);
+-        }
++        this.values.stream().forEach(this::addChild);
+     }
+ 
+     public BoolOp(PythonTree tree, boolopType op, java.util.List<expr> values) {
+@@ -120,9 +116,7 @@
+         if (values == null) {
+             this.values = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.values) {
+-            addChild(t);
+-        }
++        this.values.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/Call.java ../build/src/org/python/antlr/ast/Call.java
+--- ./src/org/python/antlr/ast/Call.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/Call.java	2026-06-29 11:43:51.568396324 +0100
+@@ -145,16 +145,12 @@
+         if (args == null) {
+             this.args = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.args) {
+-            addChild(t);
+-        }
++        this.args.stream().forEach(this::addChild);
+         this.keywords = keywords;
+         if (keywords == null) {
+             this.keywords = new ArrayList<keyword>();
+         }
+-        for(PythonTree t : this.keywords) {
+-            addChild(t);
+-        }
++        this.keywords.stream().forEach(this::addChild);
+         this.starargs = starargs;
+         addChild(starargs);
+         this.kwargs = kwargs;
+@@ -170,16 +166,12 @@
+         if (args == null) {
+             this.args = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.args) {
+-            addChild(t);
+-        }
++        this.args.stream().forEach(this::addChild);
+         this.keywords = keywords;
+         if (keywords == null) {
+             this.keywords = new ArrayList<keyword>();
+         }
+-        for(PythonTree t : this.keywords) {
+-            addChild(t);
+-        }
++        this.keywords.stream().forEach(this::addChild);
+         this.starargs = starargs;
+         addChild(starargs);
+         this.kwargs = kwargs;
+@@ -195,16 +187,12 @@
+         if (args == null) {
+             this.args = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.args) {
+-            addChild(t);
+-        }
++        this.args.stream().forEach(this::addChild);
+         this.keywords = keywords;
+         if (keywords == null) {
+             this.keywords = new ArrayList<keyword>();
+         }
+-        for(PythonTree t : this.keywords) {
+-            addChild(t);
+-        }
++        this.keywords.stream().forEach(this::addChild);
+         this.starargs = starargs;
+         addChild(starargs);
+         this.kwargs = kwargs;
+diff '--color=auto' -ur ./src/org/python/antlr/ast/ClassDef.java ../build/src/org/python/antlr/ast/ClassDef.java
+--- ./src/org/python/antlr/ast/ClassDef.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/ClassDef.java	2026-06-29 11:43:51.568599639 +0100
+@@ -130,23 +130,17 @@
+         if (bases == null) {
+             this.bases = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.bases) {
+-            addChild(t);
+-        }
++        this.bases.stream().forEach(this::addChild);
+         this.body = body;
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.decorator_list = decorator_list;
+         if (decorator_list == null) {
+             this.decorator_list = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.decorator_list) {
+-            addChild(t);
+-        }
++        this.decorator_list.stream().forEach(this::addChild);
+     }
+ 
+     public ClassDef(Integer ttype, Token token, String name, java.util.List<expr> bases,
+@@ -157,23 +151,17 @@
+         if (bases == null) {
+             this.bases = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.bases) {
+-            addChild(t);
+-        }
++        this.bases.stream().forEach(this::addChild);
+         this.body = body;
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.decorator_list = decorator_list;
+         if (decorator_list == null) {
+             this.decorator_list = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.decorator_list) {
+-            addChild(t);
+-        }
++        this.decorator_list.stream().forEach(this::addChild);
+     }
+ 
+     public ClassDef(PythonTree tree, String name, java.util.List<expr> bases, java.util.List<stmt>
+@@ -184,23 +172,17 @@
+         if (bases == null) {
+             this.bases = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.bases) {
+-            addChild(t);
+-        }
++        this.bases.stream().forEach(this::addChild);
+         this.body = body;
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.decorator_list = decorator_list;
+         if (decorator_list == null) {
+             this.decorator_list = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.decorator_list) {
+-            addChild(t);
+-        }
++        this.decorator_list.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+@@ -313,23 +295,17 @@
+         if (bases == null) {
+             this.bases = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.bases) {
+-            addChild(t);
+-        }
++        this.bases.stream().forEach(this::addChild);
+         this.body = body;
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.decorator_list = decorator_list;
+         if (decorator_list == null) {
+             this.decorator_list = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.decorator_list) {
+-            addChild(t);
+-        }
++        this.decorator_list.stream().forEach(this::addChild);
+     }
+     // End indexer support
+ }
+diff '--color=auto' -ur ./src/org/python/antlr/ast/Compare.java ../build/src/org/python/antlr/ast/Compare.java
+--- ./src/org/python/antlr/ast/Compare.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/Compare.java	2026-06-29 11:43:51.568828037 +0100
+@@ -114,9 +114,7 @@
+         if (comparators == null) {
+             this.comparators = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.comparators) {
+-            addChild(t);
+-        }
++        this.comparators.stream().forEach(this::addChild);
+     }
+ 
+     public Compare(Integer ttype, Token token, expr left, java.util.List<cmpopType> ops,
+@@ -129,9 +127,7 @@
+         if (comparators == null) {
+             this.comparators = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.comparators) {
+-            addChild(t);
+-        }
++        this.comparators.stream().forEach(this::addChild);
+     }
+ 
+     public Compare(PythonTree tree, expr left, java.util.List<cmpopType> ops, java.util.List<expr>
+@@ -144,9 +140,7 @@
+         if (comparators == null) {
+             this.comparators = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.comparators) {
+-            addChild(t);
+-        }
++        this.comparators.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/comprehension.java ../build/src/org/python/antlr/ast/comprehension.java
+--- ./src/org/python/antlr/ast/comprehension.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/comprehension.java	2026-06-29 11:43:51.574097025 +0100
+@@ -105,9 +105,7 @@
+         if (ifs == null) {
+             this.ifs = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.ifs) {
+-            addChild(t);
+-        }
++        this.ifs.stream().forEach(this::addChild);
+     }
+ 
+     public comprehension(Integer ttype, Token token, expr target, expr iter, java.util.List<expr>
+@@ -121,9 +119,7 @@
+         if (ifs == null) {
+             this.ifs = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.ifs) {
+-            addChild(t);
+-        }
++        this.ifs.stream().forEach(this::addChild);
+     }
+ 
+     public comprehension(PythonTree tree, expr target, expr iter, java.util.List<expr> ifs) {
+@@ -136,9 +132,7 @@
+         if (ifs == null) {
+             this.ifs = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.ifs) {
+-            addChild(t);
+-        }
++        this.ifs.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/Delete.java ../build/src/org/python/antlr/ast/Delete.java
+--- ./src/org/python/antlr/ast/Delete.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/Delete.java	2026-06-29 11:43:51.569039522 +0100
+@@ -81,9 +81,7 @@
+         if (targets == null) {
+             this.targets = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.targets) {
+-            addChild(t);
+-        }
++        this.targets.stream().forEach(this::addChild);
+     }
+ 
+     public Delete(Integer ttype, Token token, java.util.List<expr> targets) {
+@@ -92,9 +90,7 @@
+         if (targets == null) {
+             this.targets = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.targets) {
+-            addChild(t);
+-        }
++        this.targets.stream().forEach(this::addChild);
+     }
+ 
+     public Delete(PythonTree tree, java.util.List<expr> targets) {
+@@ -103,9 +99,7 @@
+         if (targets == null) {
+             this.targets = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.targets) {
+-            addChild(t);
+-        }
++        this.targets.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/DictComp.java ../build/src/org/python/antlr/ast/DictComp.java
+--- ./src/org/python/antlr/ast/DictComp.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/DictComp.java	2026-06-29 11:43:51.569385498 +0100
+@@ -114,9 +114,7 @@
+         if (generators == null) {
+             this.generators = new ArrayList<comprehension>();
+         }
+-        for(PythonTree t : this.generators) {
+-            addChild(t);
+-        }
++        this.generators.stream().forEach(this::addChild);
+     }
+ 
+     public DictComp(Integer ttype, Token token, expr key, expr value, java.util.List<comprehension>
+@@ -130,9 +128,7 @@
+         if (generators == null) {
+             this.generators = new ArrayList<comprehension>();
+         }
+-        for(PythonTree t : this.generators) {
+-            addChild(t);
+-        }
++        this.generators.stream().forEach(this::addChild);
+     }
+ 
+     public DictComp(PythonTree tree, expr key, expr value, java.util.List<comprehension>
+@@ -146,9 +142,7 @@
+         if (generators == null) {
+             this.generators = new ArrayList<comprehension>();
+         }
+-        for(PythonTree t : this.generators) {
+-            addChild(t);
+-        }
++        this.generators.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/Dict.java ../build/src/org/python/antlr/ast/Dict.java
+--- ./src/org/python/antlr/ast/Dict.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/Dict.java	2026-06-29 11:43:51.569218262 +0100
+@@ -95,16 +95,12 @@
+         if (keys == null) {
+             this.keys = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.keys) {
+-            addChild(t);
+-        }
++        this.keys.stream().forEach(this::addChild);
+         this.values = values;
+         if (values == null) {
+             this.values = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.values) {
+-            addChild(t);
+-        }
++        this.values.stream().forEach(this::addChild);
+     }
+ 
+     public Dict(Integer ttype, Token token, java.util.List<expr> keys, java.util.List<expr> values)
+@@ -114,16 +110,12 @@
+         if (keys == null) {
+             this.keys = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.keys) {
+-            addChild(t);
+-        }
++        this.keys.stream().forEach(this::addChild);
+         this.values = values;
+         if (values == null) {
+             this.values = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.values) {
+-            addChild(t);
+-        }
++        this.values.stream().forEach(this::addChild);
+     }
+ 
+     public Dict(PythonTree tree, java.util.List<expr> keys, java.util.List<expr> values) {
+@@ -132,16 +124,12 @@
+         if (keys == null) {
+             this.keys = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.keys) {
+-            addChild(t);
+-        }
++        this.keys.stream().forEach(this::addChild);
+         this.values = values;
+         if (values == null) {
+             this.values = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.values) {
+-            addChild(t);
+-        }
++        this.values.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/ExceptHandler.java ../build/src/org/python/antlr/ast/ExceptHandler.java
+--- ./src/org/python/antlr/ast/ExceptHandler.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/ExceptHandler.java	2026-06-29 11:43:51.569561967 +0100
+@@ -116,9 +116,7 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+     }
+ 
+     public ExceptHandler(Integer ttype, Token token, expr type, expr name, java.util.List<stmt>
+@@ -132,9 +130,7 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+     }
+ 
+     public ExceptHandler(PythonTree tree, expr type, expr name, java.util.List<stmt> body) {
+@@ -147,9 +143,7 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/ExtSlice.java ../build/src/org/python/antlr/ast/ExtSlice.java
+--- ./src/org/python/antlr/ast/ExtSlice.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/ExtSlice.java	2026-06-29 11:43:51.569730963 +0100
+@@ -69,9 +69,7 @@
+         if (dims == null) {
+             this.dims = new ArrayList<slice>();
+         }
+-        for(PythonTree t : this.dims) {
+-            addChild(t);
+-        }
++        this.dims.stream().forEach(this::addChild);
+     }
+ 
+     public ExtSlice(Integer ttype, Token token, java.util.List<slice> dims) {
+@@ -80,9 +78,7 @@
+         if (dims == null) {
+             this.dims = new ArrayList<slice>();
+         }
+-        for(PythonTree t : this.dims) {
+-            addChild(t);
+-        }
++        this.dims.stream().forEach(this::addChild);
+     }
+ 
+     public ExtSlice(PythonTree tree, java.util.List<slice> dims) {
+@@ -91,9 +87,7 @@
+         if (dims == null) {
+             this.dims = new ArrayList<slice>();
+         }
+-        for(PythonTree t : this.dims) {
+-            addChild(t);
+-        }
++        this.dims.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/For.java ../build/src/org/python/antlr/ast/For.java
+--- ./src/org/python/antlr/ast/For.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/For.java	2026-06-29 11:43:51.569916147 +0100
+@@ -132,16 +132,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.orelse = orelse;
+         if (orelse == null) {
+             this.orelse = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.orelse) {
+-            addChild(t);
+-        }
++        this.orelse.stream().forEach(this::addChild);
+     }
+ 
+     public For(Integer ttype, Token token, expr target, expr iter, java.util.List<stmt> body,
+@@ -155,16 +151,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.orelse = orelse;
+         if (orelse == null) {
+             this.orelse = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.orelse) {
+-            addChild(t);
+-        }
++        this.orelse.stream().forEach(this::addChild);
+     }
+ 
+     public For(PythonTree tree, expr target, expr iter, java.util.List<stmt> body,
+@@ -178,16 +170,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.orelse = orelse;
+         if (orelse == null) {
+             this.orelse = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.orelse) {
+-            addChild(t);
+-        }
++        this.orelse.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/FunctionDef.java ../build/src/org/python/antlr/ast/FunctionDef.java
+--- ./src/org/python/antlr/ast/FunctionDef.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/FunctionDef.java	2026-06-29 11:43:51.570104703 +0100
+@@ -131,16 +131,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.decorator_list = decorator_list;
+         if (decorator_list == null) {
+             this.decorator_list = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.decorator_list) {
+-            addChild(t);
+-        }
++        this.decorator_list.stream().forEach(this::addChild);
+     }
+ 
+     public FunctionDef(Integer ttype, Token token, String name, arguments args,
+@@ -152,16 +148,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.decorator_list = decorator_list;
+         if (decorator_list == null) {
+             this.decorator_list = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.decorator_list) {
+-            addChild(t);
+-        }
++        this.decorator_list.stream().forEach(this::addChild);
+     }
+ 
+     public FunctionDef(PythonTree tree, String name, arguments args, java.util.List<stmt> body,
+@@ -173,16 +165,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.decorator_list = decorator_list;
+         if (decorator_list == null) {
+             this.decorator_list = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.decorator_list) {
+-            addChild(t);
+-        }
++        this.decorator_list.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+@@ -292,16 +280,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.decorator_list = decorator_list;
+         if (decorator_list == null) {
+             this.decorator_list = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.decorator_list) {
+-            addChild(t);
+-        }
++        this.decorator_list.stream().forEach(this::addChild);
+     }
+     // End indexer support
+ }
+diff '--color=auto' -ur ./src/org/python/antlr/ast/GeneratorExp.java ../build/src/org/python/antlr/ast/GeneratorExp.java
+--- ./src/org/python/antlr/ast/GeneratorExp.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/GeneratorExp.java	2026-06-29 11:43:51.570313258 +0100
+@@ -97,9 +97,7 @@
+         if (generators == null) {
+             this.generators = new ArrayList<comprehension>();
+         }
+-        for(PythonTree t : this.generators) {
+-            addChild(t);
+-        }
++        this.generators.stream().forEach(this::addChild);
+     }
+ 
+     public GeneratorExp(Integer ttype, Token token, expr elt, java.util.List<comprehension>
+@@ -111,9 +109,7 @@
+         if (generators == null) {
+             this.generators = new ArrayList<comprehension>();
+         }
+-        for(PythonTree t : this.generators) {
+-            addChild(t);
+-        }
++        this.generators.stream().forEach(this::addChild);
+     }
+ 
+     public GeneratorExp(PythonTree tree, expr elt, java.util.List<comprehension> generators) {
+@@ -124,9 +120,7 @@
+         if (generators == null) {
+             this.generators = new ArrayList<comprehension>();
+         }
+-        for(PythonTree t : this.generators) {
+-            addChild(t);
+-        }
++        this.generators.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/If.java ../build/src/org/python/antlr/ast/If.java
+--- ./src/org/python/antlr/ast/If.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/If.java	2026-06-29 11:43:51.570482036 +0100
+@@ -113,16 +113,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.orelse = orelse;
+         if (orelse == null) {
+             this.orelse = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.orelse) {
+-            addChild(t);
+-        }
++        this.orelse.stream().forEach(this::addChild);
+     }
+ 
+     public If(Integer ttype, Token token, expr test, java.util.List<stmt> body,
+@@ -134,16 +130,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.orelse = orelse;
+         if (orelse == null) {
+             this.orelse = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.orelse) {
+-            addChild(t);
+-        }
++        this.orelse.stream().forEach(this::addChild);
+     }
+ 
+     public If(PythonTree tree, expr test, java.util.List<stmt> body, java.util.List<stmt> orelse) {
+@@ -154,16 +146,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.orelse = orelse;
+         if (orelse == null) {
+             this.orelse = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.orelse) {
+-            addChild(t);
+-        }
++        this.orelse.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/ImportFrom.java ../build/src/org/python/antlr/ast/ImportFrom.java
+--- ./src/org/python/antlr/ast/ImportFrom.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/ImportFrom.java	2026-06-29 11:43:51.570838296 +0100
+@@ -112,9 +112,7 @@
+         if (names == null) {
+             this.names = new ArrayList<alias>();
+         }
+-        for(PythonTree t : this.names) {
+-            addChild(t);
+-        }
++        this.names.stream().forEach(this::addChild);
+         this.level = level;
+     }
+ 
+@@ -126,9 +124,7 @@
+         if (names == null) {
+             this.names = new ArrayList<alias>();
+         }
+-        for(PythonTree t : this.names) {
+-            addChild(t);
+-        }
++        this.names.stream().forEach(this::addChild);
+         this.level = level;
+     }
+ 
+@@ -139,9 +135,7 @@
+         if (names == null) {
+             this.names = new ArrayList<alias>();
+         }
+-        for(PythonTree t : this.names) {
+-            addChild(t);
+-        }
++        this.names.stream().forEach(this::addChild);
+         this.level = level;
+     }
+ 
+@@ -240,16 +234,12 @@
+         if (names == null) {
+             this.names = new ArrayList<alias>();
+         }
+-        for(PythonTree t : this.names) {
+-            addChild(t);
+-        }
++        this.names.stream().forEach(this::addChild);
+         this.moduleNames = moduleNames;
+         if (moduleNames == null) {
+             this.moduleNames = new ArrayList<Name>();
+         }
+-        for(PythonTree t : this.moduleNames) {
+-            addChild(t);
+-        }
++        this.moduleNames.stream().forEach(this::addChild);
+         this.level = level;
+     }
+     // End indexer support
+diff '--color=auto' -ur ./src/org/python/antlr/ast/Import.java ../build/src/org/python/antlr/ast/Import.java
+--- ./src/org/python/antlr/ast/Import.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/Import.java	2026-06-29 11:43:51.570659790 +0100
+@@ -80,9 +80,7 @@
+         if (names == null) {
+             this.names = new ArrayList<alias>();
+         }
+-        for(PythonTree t : this.names) {
+-            addChild(t);
+-        }
++        this.names.stream().forEach(this::addChild);
+     }
+ 
+     public Import(Integer ttype, Token token, java.util.List<alias> names) {
+@@ -91,9 +89,7 @@
+         if (names == null) {
+             this.names = new ArrayList<alias>();
+         }
+-        for(PythonTree t : this.names) {
+-            addChild(t);
+-        }
++        this.names.stream().forEach(this::addChild);
+     }
+ 
+     public Import(PythonTree tree, java.util.List<alias> names) {
+@@ -102,9 +98,7 @@
+         if (names == null) {
+             this.names = new ArrayList<alias>();
+         }
+-        for(PythonTree t : this.names) {
+-            addChild(t);
+-        }
++        this.names.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/Interactive.java ../build/src/org/python/antlr/ast/Interactive.java
+--- ./src/org/python/antlr/ast/Interactive.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/Interactive.java	2026-06-29 11:43:51.571016217 +0100
+@@ -70,9 +70,9 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
++        this.body.stream().forEach(t -> {
+             addChild(t);
+-        }
++        });
+     }
+ 
+     public Interactive(Integer ttype, Token token, java.util.List<stmt> body) {
+@@ -81,9 +81,9 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
++        this.body.stream().forEach(t -> {
+             addChild(t);
+-        }
++        });
+     }
+ 
+     public Interactive(PythonTree tree, java.util.List<stmt> body) {
+@@ -92,9 +92,9 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
++        this.body.stream().forEach(t -> {
+             addChild(t);
+-        }
++        });
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/ListComp.java ../build/src/org/python/antlr/ast/ListComp.java
+--- ./src/org/python/antlr/ast/ListComp.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/ListComp.java	2026-06-29 11:43:51.571391859 +0100
+@@ -97,9 +97,7 @@
+         if (generators == null) {
+             this.generators = new ArrayList<comprehension>();
+         }
+-        for(PythonTree t : this.generators) {
+-            addChild(t);
+-        }
++        this.generators.stream().forEach(this::addChild);
+     }
+ 
+     public ListComp(Integer ttype, Token token, expr elt, java.util.List<comprehension> generators)
+@@ -111,9 +109,7 @@
+         if (generators == null) {
+             this.generators = new ArrayList<comprehension>();
+         }
+-        for(PythonTree t : this.generators) {
+-            addChild(t);
+-        }
++        this.generators.stream().forEach(this::addChild);
+     }
+ 
+     public ListComp(PythonTree tree, expr elt, java.util.List<comprehension> generators) {
+@@ -124,9 +120,7 @@
+         if (generators == null) {
+             this.generators = new ArrayList<comprehension>();
+         }
+-        for(PythonTree t : this.generators) {
+-            addChild(t);
+-        }
++        this.generators.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/List.java ../build/src/org/python/antlr/ast/List.java
+--- ./src/org/python/antlr/ast/List.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/List.java	2026-06-29 11:43:51.571176305 +0100
+@@ -95,9 +95,7 @@
+         if (elts == null) {
+             this.elts = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.elts) {
+-            addChild(t);
+-        }
++        this.elts.stream().forEach(this::addChild);
+         this.ctx = ctx;
+     }
+ 
+@@ -107,9 +105,7 @@
+         if (elts == null) {
+             this.elts = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.elts) {
+-            addChild(t);
+-        }
++        this.elts.stream().forEach(this::addChild);
+         this.ctx = ctx;
+     }
+ 
+@@ -119,9 +115,7 @@
+         if (elts == null) {
+             this.elts = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.elts) {
+-            addChild(t);
+-        }
++        this.elts.stream().forEach(this::addChild);
+         this.ctx = ctx;
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/antlr/ast/Module.java ../build/src/org/python/antlr/ast/Module.java
+--- ./src/org/python/antlr/ast/Module.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/Module.java	2026-06-29 11:43:51.571646565 +0100
+@@ -70,9 +70,7 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+     }
+ 
+     public Module(Integer ttype, Token token, java.util.List<stmt> body) {
+@@ -81,9 +79,7 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+     }
+ 
+     public Module(PythonTree tree, java.util.List<stmt> body) {
+@@ -92,9 +88,7 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/Print.java ../build/src/org/python/antlr/ast/Print.java
+--- ./src/org/python/antlr/ast/Print.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/Print.java	2026-06-29 11:43:51.571862276 +0100
+@@ -114,9 +114,7 @@
+         if (values == null) {
+             this.values = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.values) {
+-            addChild(t);
+-        }
++        this.values.stream().forEach(this::addChild);
+         this.nl = nl;
+     }
+ 
+@@ -128,9 +126,7 @@
+         if (values == null) {
+             this.values = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.values) {
+-            addChild(t);
+-        }
++        this.values.stream().forEach(this::addChild);
+         this.nl = nl;
+     }
+ 
+@@ -142,9 +138,7 @@
+         if (values == null) {
+             this.values = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.values) {
+-            addChild(t);
+-        }
++        this.values.stream().forEach(this::addChild);
+         this.nl = nl;
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/antlr/ast/SetComp.java ../build/src/org/python/antlr/ast/SetComp.java
+--- ./src/org/python/antlr/ast/SetComp.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/SetComp.java	2026-06-29 11:43:51.572263214 +0100
+@@ -97,9 +97,7 @@
+         if (generators == null) {
+             this.generators = new ArrayList<comprehension>();
+         }
+-        for(PythonTree t : this.generators) {
+-            addChild(t);
+-        }
++        this.generators.stream().forEach(this::addChild);
+     }
+ 
+     public SetComp(Integer ttype, Token token, expr elt, java.util.List<comprehension> generators) {
+@@ -110,9 +108,7 @@
+         if (generators == null) {
+             this.generators = new ArrayList<comprehension>();
+         }
+-        for(PythonTree t : this.generators) {
+-            addChild(t);
+-        }
++        this.generators.stream().forEach(this::addChild);
+     }
+ 
+     public SetComp(PythonTree tree, expr elt, java.util.List<comprehension> generators) {
+@@ -123,9 +119,7 @@
+         if (generators == null) {
+             this.generators = new ArrayList<comprehension>();
+         }
+-        for(PythonTree t : this.generators) {
+-            addChild(t);
+-        }
++        this.generators.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/Set.java ../build/src/org/python/antlr/ast/Set.java
+--- ./src/org/python/antlr/ast/Set.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/Set.java	2026-06-29 11:43:51.572061713 +0100
+@@ -80,9 +80,7 @@
+         if (elts == null) {
+             this.elts = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.elts) {
+-            addChild(t);
+-        }
++        this.elts.stream().forEach(this::addChild);
+     }
+ 
+     public Set(Integer ttype, Token token, java.util.List<expr> elts) {
+@@ -91,9 +89,7 @@
+         if (elts == null) {
+             this.elts = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.elts) {
+-            addChild(t);
+-        }
++        this.elts.stream().forEach(this::addChild);
+     }
+ 
+     public Set(PythonTree tree, java.util.List<expr> elts) {
+@@ -102,9 +98,7 @@
+         if (elts == null) {
+             this.elts = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.elts) {
+-            addChild(t);
+-        }
++        this.elts.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/Suite.java ../build/src/org/python/antlr/ast/Suite.java
+--- ./src/org/python/antlr/ast/Suite.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/Suite.java	2026-06-29 11:43:51.572475193 +0100
+@@ -70,9 +70,7 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+     }
+ 
+     public Suite(Integer ttype, Token token, java.util.List<stmt> body) {
+@@ -81,9 +79,7 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+     }
+ 
+     public Suite(PythonTree tree, java.util.List<stmt> body) {
+@@ -92,9 +88,7 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/TryExcept.java ../build/src/org/python/antlr/ast/TryExcept.java
+--- ./src/org/python/antlr/ast/TryExcept.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/TryExcept.java	2026-06-29 11:43:51.572668730 +0100
+@@ -112,23 +112,17 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.handlers = handlers;
+         if (handlers == null) {
+             this.handlers = new ArrayList<excepthandler>();
+         }
+-        for(PythonTree t : this.handlers) {
+-            addChild(t);
+-        }
++        this.handlers.stream().forEach(this::addChild);
+         this.orelse = orelse;
+         if (orelse == null) {
+             this.orelse = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.orelse) {
+-            addChild(t);
+-        }
++        this.orelse.stream().forEach(this::addChild);
+     }
+ 
+     public TryExcept(Integer ttype, Token token, java.util.List<stmt> body,
+@@ -138,23 +132,17 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.handlers = handlers;
+         if (handlers == null) {
+             this.handlers = new ArrayList<excepthandler>();
+         }
+-        for(PythonTree t : this.handlers) {
+-            addChild(t);
+-        }
++        this.handlers.stream().forEach(this::addChild);
+         this.orelse = orelse;
+         if (orelse == null) {
+             this.orelse = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.orelse) {
+-            addChild(t);
+-        }
++        this.orelse.stream().forEach(this::addChild);
+     }
+ 
+     public TryExcept(PythonTree tree, java.util.List<stmt> body, java.util.List<excepthandler>
+@@ -164,23 +152,17 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.handlers = handlers;
+         if (handlers == null) {
+             this.handlers = new ArrayList<excepthandler>();
+         }
+-        for(PythonTree t : this.handlers) {
+-            addChild(t);
+-        }
++        this.handlers.stream().forEach(this::addChild);
+         this.orelse = orelse;
+         if (orelse == null) {
+             this.orelse = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.orelse) {
+-            addChild(t);
+-        }
++        this.orelse.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/TryFinally.java ../build/src/org/python/antlr/ast/TryFinally.java
+--- ./src/org/python/antlr/ast/TryFinally.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/TryFinally.java	2026-06-29 11:43:51.573038735 +0100
+@@ -95,16 +95,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.finalbody = finalbody;
+         if (finalbody == null) {
+             this.finalbody = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.finalbody) {
+-            addChild(t);
+-        }
++        this.finalbody.stream().forEach(this::addChild);
+     }
+ 
+     public TryFinally(Integer ttype, Token token, java.util.List<stmt> body, java.util.List<stmt>
+@@ -114,16 +110,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.finalbody = finalbody;
+         if (finalbody == null) {
+             this.finalbody = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.finalbody) {
+-            addChild(t);
+-        }
++        this.finalbody.stream().forEach(this::addChild);
+     }
+ 
+     public TryFinally(PythonTree tree, java.util.List<stmt> body, java.util.List<stmt> finalbody) {
+@@ -132,16 +124,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.finalbody = finalbody;
+         if (finalbody == null) {
+             this.finalbody = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.finalbody) {
+-            addChild(t);
+-        }
++        this.finalbody.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/Tuple.java ../build/src/org/python/antlr/ast/Tuple.java
+--- ./src/org/python/antlr/ast/Tuple.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/Tuple.java	2026-06-29 11:43:51.573282156 +0100
+@@ -95,9 +95,7 @@
+         if (elts == null) {
+             this.elts = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.elts) {
+-            addChild(t);
+-        }
++        this.elts.stream().forEach(this::addChild);
+         this.ctx = ctx;
+     }
+ 
+@@ -107,9 +105,7 @@
+         if (elts == null) {
+             this.elts = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.elts) {
+-            addChild(t);
+-        }
++        this.elts.stream().forEach(this::addChild);
+         this.ctx = ctx;
+     }
+ 
+@@ -119,9 +115,7 @@
+         if (elts == null) {
+             this.elts = new ArrayList<expr>();
+         }
+-        for(PythonTree t : this.elts) {
+-            addChild(t);
+-        }
++        this.elts.stream().forEach(this::addChild);
+         this.ctx = ctx;
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/antlr/ast/While.java ../build/src/org/python/antlr/ast/While.java
+--- ./src/org/python/antlr/ast/While.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/While.java	2026-06-29 11:43:51.573465178 +0100
+@@ -113,16 +113,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.orelse = orelse;
+         if (orelse == null) {
+             this.orelse = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.orelse) {
+-            addChild(t);
+-        }
++        this.orelse.stream().forEach(this::addChild);
+     }
+ 
+     public While(Integer ttype, Token token, expr test, java.util.List<stmt> body,
+@@ -134,16 +130,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.orelse = orelse;
+         if (orelse == null) {
+             this.orelse = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.orelse) {
+-            addChild(t);
+-        }
++        this.orelse.stream().forEach(this::addChild);
+     }
+ 
+     public While(PythonTree tree, expr test, java.util.List<stmt> body, java.util.List<stmt>
+@@ -155,16 +147,12 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+         this.orelse = orelse;
+         if (orelse == null) {
+             this.orelse = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.orelse) {
+-            addChild(t);
+-        }
++        this.orelse.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/ast/With.java ../build/src/org/python/antlr/ast/With.java
+--- ./src/org/python/antlr/ast/With.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/ast/With.java	2026-06-29 11:43:51.573647643 +0100
+@@ -116,9 +116,7 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+     }
+ 
+     public With(Integer ttype, Token token, expr context_expr, expr optional_vars,
+@@ -132,9 +130,7 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+     }
+ 
+     public With(PythonTree tree, expr context_expr, expr optional_vars, java.util.List<stmt> body) {
+@@ -147,9 +143,7 @@
+         if (body == null) {
+             this.body = new ArrayList<stmt>();
+         }
+-        for(PythonTree t : this.body) {
+-            addChild(t);
+-        }
++        this.body.stream().forEach(this::addChild);
+     }
+ 
+     @ExposedGet(name = "repr")
+diff '--color=auto' -ur ./src/org/python/antlr/GrammarActions.java ../build/src/org/python/antlr/GrammarActions.java
+--- ./src/org/python/antlr/GrammarActions.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/GrammarActions.java	2026-06-29 11:43:51.567492335 +0100
+@@ -90,10 +90,10 @@
+       List<Name> result = new ArrayList<Name>();
+       result.add(new Name(top, top.getText(), expr_contextType.Load));
+       if (attrs != null) {
+-        for (PythonTree attr : attrs) {
++        attrs.stream().forEach(attr -> {
+           Token token = attr.getToken();
+           result.add(new Name(token, token.getText(), expr_contextType.Load));
+-        }
++        });
+       }
+       return result;
+     }
+@@ -131,9 +131,7 @@
+ 
+     List<String> makeNames(List<Token> names) {
+         List<String> s = new ArrayList<String>();
+-        for(Token name : names) {
+-            s.add(name.getText());
+-        }
++        names.stream().forEach(name -> s.add(name.getText()));
+         return s;
+     }
+ 
+@@ -146,9 +144,7 @@
+ 
+     List<Name> makeNameNodes(List<Token> names) {
+         List<Name> s = new ArrayList<Name>();
+-        for(Token name : names) {
+-            s.add(makeNameNode(name));
+-        }
++        names.stream().forEach(name -> s.add(makeNameNode(name)));
+         return s;
+     }
+ 
+@@ -674,9 +670,7 @@
+ 
+     List<expr> makeDeleteList(List deletes) {
+         List<expr> exprs = castExprs(deletes);
+-        for(expr e : exprs) {
+-            checkDelete(e);
+-        }
++        exprs.stream().forEach(this::checkDelete);
+         return exprs;
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/antlr/PythonTokenSource.java ../build/src/org/python/antlr/PythonTokenSource.java
+--- ./src/org/python/antlr/PythonTokenSource.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/antlr/PythonTokenSource.java	2026-06-29 11:43:51.567827482 +0100
+@@ -233,9 +233,7 @@
+                 for(int i=1;i<newlines.length();i++) {
+                     generateNewline(newline);
+                 }
+-                for (Token c : commentedNewlines) {
+-                    generateNewline(c);
+-                }
++                commentedNewlines.stream().forEach(this::generateNewline);
+             }
+ 
+             if (t.getType() != PythonLexer.LEADING_WS) { // discard WS
+diff '--color=auto' -ur ./src/org/python/compiler/ClassFile.java ../build/src/org/python/compiler/ClassFile.java
+--- ./src/org/python/compiler/ClassFile.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/compiler/ClassFile.java	2026-06-29 11:43:51.574334145 +0100
+@@ -46,9 +46,9 @@
+     }
+ 
+     public static void visitAnnotations(AnnotationVisitor av, Map<String, Object> fields) {
+-        for (Entry<String, Object>field: fields.entrySet()) {
++        fields.entrySet().stream().forEach(field -> {
+             visitAnnotation(av, field.getKey(), field.getValue());
+-        }
++        });
+     }
+ 
+     // See org.objectweb.asm.AnnotationVisitor for details
+@@ -63,9 +63,9 @@
+         } else if (fieldValue instanceof List) {
+             AnnotationVisitor arrayVisitor = av.visitArray(fieldName);
+             List<Object> fieldList = (List<Object>)fieldValue;
+-            for (Object arrayField: fieldList) {
++            fieldList.stream().forEach(arrayField -> {
+                 visitAnnotation(arrayVisitor, null, arrayField);
+-            }
++            });
+             arrayVisitor.visitEnd();
+         } else {
+             av.visit(fieldName, fieldValue);
+@@ -199,9 +199,7 @@
+     public void endFields()
+         throws IOException
+     {
+-        for (FieldVisitor fv : fieldVisitors) {
+-            fv.visitEnd();
+-        }
++        fieldVisitors.stream().forEach(FieldVisitor::visitEnd);
+     }
+ 
+     public void endMethods()
+@@ -215,9 +213,7 @@
+     }
+ 
+     public void endClassAnnotations() {
+-        for (AnnotationVisitor av: annotationVisitors) {
+-            av.visitEnd();
+-        }
++        annotationVisitors.stream().forEach(AnnotationVisitor::visitEnd);
+     }
+ 
+     public void write(OutputStream stream)
+diff '--color=auto' -ur ./src/org/python/compiler/Future.java ../build/src/org/python/compiler/Future.java
+--- ./src/org/python/compiler/Future.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/compiler/Future.java	2026-06-29 11:43:51.574562647 +0100
+@@ -41,10 +41,10 @@
+                     "future statement does not support import *", cand);
+         }
+         try {
+-            for (alias feature : cand.getInternalNames()) {
++            cand.getInternalNames().stream().forEach(feature -> {
+                 // *known* features
+                 FutureFeature.addFeature(feature.getInternalName(), features);
+-            }
++            });
+         } catch (ParseException pe) {
+             throw new ParseException(pe.getMessage(), cand);
+         }
+@@ -87,9 +87,7 @@
+         }
+ 
+         if (cflags != null) {
+-            for (FutureFeature feature : featureSet) {
+-                feature.setFlag(cflags);
+-            }
++            featureSet.stream().forEach(feature -> feature.setFlag(cflags));
+         }
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/compiler/ScopeInfo.java ../build/src/org/python/compiler/ScopeInfo.java
+--- ./src/org/python/compiler/ScopeInfo.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/compiler/ScopeInfo.java	2026-06-29 11:43:51.574811145 +0100
+@@ -33,7 +33,7 @@
+                 m.append(' ');
+             }
+             m.append(((kind != CLASSSCOPE) ? scope_name : "class " + scope_name) + ": ");
+-            for (Map.Entry<String, SymInfo> entry : tbl.entrySet()) {
++            tbl.entrySet().stream().forEach(entry -> {
+                 String name = entry.getKey();
+                 SymInfo info = entry.getValue();
+                 int flags = info.flags;
+@@ -59,7 +59,7 @@
+                     m.append(",f");
+                 }
+                 m.append(' ');
+-            }
++            });
+             LOGGER.fine(m.toString());
+         }
+     }
+@@ -112,9 +112,7 @@
+     }
+ 
+     public void markFromParam() {
+-        for (SymInfo info : tbl.values()) {
+-            info.flags |= FROM_PARAM;
+-        }
++        tbl.values().stream().forEach(info -> info.flags |= FROM_PARAM);
+     }
+ 
+     public void addBound(String name) {
+diff '--color=auto' -ur ./src/org/python/compiler/ScopesCompiler.java ../build/src/org/python/compiler/ScopesCompiler.java
+--- ./src/org/python/compiler/ScopesCompiler.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/compiler/ScopesCompiler.java	2026-06-29 11:43:51.575043914 +0100
+@@ -164,9 +164,7 @@
+         }
+ 
+         beginScope("<lambda>", FUNCSCOPE, node, ac);
+-        for (Object o : ac.names) {
+-            cur.addParam((String) o);
+-        }
++        ac.names.stream().forEach(o -> cur.addParam((String) o));
+         for (Object o : ac.init_code) {
+             visit((stmt) o);
+         }
+diff '--color=auto' -ur ./src/org/python/core/BaseBytes.java ../build/src/org/python/core/BaseBytes.java
+--- ./src/org/python/core/BaseBytes.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/BaseBytes.java	2026-06-29 11:43:51.575575072 +0100
+@@ -1040,12 +1040,7 @@
+ 
+         if (target instanceof PyTuple) {
+             // target is a tuple of suffixes/prefixes and only one need match
+-            for (PyObject t : ((PyTuple) target).getList()) {
+-                if (match(t, index[0], index[3], endswith)) {
+-                    return true;
+-                }
+-            }
+-            return false; // None of them matched
++            return ((PyTuple) target).getList().stream().anyMatch(t -> match(t, index[0], index[3], endswith)); // None of them matched
+ 
+         } else {
+             return match(target, index[0], index[3], endswith);
+@@ -1961,9 +1956,7 @@
+ 
+         } finally {
+             // All the buffers we acquired have to be released
+-            for (PyBuffer v : iterList) {
+-                v.release();
+-            }
++            iterList.stream().forEach(PyBuffer::release);
+         }
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/core/BaseSet.java ../build/src/org/python/core/BaseSet.java
+--- ./src/org/python/core/BaseSet.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/BaseSet.java	2026-06-29 11:43:51.576324897 +0100
+@@ -142,11 +142,11 @@
+             BaseSet bs = args[0] instanceof BaseSet ? (BaseSet)item : new PySet(item);
+             Set<PyObject> set = bs._set;
+ 
+-            for (PyObject p : set) {
++            set.stream().forEach(p -> {
+                 if (_set.contains(p)) {
+                     o._set.remove(p);
+                 }
+-            }
++            });
+         }
+         return o;
+     }
+@@ -179,16 +179,16 @@
+     final PyObject baseset_symmetric_difference(PyObject other) {
+         BaseSet bs = other instanceof BaseSet ? (BaseSet)other : new PySet(other);
+         BaseSet o = BaseSet.makeNewSet(getType());
+-        for (PyObject p : _set) {
++        _set.stream().forEach(p -> {
+             if (!bs._set.contains(p)) {
+                 o._set.add(p);
+             }
+-        }
+-        for (PyObject p : bs._set) {
++        });
++        bs._set.stream().forEach(p -> {
+             if (!_set.contains(p)) {
+                 o._set.add(p);
+             }
+-        }
++        });
+         return o;
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/core/BytecodeNotification.java ../build/src/org/python/core/BytecodeNotification.java
+--- ./src/org/python/core/BytecodeNotification.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/BytecodeNotification.java	2026-06-29 11:43:51.576540564 +0100
+@@ -70,12 +70,12 @@
+      * @param klass Java class object of the new bytecode
+      */
+     public static void notify(String name, byte[] data, Class klass) {
+-        for (Callback c : callbacks) {
++        callbacks.stream().forEach(c -> {
+             try {
+                 c.notify(name, data, klass);
+             } catch (Exception e) {
+                 Py.writeWarning("BytecodeNotification", "Exception from callback:" + e);
+             }
+-        }
++        });
+     }
+ }
+diff '--color=auto' -ur ./src/org/python/core/io/FileIO.java ../build/src/org/python/core/io/FileIO.java
+--- ./src/org/python/core/io/FileIO.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/io/FileIO.java	2026-06-29 11:43:51.581166004 +0100
+@@ -341,9 +341,7 @@
+ 
+         // otherwise append together into a single ByteBuffer
+         final ByteBuffer all = ByteBuffer.allocate(length);
+-        for (ByteBuffer chunk : chunks) {
+-            all.put(chunk);
+-        }
++        chunks.stream().forEach(all::put);
+         all.flip();
+         return all;
+     }
+diff '--color=auto' -ur ./src/org/python/core/JavaProxyList.java ../build/src/org/python/core/JavaProxyList.java
+--- ./src/org/python/core/JavaProxyList.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/JavaProxyList.java	2026-06-29 11:43:51.576721924 +0100
+@@ -369,9 +369,7 @@
+             Collections.reverse(decorated);
+         }
+         boolean modified = list.size() > 0;
+-        for (KV kv : decorated) {
+-            list.add(kv.value);
+-        }
++        decorated.stream().forEach(kv -> list.add(kv.value));
+         if (modified) {
+             throw Py.ValueError("list modified during sort");
+         }
+diff '--color=auto' -ur ./src/org/python/core/JavaProxyMap.java ../build/src/org/python/core/JavaProxyMap.java
+--- ./src/org/python/core/JavaProxyMap.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/JavaProxyMap.java	2026-06-29 11:43:51.576976902 +0100
+@@ -80,9 +80,9 @@
+                 // Being compared to a Java Map convert to Python
+                 Map<Object, Object> map = (Map) oj;
+                 final Map<PyObject, PyObject> pyMap = new HashMap<>();
+-                for (Entry<Object, Object> el : map.entrySet()) {
++                map.entrySet().stream().forEach(el -> {
+                     pyMap.put(Py.java2py(el.getKey()), Py.java2py(el.getValue()));
+-                }
++                });
+                 // Compare again this time after conversion to Python dict
+                 return mapEq(self, new PyDictionary(pyMap));
+             } else {
+@@ -135,12 +135,7 @@
+         Set<Object> selfKeys = ((Map<Object, Object>) self.getJavaProxy()).keySet();
+         if (other.getType().isSubType(PyDictionary.TYPE)) {
+             PyDictionary oDict = (PyDictionary) other;
+-            for (Object k : selfKeys) {
+-                if (!oDict.__contains__(Py.java2py(k))) {
+-                    return Py.False;
+-                }
+-            }
+-            return Py.True;
++            return selfKeys.stream().filter(k -> !oDict.__contains__(Py.java2py(k))).findFirst().map(k -> Py.False).orElse(Py.True);
+         } else {
+             Object oj = other.getJavaProxy();
+             if (oj instanceof Map) {
+@@ -387,9 +382,7 @@
+         @Override
+         public PyObject __call__() {
+             PyList keys = new PyList();
+-            for (Object key : asMap().keySet()) {
+-                keys.add(Py.java2py(key));
+-            }
++            asMap().keySet().stream().forEach(key -> keys.add(Py.java2py(key)));
+             return keys;
+         }
+     };
+@@ -399,9 +392,7 @@
+         @Override
+         public PyObject __call__() {
+             PyList values = new PyList();
+-            for (Object value : asMap().values()) {
+-                values.add(Py.java2py(value));
+-            }
++            asMap().values().stream().forEach(value -> values.add(Py.java2py(value)));
+             return values;
+         }
+     };
+@@ -472,9 +463,9 @@
+         @Override
+         public PyObject __call__() {
+             PyList items = new PyList();
+-            for (Map.Entry<Object, Object> entry : asMap().entrySet()) {
++            asMap().entrySet().stream().forEach(entry -> {
+                 items.add(new PyTuple(Py.java2py(entry.getKey()), Py.java2py(entry.getValue())));
+-            }
++            });
+             return items;
+         }
+     };
+@@ -490,9 +481,9 @@
+                 clazz = (Class<Map<Object, Object>>) map.getClass();
+                 Constructor<? extends Map<Object, Object>> ctor = clazz.getDeclaredConstructor();
+                 newMap = ctor.newInstance();
+-                for (Map.Entry<Object, Object> entry : map.entrySet()) {
++                map.entrySet().stream().forEach(entry -> {
+                     newMap.put(entry.getKey(), entry.getValue());
+-                }
++                });
+             } catch (NullPointerException npe) {
+                 throw nullException();
+             } catch (ReflectiveOperationException | SecurityException
+diff '--color=auto' -ur ./src/org/python/core/JavaProxySet.java ../build/src/org/python/core/JavaProxySet.java
+--- ./src/org/python/core/JavaProxySet.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/JavaProxySet.java	2026-06-29 11:43:51.577230067 +0100
+@@ -58,13 +58,8 @@
+                     return Py.False;
+                 }
+                 // Do element by element comparison, if any elements are not contained return false
+-                for (Object obj : selfSet) {
+-                    if (!otherPySet.contains(Py.java2py(obj))) {
+-                        return Py.False;
+-                    }
+-                }
+                 // All elements are equal so the sets are equal
+-                return Py.True;
++                return selfSet.stream().filter(obj -> !otherPySet.contains(Py.java2py(obj))).findFirst().map(obj -> Py.False).orElse(Py.True);
+             } else {
+                 // Being compared to something that is not a Python set
+                 final Object oj = other.getJavaProxy();
+@@ -88,12 +83,7 @@
+                 return selfSet.containsAll(otherSet);
+             } else if (isPySet(other)) {
+                 Set<PyObject> otherPySet = ((BaseSet) other).getSet();
+-                for (PyObject pyobj : otherPySet) {
+-                    if (!selfSet.contains(pyobj.__tojava__(Object.class))) {
+-                        return false;
+-                    }
+-                }
+-                return true;
++                return otherPySet.stream().allMatch(pyobj -> selfSet.contains(pyobj.__tojava__(Object.class)));
+             }
+             return false;
+         }
+@@ -107,12 +97,7 @@
+                 return otherSet.containsAll(selfSet);
+             } else if (isPySet(other)) {
+                 Set<PyObject> otherPySet = ((BaseSet) other).getSet();
+-                for (Object obj : selfSet) {
+-                    if (!otherPySet.contains(Py.java2py(obj))) {
+-                        return false;
+-                    }
+-                }
+-                return true;
++                return selfSet.stream().allMatch(obj -> otherPySet.contains(Py.java2py(obj)));
+             }
+             return false;
+         }
+@@ -217,9 +202,9 @@
+         if (isPySet(obj)) {
+             Set<PyObject> otherPySet = ((BaseSet) obj).getSet();
+             items = new ArrayList<>(otherPySet.size());
+-            for (PyObject pyobj : otherPySet) {
++            otherPySet.stream().forEach(pyobj -> {
+                 items.add(pyobj.__tojava__(Object.class));
+-            }
++            });
+         } else {
+             Object oj = obj.getJavaProxy();
+             if (oj instanceof Set) {
+@@ -536,11 +521,11 @@
+         @Override
+         public PyObject __call__(PyObject memo) {
+             Set<Object> newSet = new HashSet<>();
+-            for (Object obj : asSet()) {
++            asSet().stream().forEach(obj -> {
+                 PyObject pyobj = Py.java2py(obj);
+                 PyObject newobj = pyobj.invoke("__deepcopy__", memo);
+                 newSet.add(newobj.__tojava__(Object.class));
+-            }
++            });
+             return makePySet(newSet);
+         }
+     };
+diff '--color=auto' -ur ./src/org/python/core/packagecache/CachedJarsPackageManager.java ../build/src/org/python/core/packagecache/CachedJarsPackageManager.java
+--- ./src/org/python/core/packagecache/CachedJarsPackageManager.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/packagecache/CachedJarsPackageManager.java	2026-06-29 11:43:51.581376609 +0100
+@@ -192,9 +192,7 @@
+ 
+         private static void appendList(StringBuilder buf, List<String> names) {
+             if (names.size() > 0) {
+-                for (String n : names) {
+-                    buf.append(n).append(',');
+-                }
++                names.stream().forEach(n -> buf.append(n).append(','));
+                 // Deal with surplus comma
+                 buf.deleteCharAt(buf.length() - 1);
+             }
+@@ -225,9 +223,9 @@
+ 
+         // Turn each ClassList into a comma/@-separated String
+         Map<String, String> transformed = Generic.map();
+-        for (Entry<String, ClassList> kv : zipPackages.entrySet()) {
++        zipPackages.entrySet().stream().forEach(kv -> {
+             transformed.put(kv.getKey(), kv.getValue().toString());
+-        }
++        });
+ 
+         return transformed;
+     }
+@@ -435,7 +433,7 @@
+      * @param jarfile becomes the __file__ attribute of the {@link PyJavaPackage}
+      */
+     private void addPackages(Map<String, String> packageToClasses, String jarfile) {
+-        for (Entry<String, String> entry : packageToClasses.entrySet()) {
++        packageToClasses.entrySet().stream().forEach(entry -> {
+             String pkg = entry.getKey();
+             String classes = entry.getValue();
+ 
+@@ -445,7 +443,7 @@
+             }
+ 
+             makeJavaPackage(pkg, classes, jarfile);
+-        }
++        });
+     }
+ 
+     /**
+@@ -616,9 +614,9 @@
+ 
+         // Turn each ClassList into a comma/@-separated String
+         Map<String, String> transformed = Generic.map();
+-        for (Entry<String, ClassList> kv : modPackages.entrySet()) {
++        modPackages.entrySet().stream().forEach(kv -> {
+             transformed.put(kv.getKey(), kv.getValue().toString());
+-        }
++        });
+ 
+         return transformed;
+     }
+diff '--color=auto' -ur ./src/org/python/core/packagecache/SysPackageManager.java ../build/src/org/python/core/packagecache/SysPackageManager.java
+--- ./src/org/python/core/packagecache/SysPackageManager.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/packagecache/SysPackageManager.java	2026-06-29 11:43:51.581620482 +0100
+@@ -178,27 +178,27 @@
+ 
+         Set<String> cps = split(registry.getProperty(
+                     RegistryKey.PYTHON_PACKAGES_PATHS, defaultClassPaths));
+-        for (String name : cps) {
++        cps.stream().forEach(name -> {
+             // Each property is a class-path string containing JARS and directories
+             String classPath = registry.getProperty(name);
+             if (classPath != null) {
+                 // Each path may be a mixture of directory and JAR specifiers (source of packages)
+                 addClassPath(classPath);
+             }
+-        }
++        });
+ 
+         Set<String> directories =
+                 split(registry.getProperty(
+                             RegistryKey.PYTHON_PACKAGES_DIRECTORIES,
+                             defaultDirectories));
+-        for (String name : directories) {
++        directories.stream().forEach(name -> {
+             // Each property defines a path string containing directories
+             String path = registry.getProperty(name);
+             if (path != null) {
+                 // Add the JAR/ZIP archives in those directories to the search path for packages
+                 addJarPath(path);
+             }
+-        }
++        });
+ 
+         String fakepath = registry.getProperty(
+                 RegistryKey.PYTHON_PACKAGES_FAKEPATH, null);
+diff '--color=auto' -ur ./src/org/python/core/PyCompoundCallable.java ../build/src/org/python/core/PyCompoundCallable.java
+--- ./src/org/python/core/PyCompoundCallable.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/PyCompoundCallable.java	2026-06-29 11:43:51.578075977 +0100
+@@ -22,9 +22,9 @@
+     public PyObject __call__(PyObject[] args, String[] keywords) {
+         // Set the system state to handle callbacks from java threads
+         Py.setSystemState(systemState);
+-        for (PyObject callable : callables) {
++        callables.stream().forEach(callable -> {
+             callable.__call__(args, keywords);
+-        }
++        });
+         return Py.None;
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/core/PyDictionary.java ../build/src/org/python/core/PyDictionary.java
+--- ./src/org/python/core/PyDictionary.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/PyDictionary.java	2026-06-29 11:43:51.578265870 +0100
+@@ -235,12 +235,12 @@
+         }
+ 
+         StringBuilder buf = new StringBuilder("{");
+-        for (Entry<PyObject, PyObject> entry : getMap().entrySet()) {
++        getMap().entrySet().stream().forEach(entry -> {
+             buf.append((entry.getKey()).__repr__().toString());
+             buf.append(": ");
+             buf.append((entry.getValue()).__repr__().toString());
+             buf.append(", ");
+-        }
++        });
+         if (buf.length() > 1) {
+             buf.delete(buf.length() - 2, buf.length());
+         }
+@@ -500,9 +500,9 @@
+     }
+ 
+     private void merge(Map<Object, Object> other) {
+-        for (Entry<Object, Object> entry : other.entrySet()) {
++        other.entrySet().stream().forEach(entry -> {
+             dict___setitem__(Py.java2py(entry.getKey()), Py.java2py(entry.getValue()));
+-        }
++        });
+     }
+ 
+ 
+@@ -537,11 +537,11 @@
+                 if (other instanceof PyDictionary) {
+                     Set<Map.Entry<PyObject, PyObject>> entrySet =
+                             ((PyDictionary)other).internalMap.entrySet();
+-                    for (Map.Entry<PyObject, PyObject> ent: entrySet) {
++                    entrySet.stream().forEach(ent -> {
+                         if (!internalMap.containsKey(ent.getKey())) {
+                             internalMap.put(ent.getKey(), ent.getValue());
+                         }
+-                    }
++                    });
+                 } else if (other instanceof PyStringMap) {
+                     mergeFromKeys(other, ((PyStringMap)other).keys(), override);
+                 } else {
+@@ -746,9 +746,9 @@
+     @ExposedMethod(doc = BuiltinDocs.dict_items_doc)
+     final PyList dict_items() {
+         List<PyObject> list = new ArrayList<PyObject>(getMap().size());
+-        for (Entry<PyObject, PyObject> entry : getMap().entrySet()) {
++        getMap().entrySet().stream().forEach(entry -> {
+             list.add(new PyTuple(entry.getKey(), entry.getValue()));
+-        }
++        });
+         return PyList.fromList(list);
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/core/Py.java ../build/src/org/python/core/Py.java
+--- ./src/org/python/core/Py.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/Py.java	2026-06-29 11:43:51.577585799 +0100
+@@ -791,9 +791,9 @@
+      */
+     private static List<String> fileSystemDecode(PyList path) {
+         List<String> list = new ArrayList<>(path.__len__());
+-        for (PyObject filename : path.getList()) {
++        path.getList().stream().forEach(filename -> {
+             list.add(fileSystemDecode(filename));
+-        }
++        });
+         return list;
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/core/PyJavaPackage.java ../build/src/org/python/core/PyJavaPackage.java
+--- ./src/org/python/core/PyJavaPackage.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/PyJavaPackage.java	2026-06-29 11:43:51.578518654 +0100
+@@ -96,12 +96,12 @@
+      * @param classes the names as strings
+      */
+     public void addPlaceholders(Collection<String> classes) {
+-        for (String name : classes) {
++        classes.stream().forEach(name -> {
+             name = name.intern();
+             if (clsSet.__finditem__(name) == null) {
+                 clsSet.__setitem__(name, Py.One);
+             }
+-        }
++        });
+     }
+ 
+     @Override
+diff '--color=auto' -ur ./src/org/python/core/PyJavaType.java ../build/src/org/python/core/PyJavaType.java
+--- ./src/org/python/core/PyJavaType.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/PyJavaType.java	2026-06-29 11:43:51.578737299 +0100
+@@ -196,14 +196,14 @@
+         }
+         if (modified.add(name)) {
+             if (conflicted != null) {
+-                for (PyJavaType conflict : conflicted) {
++                conflicted.stream().forEach(conflict -> {
+                     if (conflict.modified != null && conflict.modified.contains(name)) {
+                         throw Py.TypeError(getName()
+                                 + " does not have a consistent method resolution order with "
+                                 + conflict.getName() + ", and it already has " + name
+                                 + " added for Python");
+                     }
+-                }
++                });
+             }
+         }
+         object___setattr__(name, value);
+@@ -328,16 +328,16 @@
+          * We can keep trucking, there aren't any existing method name conflicts. Mark the conflicts
+          * in all the classes so further method additions can check for trouble.
+          */
+-        for (PyJavaType type : inConflict) {
+-            for (PyJavaType otherType : inConflict) {
++        inConflict.stream().forEach(type -> {
++            inConflict.stream().forEach(otherType -> {
+                 if (otherType != type) {
+                     if (type.conflicted == null) {
+                         type.conflicted = Generic.set();
+                     }
+                     type.conflicted.add(otherType);
+                 }
+-            }
+-        }
++            });
++        });
+ 
+         /*
+          * Emit the first conflicting type we encountered to the MRO, and remove it from the working
+@@ -1529,9 +1529,7 @@
+                 c = c.getSuperclass();
+             } while (c != null);
+ 
+-            for (String name : nameStack) {
+-                namesBuilder.append(name);
+-            }
++            nameStack.stream().forEach(namesBuilder::append);
+ 
+             return namesBuilder.toString();
+         }
+diff '--color=auto' -ur ./src/org/python/core/PyList.java ../build/src/org/python/core/PyList.java
+--- ./src/org/python/core/PyList.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/PyList.java	2026-06-29 16:00:34.767091320 +0100
+@@ -21,6 +21,8 @@
+ 
+ import java.lang.reflect.Array;
+ import java.util.Map;
++import java.util.stream.Collectors;
++import java.util.stream.IntStream;
+ 
+ @ExposedType(name = "list", base = PyObject.class, doc = BuiltinDocs.list_doc)
+ public class PyList extends PySequenceList {
+@@ -49,9 +51,7 @@
+             this.list = (List<PyObject>) list;
+         } else {
+             this.list = Generic.list();
+-            for (Object o : list) {
+-                add(o);
+-            }
++            list.stream().forEach(this::add);
+         }
+     }
+ 
+@@ -107,7 +107,7 @@
+     // presumably we can consume an arbitrary iterable too!
+     private static void addCollection(List<PyObject> list, Collection<Object> seq) {
+         Map<Long, PyObject> seen = new HashMap<>();
+-        for (Object item : seq) {
++        seq.stream().forEach(item -> {
+             long id = Py.java_obj_id(item);
+             PyObject seen_obj = seen.get(id);
+             if (seen_obj != null) {
+@@ -115,7 +115,7 @@
+                 seen.put(id, seen_obj);
+             }
+             list.add(seen_obj);
+-        }
++        });
+     }
+ 
+     @SuppressWarnings("unchecked")
+@@ -987,9 +987,9 @@
+ 
+         int size = list.size();
+         final ArrayList<KV> decorated = new ArrayList<KV>(size);
+-        for (PyObject value : list) {
++        list.stream().forEach(value -> {
+             decorated.add(new KV(key.__call__(value), value));
+-        }
++        });
+         list.clear();
+         KVComparator c = new KVComparator(this, cmp);
+         if (reverse) {
+@@ -1002,9 +1002,7 @@
+         if (list instanceof ArrayList) {
+             ((ArrayList<PyObject>) list).ensureCapacity(size);
+         }
+-        for (KV kv : decorated) {
+-            list.add(kv.value);
+-        }
++        decorated.stream().forEach(kv -> list.add(kv.value));
+         gListAllocatedStatus = list.size();
+     }
+ 
+@@ -1277,10 +1275,10 @@
+         if (step == 1) {
+             newList = new ArrayList<PyObject>(list.subList(start, stop));
+         } else {
+-            newList = new ArrayList<PyObject>(n);
+-            for (int i = start, j = 0; j < n; i += step, j++) {
+-                newList.add(list.get(i));
+-            }
++            newList = IntStream.range(0, n).mapToObj(j -> {
++                final int i = start + j * step;
++                return list.get(i);
++            }).collect(Collectors.toCollection(ArrayList::new));
+         }
+         return fromList(newList);
+     }
+diff '--color=auto' -ur ./src/org/python/core/PyObject.java ../build/src/org/python/core/PyObject.java
+--- ./src/org/python/core/PyObject.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/PyObject.java	2026-06-29 15:46:21.771470084 +0100
+@@ -4,9 +4,13 @@
+ import java.io.Serializable;
+ import java.text.MessageFormat;
+ import java.util.ArrayList;
++import java.util.Arrays;
+ import java.util.Iterator;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Objects;
++import java.util.stream.Collectors;
++import java.util.stream.IntStream;
+ 
+ import org.python.expose.ExposedClassMethod;
+ import org.python.expose.ExposedDelete;
+@@ -17,6 +21,7 @@
+ import org.python.expose.ExposedType;
+ import org.python.modules.gc;
+ import org.python.util.Generic;
++import org.python.util.StreamExtensions;
+ 
+ /**
+  * All objects known to the Jython runtime system are represented by an instance of the class
+@@ -535,31 +540,29 @@
+             if (keys == null) {
+                 throw Py.TypeError(name + "argument after ** must be a mapping");
+             }
+-            for (String keyword : keywords) {
+-                if (kwargs.__finditem__(keyword) != null) {
+-                    throw Py.TypeError(
+-                            name + "got multiple values for keyword argument '" + keyword + "'");
+-                }
+-            }
++            Arrays.stream(keywords)
++                    .filter(keyword -> kwargs.__finditem__(keyword) != null)
++                    .forEach(keyword -> {
++                        throw Py.TypeError(name + "got multiple values for keyword argument '" + keyword + "'");
++                    });
+             argslen += kwargs.__len__();
+         }
+         List<PyObject> starObjs = null;
+         if (starargs != null) {
+-            starObjs = new ArrayList<PyObject>();
+             PyObject iter = Py.iter(starargs, name + "argument after * must be a sequence");
+-            for (PyObject cur = null; ((cur = iter.__iternext__()) != null);) {
+-                starObjs.add(cur);
+-            }
++            starObjs = StreamExtensions.iterate(iter.__iternext__(), Objects::nonNull, cur -> iter.__iternext__())
++                    .collect(Collectors.toCollection(ArrayList::new));
+             argslen += starObjs.size();
+         }
+         PyObject[] newargs = new PyObject[argslen];
+         int argidx = args.length - keywords.length;
+         System.arraycopy(args, 0, newargs, 0, argidx);
+         if (starObjs != null) {
+-            Iterator<PyObject> it = starObjs.iterator();
+-            while (it.hasNext()) {
+-                newargs[argidx++] = it.next();
+-            }
++            final int initialArgIdx = argidx;
++            argidx = starObjs.stream().reduce(initialArgIdx, (i, arg) -> {
++                newargs[i] = arg;
++                return i + 1;
++            }, Integer::max);
+         }
+         System.arraycopy(args, args.length - keywords.length, newargs, argidx, keywords.length);
+         argidx += keywords.length;
+@@ -569,15 +572,20 @@
+             System.arraycopy(keywords, 0, newkeywords, 0, keywords.length);
+ 
+             PyObject keys = kwargs.invoke("keys");
+-            PyObject key;
+-            for (int i = 0; (key = keys.__finditem__(i)) != null; i++) {
++            final int keywordsLen = keywords.length;
++            final int initialArgIdx = argidx;
++            final int kwargsLen = kwargs.__len__();
++            IntStream.range(0, kwargsLen).forEach(i -> {
++                final PyObject key = keys.__finditem__(i);
+                 if (!(key instanceof PyString)) {
+                     throw Py.TypeError(name + "keywords must be strings");
+                 }
+-                newkeywords[keywords.length + i] = ((PyString) key).internedString();
+-                newargs[argidx++] = kwargs.__finditem__(key);
+-            }
++                newkeywords[keywordsLen + i] = ((PyString) key).internedString();
++                newargs[initialArgIdx + i] = kwargs.__finditem__(key);
++            });
++
+             keywords = newkeywords;
++            argidx += kwargsLen;
+         }
+ 
+         if (newargs.length != argidx) {
+@@ -4183,8 +4191,8 @@
+         // OverflowErrors are handled in PyLong.asIndex
+         return __index__().asInt();
+     }
+-}
+ 
++}
+ 
+ /**
+  * A very specialized tuple-like class used when detecting cycles during object comparisons. This
+diff '--color=auto' -ur ./src/org/python/core/PyReflectedFunction.java ../build/src/org/python/core/PyReflectedFunction.java
+--- ./src/org/python/core/PyReflectedFunction.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/PyReflectedFunction.java	2026-06-29 16:43:13.092668250 +0100
+@@ -5,7 +5,10 @@
+ 
+ import java.lang.reflect.Method;
+ import java.lang.reflect.Modifier;
++import java.util.Arrays;
++import java.util.Objects;
+ import java.util.Set;
++import java.util.stream.IntStream;
+ 
+ import org.python.util.Generic;
+ 
+@@ -161,12 +164,11 @@
+     @Override
+     public PyObject __call__(PyObject self, PyObject[] args, String[] keywords) {
+         ReflectedCallData callData = new ReflectedCallData();
+-        ReflectedArgs match = null;
+-        for (int i = 0; i < nargs && match == null; i++) {
+-            if (argslist[i].matches(self, args, keywords, callData)) {
+-                match = argslist[i];
+-            }
+-        }
++        ReflectedArgs match = Arrays.stream(argslist, 0, nargs)
++                .filter(reflectedArgs -> reflectedArgs.matches(self, args, keywords, callData))
++                .findFirst()
++                .orElse(null);
++
+         if (match == null) {
+             throwError(callData.errArg, args.length, self != null, keywords.length != 0);
+         }
+diff '--color=auto' -ur ./src/org/python/core/PySequence.java ../build/src/org/python/core/PySequence.java
+--- ./src/org/python/core/PySequence.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/PySequence.java	2026-06-29 12:21:40.476280640 +0100
+@@ -1,6 +1,10 @@
+ // Copyright (c) Corporation for National Research Initiatives
+ package org.python.core;
+ 
++import org.python.util.StreamExtensions;
++
++import java.util.Objects;
++
+ /**
+  * The abstract superclass of PyObjects that implements a Sequence. Minimize the work in creating
+  * such objects.
+@@ -311,9 +315,9 @@
+         }
+         PyList list = new PyList();
+         PyObject iter = Py.iter(seq, msg);
+-        for (PyObject item = null; (item = iter.__iternext__()) != null;) {
+-            list.append(item);
+-        }
++        StreamExtensions.iterate(iter.__iternext__(), Objects::nonNull, item -> iter.__iternext__())
++                .forEach(list::append);
++
+         return list;
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/core/PySet.java ../build/src/org/python/core/PySet.java
+--- ./src/org/python/core/PySet.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/PySet.java	2026-06-29 11:43:51.579381286 +0100
+@@ -322,13 +322,13 @@
+         }
+ 
+         BaseSet bs = (other instanceof BaseSet) ? (BaseSet)other : new PySet(other);
+-        for (PyObject o : bs._set) {
++        bs._set.stream().forEach(o -> {
+             if (_set.contains(o)) {
+                 _set.remove(o);
+             } else {
+                 _set.add(o);
+             }
+-        }
++        });
+     }
+ 
+     @ExposedMethod(doc = BuiltinDocs.set_difference_update_doc)
+diff '--color=auto' -ur ./src/org/python/core/PyString.java ../build/src/org/python/core/PyString.java
+--- ./src/org/python/core/PyString.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/PyString.java	2026-06-29 16:10:47.584256730 +0100
+@@ -8,8 +8,11 @@
+ import java.util.Arrays;
+ import java.util.Collection;
+ import java.util.List;
++import java.util.Objects;
++import java.util.Optional;
+ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
++import java.util.stream.IntStream;
+ 
+ import org.python.core.buffer.BaseBuffer;
+ import org.python.core.buffer.SimpleStringBuffer;
+@@ -26,6 +29,7 @@
+ import org.python.expose.ExposedNew;
+ import org.python.expose.ExposedType;
+ import org.python.expose.MethodType;
++import org.python.util.StreamExtensions;
+ 
+ /**
+  * A builtin python string.
+@@ -830,10 +834,10 @@
+         } else {
+             int n = sliceLength(start, stop, step);
+             char new_chars[] = new char[n];
+-            int j = 0;
+-            for (int i = start; j < n; i += step) {
+-                new_chars[j++] = getString().charAt(i);
+-            }
++            IntStream.range(0, n).forEach(j -> {
++                final int i = start + j * step;
++                new_chars[j] = getString().charAt(i);
++            });
+ 
+             return createInstance(new String(new_chars), true);
+         }
+@@ -1103,13 +1107,10 @@
+             char c = s.charAt(0);
+             return _isupper(c) ? String.valueOf((char) (c ^ SWAP_CASE)) : s;
+         } else {
+-            // Copy chars to buffer, converting to lower-case.
+-            char[] buf = new char[n];
+-            for (int i = 0; i < n; i++) {
+-                char c = s.charAt(i);
+-                buf[i] = _isupper(c) ? (char) (c ^ SWAP_CASE) : c;
+-            }
+-            return new String(buf);
++            return s.chars()
++                    .map(c -> _isupper((char) c) ? (c ^ SWAP_CASE) : c)
++                    .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
++                    .toString();
+         }
+     }
+ 
+@@ -3284,39 +3285,51 @@
+         // builtin types in the sequence. Do a pre-pass to figure out the total amount of
+         // space we'll need, see whether any argument is absurd, and defer to the Unicode
+         // join if appropriate
+-        int i = 0;
+-        long size = 0;
+-        int sepLen = getString().length();
+-        for (; i < seqLen; i++) {
+-            item = seq.pyget(i);
+-            if (!(item instanceof PyString)) {
++        final class StreamState {
++            long size = 0L;
++        }
++
++        final int sepLen = getString().length();
++        final StreamState s = new StreamState();
++
++        Optional<PyUnicode> maybeStr = IntStream.range(0, seqLen).mapToObj(i -> {
++            final PyObject seqItem = seq.pyget(i);
++            if (!(seqItem instanceof PyString)) {
+                 throw Py.TypeError(String.format("sequence item %d: expected string, %.80s found",
+-                        i, item.getType().fastGetName()));
++                        i, seqItem.getType().fastGetName()));
+             }
+-            if (item instanceof PyUnicode) {
++            if (seqItem instanceof PyUnicode) {
+                 // Defer to Unicode join. CAUTION: There's no gurantee that the original
+                 // sequence can be iterated over again, so we must pass seq here
+                 return unicodeJoin(seq);
+             }
+ 
+             if (i != 0) {
+-                size += sepLen;
++                s.size += sepLen;
+             }
+-            size += ((PyString) item).getString().length();
+-            if (size > Integer.MAX_VALUE) {
++            s.size += ((PyString) seqItem).getString().length();
++            if (s.size > Integer.MAX_VALUE) {
+                 throw Py.OverflowError("join() result is too long for a Python string");
+             }
++
++            return null;
++        }).filter(Objects::nonNull).findFirst();
++
++        if (maybeStr.isPresent()) {
++            return maybeStr.get();
+         }
+ 
+         // Catenate everything
+-        StringBuilder buf = new StringBuilder((int) size);
+-        for (i = 0; i < seqLen; i++) {
+-            item = seq.pyget(i);
++        StringBuilder buf = new StringBuilder((int) s.size);
++
++        IntStream.range(0, seqLen).forEach(i -> {
++            final PyObject seqItem = seq.pyget(i);
+             if (i != 0) {
+                 buf.append(getString());
+             }
+-            buf.append(((PyString) item).getString());
+-        }
++            buf.append(((PyString) seqItem).getString());
++        });
++
+         return new PyString(buf.toString(), true); // Guaranteed to be byte-like
+     }
+ 
+@@ -4092,11 +4105,7 @@
+         // Result will be formed here
+         StringBuilder result = new StringBuilder();
+ 
+-        while (true) {
+-            MarkupIterator.Chunk chunk = it.nextChunk();
+-            if (chunk == null) {
+-                break;
+-            }
++        StreamExtensions.iterate(it.nextChunk(), Objects::nonNull, chunk -> it.nextChunk()).forEach(chunk -> {
+             // A Chunk encapsulates a literal part ...
+             result.append(chunk.literalText);
+             // ... and the parsed form of the replacement field that followed it (if any)
+@@ -4107,7 +4116,7 @@
+                 // Get the object referred to by the field name (which may be omitted).
+                 PyObject fieldObj = getFieldObject(chunk.fieldName, it.isBytes(), args, keywords);
+                 if (fieldObj == null) {
+-                    continue;
++                    return; // continue
+                 }
+ 
+                 // The conversion specifier is s = __str__ or r = __repr__.
+@@ -4122,7 +4131,7 @@
+                 // Check for "{}".format(u"abc")
+                 if (fieldObj instanceof PyUnicode && !(this instanceof PyUnicode)) {
+                     // Down-convert to PyString, at the risk of raising UnicodeEncodingError
+-                    fieldObj = ((PyUnicode) fieldObj).__str__();
++                    fieldObj = fieldObj.__str__();
+                 }
+ 
+                 // The format_spec may be simple, or contained nested replacement fields.
+@@ -4137,7 +4146,8 @@
+                 }
+                 renderField(fieldObj, formatSpec, result);
+             }
+-        }
++        });
++
+         return result.toString();
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/core/PyStringMap.java ../build/src/org/python/core/PyStringMap.java
+--- ./src/org/python/core/PyStringMap.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/PyStringMap.java	2026-06-29 11:43:51.579609798 +0100
+@@ -241,7 +241,7 @@
+             return "{...}";
+         }
+         StringBuilder buf = new StringBuilder("{");
+-        for (Entry<Object, PyObject> entry : table.entrySet()) {
++        table.entrySet().stream().forEach(entry -> {
+             Object key = entry.getKey();
+             if (key instanceof String) {
+                 /* This is a bit complicated, but prevents us to duplicate
+@@ -253,7 +253,7 @@
+             buf.append(": ");
+             buf.append(entry.getValue().__repr__().toString());
+             buf.append(", ");
+-        }
++        });
+         if (buf.length() > 1) {
+             buf.delete(buf.length() - 2, buf.length());
+         }
+@@ -424,11 +424,11 @@
+                 if (other instanceof PyStringMap) {
+                     Set<Map.Entry<Object, PyObject>> entrySet =
+                             ((PyStringMap)other).table.entrySet();
+-                    for (Map.Entry<Object, PyObject> ent: entrySet) {
++                    entrySet.stream().forEach(ent -> {
+                         if (!table.containsKey(ent.getKey())) {
+                             table.put(ent.getKey(), ent.getValue());
+                         }
+-                    }
++                    });
+                 } else if (other instanceof PyDictionary) {
+                     mergeFromKeys(other, ((PyDictionary)other).keys(), override);
+                 } else {
+diff '--color=auto' -ur ./src/org/python/core/PyTuple.java ../build/src/org/python/core/PyTuple.java
+--- ./src/org/python/core/PyTuple.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/PyTuple.java	2026-06-29 16:04:02.381290809 +0100
+@@ -8,6 +8,7 @@
+ import java.util.ListIterator;
+ 
+ import java.lang.reflect.Array;
++import java.util.stream.IntStream;
+ 
+ import org.python.expose.ExposedMethod;
+ import org.python.expose.ExposedNew;
+@@ -110,16 +111,19 @@
+         if (step > 0 && stop < start) {
+             stop = start;
+         }
+-        int n = sliceLength(start, stop, step);
+-        PyObject[] newArray = new PyObject[n];
++        final int n = sliceLength(start, stop, step);
++        final PyObject[] newArray;
+ 
+         if (step == 1) {
++            newArray = new PyObject[n];
+             System.arraycopy(array, start, newArray, 0, stop - start);
+-            return fromArrayNoCopy(newArray);
+-        }
+-        for (int i = start, j = 0; j < n; i += step, j++) {
+-            newArray[j] = array[i];
++        } else {
++            newArray = IntStream.range(0, n).mapToObj(j -> {
++                final int i = start + j * step;
++                return array[i];
++            }).toArray(PyObject[]::new);
+         }
++
+         return fromArrayNoCopy(newArray);
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/core/PyUnicode.java ../build/src/org/python/core/PyUnicode.java
+--- ./src/org/python/core/PyUnicode.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/PyUnicode.java	2026-06-29 12:51:11.020552935 +0100
+@@ -7,6 +7,9 @@
+ import java.util.LinkedList;
+ import java.util.List;
+ import java.util.Set;
++import java.util.Spliterator;
++import java.util.Spliterators;
++import java.util.stream.StreamSupport;
+ 
+ import org.python.core.stringlib.FieldNameIterator;
+ import org.python.core.stringlib.MarkupIterator;
+@@ -19,6 +22,10 @@
+ 
+ import com.google.common.base.CharMatcher;
+ 
++import static java.util.Spliterator.IMMUTABLE;
++import static java.util.Spliterator.NONNULL;
++import static java.util.Spliterator.ORDERED;
++
+ /**
+  * a builtin python unicode string.
+  */
+@@ -1223,9 +1230,11 @@
+     @ExposedMethod(doc = BuiltinDocs.unicode_title_doc)
+     final PyObject unicode_title() {
+         StringBuilder buffer = new StringBuilder(getString().length());
+-        boolean previous_is_cased = false;
+-        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
+-            int codePoint = iter.next();
++        Iterator<Integer> iter = newSubsequenceIterator();
++        Spliterator<Integer> spliter = Spliterators.spliteratorUnknownSize(iter, ORDERED | IMMUTABLE | NONNULL);
++
++        StreamSupport.stream(spliter, false).reduce(Boolean.FALSE, (previous_is_cased, boxedCodePoint) -> {
++            int codePoint = boxedCodePoint.intValue();
+             if (previous_is_cased) {
+                 buffer.appendCodePoint(Character.toLowerCase(codePoint));
+             } else {
+@@ -1238,7 +1247,12 @@
+             } else {
+                 previous_is_cased = false;
+             }
+-        }
++
++            return previous_is_cased;
++        }, (a, b) -> {
++            throw new UnsupportedOperationException("Parallel execution is unsupported due to order-dependent reduction");
++        });
++
+         return new PyUnicode(buffer);
+     }
+ 
+@@ -1461,9 +1475,7 @@
+         }
+ 
+         protected void addLookahead(StringBuilder buffer) {
+-            for (int codepoint : lookahead) {
+-                buffer.appendCodePoint(codepoint);
+-            }
++            lookahead.stream().mapToInt(Integer::valueOf).forEach(codepoint -> buffer.appendCodePoint(codepoint));
+             lookahead.clear();
+         }
+ 
+diff '--color=auto' -ur ./src/org/python/core/util/StringCounter.java ../build/src/org/python/core/util/StringCounter.java
+--- ./src/org/python/core/util/StringCounter.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/core/util/StringCounter.java	2026-06-29 11:43:51.581823050 +0100
+@@ -81,10 +81,10 @@
+ 
+     /** Report the top n counts. */
+     public void top(int n, PrintStream out) {
+-        for (Map.Entry<String, Integer> e : top(n).entrySet()) {
++        top(n).entrySet().stream().forEach(e -> {
+             String key = e.getKey();
+             out.printf("%5d  \"%.60s%s\"\n", e.getValue(), key, key.length() > 60 ? "..." : "");
+-        }
++        });
+         out.println();
+     }
+ }
+diff '--color=auto' -ur ./src/org/python/expose/generate/ExposedTypeProcessor.java ../build/src/org/python/expose/generate/ExposedTypeProcessor.java
+--- ./src/org/python/expose/generate/ExposedTypeProcessor.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/expose/generate/ExposedTypeProcessor.java	2026-06-29 11:43:51.582132054 +0100
+@@ -166,12 +166,12 @@
+                                           methodExposers,
+                                           descExposers.values(),
+                                           newExposer);
+-            for (MethodExposer exposer : methodExposers) {
++            methodExposers.stream().forEach(exposer -> {
+                 addInnerClass(exposer.getGeneratedType());
+-            }
+-            for (DescriptorExposer exposer : descExposers.values()) {
++            });
++            descExposers.values().stream().forEach(exposer -> {
+                 addInnerClass(exposer.getGeneratedType());
+-            }
++            });
+             if (newExposer != null) {
+                 addInnerClass(newExposer.getGeneratedType());
+             }
+diff '--color=auto' -ur ./src/org/python/expose/generate/ExposeTask.java ../build/src/org/python/expose/generate/ExposeTask.java
+--- ./src/org/python/expose/generate/ExposeTask.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/expose/generate/ExposeTask.java	2026-06-29 11:43:51.581984297 +0100
+@@ -34,7 +34,7 @@
+     }
+ 
+     private void expose(Set<File> toExpose) {
+-        for (File f : toExpose) {
++        toExpose.stream().forEach(f -> {
+             ExposedTypeProcessor etp;
+             try {
+                 etp = new ExposedTypeProcessor(new FileInputStream(f));
+@@ -43,18 +43,14 @@
+             } catch (InvalidExposingException iee) {
+                 throw new BuildException(iee.getMessage());
+             }
+-            for (MethodExposer exposer : etp.getMethodExposers()) {
+-                generate(exposer);
+-            }
+-            for (DescriptorExposer exposer : etp.getDescriptorExposers()) {
+-                generate(exposer);
+-            }
++            etp.getMethodExposers().stream().forEach(this::generate);
++            etp.getDescriptorExposers().stream().forEach(this::generate);
+             if (etp.getNewExposer() != null) {
+                 generate(etp.getNewExposer());
+             }
+             generate(etp.getTypeExposer());
+             write(etp.getExposedClassName(), etp.getBytecode());
+-        }
++        });
+     }
+ 
+     private void generate(Exposer exposer) {
+diff '--color=auto' -ur ./src/org/python/expose/generate/TypeExposer.java ../build/src/org/python/expose/generate/TypeExposer.java
+--- ./src/org/python/expose/generate/TypeExposer.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/expose/generate/TypeExposer.java	2026-06-29 11:43:51.582304410 +0100
+@@ -51,12 +51,12 @@
+         this.methods = methods;
+         this.descriptors = descriptors;
+         Set<String> names = Generic.set();
+-        for(DescriptorExposer exposer : descriptors) {
++        descriptors.stream().forEach(exposer -> {
+             if(!names.add(exposer.getName())) {
+                 throwDupe(exposer.getName());
+             }
+-        }
+-        for(MethodExposer method : methods) {
++        });
++        methods.stream().forEach(method -> {
+             String[] methNames = method.getNames();
+             for(String methName : methNames) {
+                 if(!names.add(methName)) {
+@@ -64,7 +64,7 @@
+                 }
+             }
+             numNames += methNames.length;
+-        }
++        });
+         this.ne = ne;
+     }
+ 
+@@ -82,12 +82,8 @@
+         if(ne != null) {
+             ne.load(l);
+         }
+-        for(DescriptorExposer de : descriptors) {
+-            de.load(l);
+-        }
+-        for(MethodExposer me : methods) {
+-            me.load(l);
+-        }
++        descriptors.stream().forEach(de -> de.load(l));
++        methods.stream().forEach(me -> me.load(l));
+         Class<?> descriptor = load(l);
+         try {
+             return (TypeBuilder)descriptor.getDeclaredConstructor().newInstance();
+diff '--color=auto' -ur ./src/org/python/indexer/ast/NBlock.java ../build/src/org/python/indexer/ast/NBlock.java
+--- ./src/org/python/indexer/ast/NBlock.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/ast/NBlock.java	2026-06-29 11:43:51.583599286 +0100
+@@ -32,14 +32,14 @@
+ 
+     @Override
+     public NType resolve(Scope scope) throws Exception {
+-        for (NNode n : seq) {
++        seq.stream().forEach(n -> {
+             // XXX:  This works for inferring lambda return types, but needs
+             // to be fixed for functions (should be union of return stmt types).
+             NType returnType = resolveExpr(n, scope);
+             if (returnType != Indexer.idx.builtins.None) {
+                 setType(returnType);
+             }
+-        }
++        });
+         return getType();
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/indexer/ast/NCall.java ../build/src/org/python/indexer/ast/NCall.java
+--- ./src/org/python/indexer/ast/NCall.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/ast/NCall.java	2026-06-29 11:43:51.583737646 +0100
+@@ -47,9 +47,7 @@
+     public NType resolve(Scope s) throws Exception {
+         NType ft = resolveExpr(func, s);
+         List<NType> argTypes = new ArrayList<NType>();
+-        for (NNode a : args) {
+-            argTypes.add(resolveExpr(a, s));
+-        }
++        args.stream().forEach(a -> argTypes.add(resolveExpr(a, s)));
+         resolveList(keywords, s);
+         resolveExpr(starargs, s);
+         resolveExpr(kwargs, s);
+diff '--color=auto' -ur ./src/org/python/indexer/ast/NClassDef.java ../build/src/org/python/indexer/ast/NClassDef.java
+--- ./src/org/python/indexer/ast/NClassDef.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/ast/NClassDef.java	2026-06-29 11:43:51.583899244 +0100
+@@ -66,13 +66,13 @@
+     public NType resolve(Scope s) throws Exception {
+         NClassType thisType = getType().asClassType();
+         List<NType> baseTypes = new ArrayList<NType>();
+-        for (NNode base : bases) {
++        bases.stream().forEach(base -> {
+             NType baseType = resolveExpr(base, s);
+             if (baseType.isClassType()) {
+                 thisType.addSuper(baseType);
+             }
+             baseTypes.add(baseType);
+-        }
++        });
+ 
+         Builtins builtins = Indexer.idx.builtins;
+         addSpecialAttribute("__bases__", new NTupleType(baseTypes));
+diff '--color=auto' -ur ./src/org/python/indexer/ast/NDelete.java ../build/src/org/python/indexer/ast/NDelete.java
+--- ./src/org/python/indexer/ast/NDelete.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/ast/NDelete.java	2026-06-29 11:43:51.584034716 +0100
+@@ -27,12 +27,12 @@
+ 
+     @Override
+     public NType resolve(Scope s) throws Exception {
+-        for (NNode n : targets) {
++        targets.stream().forEach(n -> {
+             resolveExpr(n, s);
+             if (n instanceof NName) {
+                 s.remove(((NName)n).id);
+             }
+-        }
++        });
+         return getType();
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/indexer/ast/NImportFrom.java ../build/src/org/python/indexer/ast/NImportFrom.java
+--- ./src/org/python/indexer/ast/NImportFrom.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/ast/NImportFrom.java	2026-06-29 11:43:51.584178574 +0100
+@@ -192,19 +192,19 @@
+ 
+         List<String> names = mod.getExportedNames();
+         if (!names.isEmpty()) {
+-            for (String name : names) {
++            names.stream().forEach(name -> {
+                 NBinding nb = mt.getTable().lookupLocal(name);
+                 if (nb != null) {
+                     s.put(name, nb);
+                 }
+-            }
++            });
+         } else {
+             // Fall back to importing all names not starting with "_".
+-            for (Entry<String, NBinding> e : mt.getTable().entrySet()) {
++            mt.getTable().entrySet().stream().forEach(e -> {
+                 if (!e.getKey().startsWith("_")) {
+                     s.put(e.getKey(), e.getValue());
+                 }
+-            }
++            });
+         }
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/indexer/ast/NModule.java ../build/src/org/python/indexer/ast/NModule.java
+--- ./src/org/python/indexer/ast/NModule.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/ast/NModule.java	2026-06-29 11:43:51.584339645 +0100
+@@ -112,13 +112,13 @@
+         }
+ 
+         Scope table = mtype.getTable();
+-        for (NStr nstr : getExportedNameNodes()) {
++        getExportedNameNodes().stream().forEach(nstr -> {
+             String name = nstr.n.toString();
+             NBinding b = table.lookupLocal(name);
+             if (b != null) {
+                 Indexer.idx.putLocation(nstr, b);
+             }
+-        }
++        });
+     }
+ 
+     /**
+@@ -136,9 +136,7 @@
+         if (!getType().isModuleType()) {
+             return exports;
+         }
+-        for (NStr nstr : getExportedNameNodes()) {
+-            exports.add(nstr.n.toString());
+-        }
++        getExportedNameNodes().stream().forEach(nstr -> exports.add(nstr.n.toString()));
+         return exports;
+     }
+ 
+@@ -172,14 +170,14 @@
+         if (!(rvalue instanceof NList)) {
+             return exports;
+         }
+-        for (NNode elt : ((NList)rvalue).elts) {
++        ((NList)rvalue).elts.stream().forEach(elt -> {
+             if (elt instanceof NStr) {
+                 NStr nstr = (NStr)elt;
+                 if (nstr.n != null) {
+                     exports.add(nstr);
+                 }
+             }
+-        }
++        });
+         return exports;
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/indexer/ast/NNode.java ../build/src/org/python/indexer/ast/NNode.java
+--- ./src/org/python/indexer/ast/NNode.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/ast/NNode.java	2026-06-29 11:43:51.584511546 +0100
+@@ -158,11 +158,11 @@
+ 
+     public void addChildren(List<? extends NNode> nodes) {
+         if (nodes != null) {
+-            for (NNode n : nodes) {
++            nodes.stream().forEach((NNode n) -> {
+                 if (n != null) {
+                     n.setParent(this);
+                 }
+-            }
++            });
+         }
+     }
+ 
+@@ -237,11 +237,11 @@
+ 
+     protected void visitNodeList(List<? extends NNode> nodes, NNodeVisitor v) {
+         if (nodes != null) {
+-            for (NNode n : nodes) {
++            nodes.stream().forEach((NNode n) -> {
+                 if (n != null) {
+                     n.visit(v);
+                 }
+-            }
++            });
+         }
+     }
+ 
+@@ -324,9 +324,7 @@
+      */
+     protected void resolveList(List<? extends NNode> nodes, Scope s) {
+         if (nodes != null) {
+-            for (NNode n : nodes) {
+-                resolveExpr(n, s);
+-            }
++            nodes.stream().forEach((NNode n) -> resolveExpr(n, s));
+         }
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/indexer/ast/NTuple.java ../build/src/org/python/indexer/ast/NTuple.java
+--- ./src/org/python/indexer/ast/NTuple.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/ast/NTuple.java	2026-06-29 11:43:51.584678013 +0100
+@@ -25,9 +25,7 @@
+     @Override
+     public NType resolve(Scope s) throws Exception {
+         NTupleType thisType = new NTupleType();
+-        for (NNode e : elts) {
+-            thisType.add(resolveExpr(e, s));
+-        }
++        elts.stream().forEach(e -> thisType.add(resolveExpr(e, s)));
+         return setType(thisType);
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/indexer/AstCache.java ../build/src/org/python/indexer/AstCache.java
+--- ./src/org/python/indexer/AstCache.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/AstCache.java	2026-06-29 11:43:51.582460266 +0100
+@@ -229,10 +229,10 @@
+             return;
+         }
+         List<Diagnostic> diags = Indexer.idx.getParseErrs(path);
+-        for (RecognitionException rx : errs) {
++        errs.stream().forEach(rx -> {
+             String msg = rx.line + ":" + rx.charPositionInLine + ":" + rx;
+             diags.add(new Diagnostic(path, Diagnostic.Type.ERROR, -1, -1, msg));
+-        }
++        });
+     }
+ 
+     /**
+diff '--color=auto' -ur ./src/org/python/indexer/demos/HtmlOutline.java ../build/src/org/python/indexer/demos/HtmlOutline.java
+--- ./src/org/python/indexer/demos/HtmlOutline.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/demos/HtmlOutline.java	2026-06-29 11:43:51.584824712 +0100
+@@ -36,9 +36,7 @@
+ 
+     private void addOutline(List<Outliner.Entry> entries) {
+         add("<ul>\n");
+-        for (Outliner.Entry e : entries) {
+-            addEntry(e);
+-        }
++        entries.stream().forEach(this::addEntry);
+         add("</ul>\n");
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/indexer/demos/Linker.java ../build/src/org/python/indexer/demos/Linker.java
+--- ./src/org/python/indexer/demos/Linker.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/demos/Linker.java	2026-06-29 11:43:51.584965979 +0100
+@@ -49,11 +49,11 @@
+      * Should be called once per index.
+      */
+     public void findLinks(Indexer indexer) {
+-        for (NBinding nb : indexer.getBindings().values()) {
++        indexer.getBindings().values().stream().forEach(nb -> {
+             addSemanticStyles(nb);
+             processDefs(nb);
+             processRefs(nb);
+-        }
++        });
+     }
+ 
+     /**
+@@ -135,9 +135,7 @@
+      */
+     private void processRefs(NBinding nb) {
+         if (nb.hasRefs()) {  // avoid lazy ref-list instantiation
+-            for (Ref ref : nb.getRefs()) {
+-                processRef(ref, nb);
+-            }
++            nb.getRefs().stream().forEach(ref -> processRef(ref, nb));
+         }
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/indexer/demos/StyleApplier.java ../build/src/org/python/indexer/demos/StyleApplier.java
+--- ./src/org/python/indexer/demos/StyleApplier.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/demos/StyleApplier.java	2026-06-29 11:43:51.585121224 +0100
+@@ -109,10 +109,10 @@
+     public StyleApplier(String path, String src, List<StyleRun> runs) {
+         this.path = path;
+         source = src;
+-        for (StyleRun run : runs) {
++        runs.stream().forEach(run -> {
+             tags.add(new StartTag(run));
+             tags.add(new EndTag(run));
+-        }
++        });
+     }
+ 
+     /**
+@@ -121,9 +121,7 @@
+     public String apply() {
+         buffer = new StringBuilder(source.length() * SOURCE_BUF_MULTIPLIER);
+         int lastStart = -1;
+-        for (Tag tag : tags) {
+-            tag.insert();
+-        }
++        tags.stream().forEach(Tag::insert);
+         // Copy in remaining source beyond last tag.
+         if (sourceOffset < source.length()) {
+             copySource(sourceOffset, source.length());
+diff '--color=auto' -ur ./src/org/python/indexer/Indexer.java ../build/src/org/python/indexer/Indexer.java
+--- ./src/org/python/indexer/Indexer.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/Indexer.java	2026-06-29 11:43:51.582665455 +0100
+@@ -377,9 +377,7 @@
+             bindings = new ArrayList<NBinding>(1);
+             locations.put(node, bindings);
+         } else {
+-            for (NBinding oldb : bindings) {
+-                oldb.removeRef(node);
+-            }
++            bindings.stream().forEach(oldb -> oldb.removeRef(node));
+             bindings.clear();
+         }
+         if (!bindings.contains(b)) {
+@@ -570,12 +568,7 @@
+     }
+ 
+     private boolean isInLoadPath(File dir) {
+-        for (String s : getLoadPath()) {
+-            if (new File(s).equals(dir)) {
+-                return true;
+-            }
+-        }
+-        return false;
++        return getLoadPath().stream().anyMatch(s -> new File(s).equals(dir));
+     }
+ 
+     private NModuleType parseAndResolve(String file) throws Exception {
+@@ -748,7 +741,7 @@
+     public void ready() {
+         fine("Checking for undeclared variables");
+ 
+-        for (Entry<Ref, List<NBinding>> ent : locations.entrySet()) {
++        locations.entrySet().stream().forEach(ent -> {
+             Ref ref = ent.getKey();
+             List<NBinding> bindings = ent.getValue();
+ 
+@@ -765,21 +758,19 @@
+             } else {
+                 nloc++;
+             }
+-        }
++        });
+ 
+         nprob = problems.size();
+         nparsing = parseErrs.size();
+ 
+         Set<String> removals = new HashSet<String>();
+-        for (Entry<String, NBinding> e : allBindings.entrySet()) {
++        allBindings.entrySet().stream().forEach(e -> {
+             NBinding nb = e.getValue();
+             if (nb.isProvisional() || nb.getNumDefs() == 0) {
+                 removals.add(e.getKey());
+             }
+-        }
+-        for (String s : removals) {
+-            allBindings.remove(s);
+-        }
++        });
++        removals.stream().forEach(s -> allBindings.remove(s));
+ 
+         locations.clear();
+     }
+@@ -838,10 +829,10 @@
+         StringBuilder sb = new StringBuilder();
+         Set<String> sorter = new TreeSet<String>();
+         sorter.addAll(allBindings.keySet());
+-        for (String key : sorter) {
++        sorter.stream().forEach(key -> {
+             NBinding b = allBindings.get(key);
+             sb.append(b.toString()).append("\n");
+-        }
++        });
+         return sb.toString();
+     }
+ 
+@@ -875,7 +866,7 @@
+                 .append(unresolvedModules.size())
+                 .append("\n");
+ 
+-        for (String s : unresolvedModules.keySet()) {
++        unresolvedModules.keySet().stream().forEach(s -> {
+             sb.append(s).append(": ");
+             Set<String> importers = unresolvedModules.get(s);
+             if (importers.size() > 5) {
+@@ -888,7 +879,7 @@
+                 sb.append(files.substring(1, files.length() - 1));
+             }
+             sb.append("\n");
+-        }
++        });
+ 
+         // XXX: these are no longer accurate, and need to be fixed.
+         // .append("\nnames resolved: " .append(percent(nloc, total)
+@@ -912,11 +903,11 @@
+ 
+     public List<String> getLoadedFiles() {
+         List<String> files = new ArrayList<String>();
+-        for (String file : moduleTable.keySet()) {
++        moduleTable.keySet().stream().forEach(file -> {
+             if (file.startsWith(File.separator)) {
+                 files.add(file);
+             }
+-        }
++        });
+         return files;
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/indexer/NBinding.java ../build/src/org/python/indexer/NBinding.java
+--- ./src/org/python/indexer/NBinding.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/NBinding.java	2026-06-29 11:43:51.582928624 +0100
+@@ -125,9 +125,7 @@
+     }
+ 
+     public void addDefs(Collection<NNode> nodes) {
+-        for (NNode n : nodes) {
+-            addDef(n);
+-        }
++        nodes.stream().forEach(this::addDef);
+     }
+ 
+     /**
+diff '--color=auto' -ur ./src/org/python/indexer/Outliner.java ../build/src/org/python/indexer/Outliner.java
+--- ./src/org/python/indexer/Outliner.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/Outliner.java	2026-06-29 11:43:51.583096903 +0100
+@@ -103,9 +103,7 @@
+             sb.append(getName());
+             sb.append("\n");
+             if (hasChildren()) {
+-                for (Entry e : getChildren()) {
+-                    e.toString(sb, depth + 1);
+-                }
++                getChildren().stream().forEach(e -> e.toString(sb, depth + 1));
+             }
+         }
+     }
+@@ -201,14 +199,14 @@
+         List<Entry> result = new ArrayList<Entry>();
+ 
+         Set<NBinding> entries = new TreeSet<NBinding>();
+-        for (NBinding nb : scope.values()) {
++        scope.values().stream().forEach(nb -> {
+             if (!nb.isSynthetic()
+                 && !nb.isBuiltin()
+                 && !nb.getDefs().isEmpty()
+                 && path.equals(nb.getSignatureNode().getFile())) {
+                 entries.add(nb);
+             }
+-        }
++        });
+ 
+         for (NBinding nb : entries) {
+             Def signode = nb.getSignatureNode();
+diff '--color=auto' -ur ./src/org/python/indexer/Scope.java ../build/src/org/python/indexer/Scope.java
+--- ./src/org/python/indexer/Scope.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/Scope.java	2026-06-29 11:43:51.583263176 +0100
+@@ -336,9 +336,7 @@
+             if (newBinding != null) {
+                 List<Ref> refs = new ArrayList<Ref>();  // avoid ConcurrentModificationException
+                 refs.addAll(oldBinding.getRefs());
+-                for (Ref ref : refs) {
+-                    Indexer.idx.updateLocation(ref, newBinding);
+-                }
++                refs.stream().forEach(ref -> Indexer.idx.updateLocation(ref, newBinding));
+             }
+         }
+     }
+diff '--color=auto' -ur ./src/org/python/indexer/types/NTupleType.java ../build/src/org/python/indexer/types/NTupleType.java
+--- ./src/org/python/indexer/types/NTupleType.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/types/NTupleType.java	2026-06-29 11:43:51.585269549 +0100
+@@ -62,19 +62,17 @@
+ 
+     public NListType toListType() {
+         NListType t = new NListType();
+-        for (NType e : eltTypes) {
+-            t.add(e);
+-        }
++        eltTypes.stream().forEach(t::add);
+         return t;
+     }
+ 
+     @Override
+     public void printKids(CyclicTypeRecorder ctr, StringBuilder sb) {
+         sb.append("[");
+-        for (NType elt : eltTypes) {
++        eltTypes.stream().forEach(elt -> {
+             elt.print(ctr, sb);
+             sb.append(",");
+-        }
++        });
+         sb.setLength(sb.length() - 1);  // pop last comma
+         sb.append("]");
+     }
+diff '--color=auto' -ur ./src/org/python/indexer/types/NUnionType.java ../build/src/org/python/indexer/types/NUnionType.java
+--- ./src/org/python/indexer/types/NUnionType.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/types/NUnionType.java	2026-06-29 11:43:51.585406558 +0100
+@@ -201,12 +201,7 @@
+      * @return the first non-unknown alternate, or {@code null} if none found
+      */
+     public NType firstKnownAlternate() {
+-        for (NType type : types) {
+-            if (!type.follow().isUnknownType()) {
+-                return type;
+-            }
+-        }
+-        return null;
++        return types.stream().filter(type -> !type.follow().isUnknownType()).findFirst().orElse(null);
+     }
+ 
+     /**
+@@ -227,10 +222,10 @@
+     @Override
+     public void printKids(CyclicTypeRecorder ctr, StringBuilder sb) {
+         sb.append("[");
+-        for (NType u : types) {
++        types.stream().forEach(u -> {
+             u.print(ctr, sb);
+             sb.append(",");
+-        }
++        });
+         sb.setLength(sb.length() - 1);  // pop last comma
+         sb.append("]");
+     }
+diff '--color=auto' -ur ./src/org/python/indexer/Util.java ../build/src/org/python/indexer/Util.java
+--- ./src/org/python/indexer/Util.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/indexer/Util.java	2026-06-29 11:43:51.583446623 +0100
+@@ -80,9 +80,7 @@
+ 
+     public static String arrayToString(Collection<String> strings) {
+         StringBuffer sb = new StringBuffer();
+-        for (String s : strings) {
+-            sb.append(s).append("\n");
+-        }
++        strings.stream().forEach(s -> sb.append(s).append("\n"));
+         return sb.toString();
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/jsr223/PyScriptEngineScope.java ../build/src/org/python/jsr223/PyScriptEngineScope.java
+--- ./src/org/python/jsr223/PyScriptEngineScope.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/jsr223/PyScriptEngineScope.java	2026-06-29 11:43:51.585567619 +0100
+@@ -57,8 +57,7 @@
+             Bindings bindings = context.getBindings(scope);
+             if (bindings == null)
+                 continue;
+-            for (String key : bindings.keySet())
+-                members.append(new PyString(key));
++            bindings.keySet().stream().forEach(key -> members.append(new PyString(key)));
+         }
+         members.sort();
+         return members;
+diff '--color=auto' -ur ./src/org/python/modules/errno.java ../build/src/org/python/modules/errno.java
+--- ./src/org/python/modules/errno.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/modules/errno.java	2026-06-29 11:43:51.585961618 +0100
+@@ -73,17 +73,17 @@
+             }
+         }
+         // Then provide the WSA names
+-        for (Constant lastError : lastErrors) {
++        lastErrors.stream().forEach(lastError -> {
+             if (lastError.name().startsWith("WSA")) {
+                 addCode(dict, lastError.name(), lastError.intValue(), lastError.toString());
+             }
+-        }
++        });
+     }
+ 
+     private static void initPosix(PyObject dict) {
+-        for (Constant constant : ConstantSet.getConstantSet("Errno")) {
++        ConstantSet.getConstantSet("Errno").stream().forEach(constant -> {
+             addCode(dict, constant.name(), constant.intValue(), constant.toString());
+-        }
++        });
+     }
+ 
+     private static void addCode(PyObject dict, String name, int code, String message) {
+diff '--color=auto' -ur ./src/org/python/modules/gc.java ../build/src/org/python/modules/gc.java
+--- ./src/org/python/modules/gc.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/modules/gc.java	2026-06-29 11:43:51.586252038 +0100
+@@ -938,12 +938,8 @@
+                     if ((gcFlags & VERBOSE_DELAYED) != 0) {
+                         writeDebug("gc", "process delayed finalizers (force-branch)");
+                     }
+-                    for (PyObject del: delayedFinalizables.keySet()) {
+-                        performFinalization(del);
+-                    }
+-                    for (PyObject cr: criticals) {
+-                        performFinalization(cr);
+-                    }
++                    delayedFinalizables.keySet().stream().forEach(DelayedFinalizationProcess::performFinalization);
++                    criticals.stream().forEach(DelayedFinalizationProcess::performFinalization);
+                     delayedFinalizables.clear();
+                     resurrectionCriticals.clear();
+                 }
+@@ -985,9 +981,7 @@
+                 if ((gcFlags & VERBOSE_DELAYED) != 0) {
+                     writeDebug("gc", "restore potentially resurrected weak references...");
+                 }
+-                for (PyObject rst: criticalReachablePool) {
+-                    restoreWeakReferences(rst);
+-                }
++                criticalReachablePool.stream().forEach(gc::restoreWeakReferences);
+                 GlobalRef.processDelayedCallbacks();
+             }
+             criticalReachablePool.clear();
+@@ -997,32 +991,24 @@
+                     writeDebug("gc", "restore "+criticalReachables.size()+
+                             " potentially resurrected finalizers...");
+                 }
+-                for (PyObject obj: criticalReachables) {
+-                    restoreFinalizer(obj);
+-                }
++                criticalReachables.stream().forEach(gc::restoreFinalizer);
+             } else {
+                 if ((gcFlags & VERBOSE_DELAYED) != 0) {
+                     writeDebug("gc", "delayed finalization of "+criticalReachables.size()+
+                             " potentially resurrected finalizers...");
+                 }
+-                for (PyObject del: criticalReachables) {
+-                    performFinalization(del);
+-                }
++                criticalReachables.stream().forEach(DelayedFinalizationProcess::performFinalization);
+             }
+             cyclicCriticals.removeAll(criticalReachables);
+             if ((gcFlags & VERBOSE_DELAYED) != 0 && !delayedFinalizables.isEmpty()) {
+                 writeDebug("gc", "process "+delayedFinalizables.size()+
+                         " delayed finalizers...");
+             }
+-            for (PyObject del: delayedFinalizables.keySet()) {
+-                performFinalization(del);
+-            }
++            delayedFinalizables.keySet().stream().forEach(DelayedFinalizationProcess::performFinalization);
+             if ((gcFlags & VERBOSE_DELAYED) != 0 && !cyclicCriticals.isEmpty()) {
+                 writeDebug("gc", "process "+cyclicCriticals.size()+" cyclic delayed finalizers...");
+             }
+-            for (PyObject del: cyclicCriticals) {
+-                performFinalization(del);
+-            }
++            cyclicCriticals.stream().forEach(DelayedFinalizationProcess::performFinalization);
+             if ((gcFlags & VERBOSE_DELAYED) != 0 && !criticals.isEmpty()) {
+                 writeDebug("gc", "calling "+criticals.size()+
+                         " critical finalizers not reachable by other critical finalizers...");
+@@ -1037,7 +1023,7 @@
+                 notifyRerun = true;
+             }
+             if (delayedFinalizationMode == NOTIFY_FOR_RERUN && !notifyRerun) {
+-                for (PyObject del: criticals) {
++                criticals.stream().forEach(del -> {
+                     if (!notifyRerun) {
+                         Object m = JyAttribute.getAttr(del,
+                                 JyAttribute.GC_DELAYED_FINALIZE_CRITICAL_MARK_ATTR);
+@@ -1046,11 +1032,9 @@
+                         }
+                     }
+                     performFinalization(del);
+-                }
++                });
+             } else {
+-                for (PyObject del: criticals) {
+-                    performFinalization(del);
+-                }
++                criticals.stream().forEach(DelayedFinalizationProcess::performFinalization);
+             }
+             delayedFinalizables.clear();
+             resurrectionCriticals.clear();
+@@ -1371,14 +1355,14 @@
+             return;
+         }
+             synchronized(preFinalizationProcess) {
+-                for (Runnable r: preFinalizationProcess) {
++                preFinalizationProcess.stream().forEach(r -> {
+                     try {
+                         r.run();
+                     } catch (Exception preProcessError) {
+                         Py.writeError("gc", "Finalization preprocess "+r+" caused error: "
+                                 +preProcessError);
+                     }
+-                }
++                });
+                     synchronized (preFinalizationProcessRemove) {
+                         preFinalizationProcess.removeAll(preFinalizationProcessRemove);
+                         preFinalizationProcessRemove.clear();
+@@ -1406,14 +1390,14 @@
+ 
+     protected static void postFinalizationProcess() {
+         synchronized (postFinalizationProcess) {
+-            for (Runnable r : postFinalizationProcess) {
++            postFinalizationProcess.stream().forEach(r -> {
+                 try {
+                     r.run();
+                 } catch (Exception postProcessError) {
+                     System.err.println("Finalization postprocess " + r + " caused error:");
+                     System.err.println(postProcessError);
+                 }
+-            }
++            });
+             synchronized (postFinalizationProcessRemove) {
+                 postFinalizationProcess.removeAll(postFinalizationProcessRemove);
+                 postFinalizationProcessRemove.clear();
+@@ -1824,14 +1808,12 @@
+                  * such bad stuff). So we do it here...
+                  */
+                 List<WeakReferenceGC> lst = new ArrayList<>();
+-                for (WeakReferenceGC wr: monitoredObjects) {
++                monitoredObjects.stream().forEach(wr -> {
+                     if (wr.str == null) {
+                         lst.add(wr);
+                     }
+-                }
+-                for (WeakReferenceGC ol: lst) {
+-                    ol.initStr(null);
+-                }
++                });
++                lst.stream().forEach(ol -> ol.initStr(null));
+                 lst.clear();
+             }
+             ++gcMonitoredRunCount;
+@@ -2092,7 +2074,7 @@
+                 /* note that all cycleMarks should have been initialized when
+                  * objects became monitored.
+                  */
+-                for (WeakReferenceGC wrg: collectBuffer) {
++                collectBuffer.stream().forEach(wrg -> {
+                     if (!wrg.cycleMark.isUncollectable()) {
+                         if (wrg.isInstance) {
+                             writeDebug("gc", "collectable "+
+@@ -2104,18 +2086,18 @@
+                     } else {
+                         ++stat[1];
+                     }
+-                }
++                });
+             } else if ((debugFlags & gc.DEBUG_STATS) != 0) {
+-                for (WeakReferenceGC wrg: collectBuffer) {
++                collectBuffer.stream().forEach(wrg -> {
+                     if (wrg.cycleMark.isUncollectable()) {
+                         ++stat[1];
+                     }
+-                }
++                });
+             }
+             if ((debugFlags & gc.DEBUG_UNCOLLECTABLE) != 0 &&
+                     (    (debugFlags & gc.DEBUG_OBJECTS) != 0 ||
+                         (debugFlags & gc.DEBUG_INSTANCES) != 0)) {
+-                for (WeakReferenceGC wrg: collectBuffer) {
++                collectBuffer.stream().forEach(wrg -> {
+                     if (wrg.cycleMark.isUncollectable()) {
+                         if (wrg.isInstance) {
+                             writeDebug("gc", "uncollectable "+
+@@ -2125,7 +2107,7 @@
+                             writeDebug("gc", "uncollectable "+wrg.str);
+                         }
+                     }
+-                }
++                });
+             }
+         }
+         if ((gcFlags & VERBOSE_COLLECT) != 0) {
+@@ -2459,12 +2441,12 @@
+         }
+         ArrayList<PyObject> resultList = new ArrayList<>(monitoredObjects.size());
+         synchronized (monitoredObjects) {
+-            for (WeakReferenceGC src: monitoredObjects) {
++            monitoredObjects.stream().forEach(src -> {
+                 PyObject obj = src.get();
+                 if (isTraversable(obj)) {
+                     resultList.add(obj);
+                 }
+-            }
++            });
+         }
+         resultList.trimToSize();
+         return new PyList(resultList);
+@@ -2585,17 +2567,17 @@
+         IdentityHashMap<PyObject, WeakReferenceGC> tmp;
+         IdentityHashMap<PyObject, WeakReferenceGC> toProcess = new IdentityHashMap<>();
+         /* We complete pools[0] with all reachable objects. */
+-        for (WeakReferenceGC ref: pools[0].values()) {
++        pools[0].values().stream().forEach(ref -> {
+             traverse((PyObject) ref.get(), ReachableFinderWeakRefs.defaultInstance, pools);
+-        }
++        });
+         while (!pools[1].isEmpty()) {
+             tmp = pools[1];
+             pools[1] = toProcess;
+             toProcess = tmp;
+             pools[0].putAll(toProcess);
+-            for (WeakReferenceGC ref: toProcess.values()) {
++            toProcess.values().stream().forEach(ref -> {
+                 traverse((PyObject) ref.get(), ReachableFinderWeakRefs.defaultInstance, pools);
+-            }
++            });
+             toProcess.clear();
+         }
+         /* pools[0] should now be a closed set in the sense that it contains all PyObjects
+@@ -2620,9 +2602,7 @@
+                     done = false;
+                 }
+             }
+-            for (PyObject ref: toProcess.keySet()) {
+-                pools[1].remove(ref);
+-            }
++            toProcess.keySet().stream().forEach(ref -> pools[1].remove(ref));
+             toProcess.clear();
+             done = done && pools[0].size() == pools[1].size();
+             tmp = pools[0];
+@@ -2664,9 +2644,9 @@
+             pools[1] = toProcess;
+             toProcess = tmp;
+             pools[0].putAll(toProcess);
+-            for (PyObject obj: toProcess.keySet()) {
++            toProcess.keySet().stream().forEach(obj -> {
+                 traverse(obj, ReachableFinder.defaultInstance, pools);
+-            }
++            });
+             toProcess.clear();
+         }
+         /* pools[0] should now be a closed set in the sense that it contains
+@@ -2710,17 +2690,17 @@
+         IdentityHashMap<PyObject, PyObject> toProcess = new IdentityHashMap<>();
+ 
+         /* We complete pools[0] with all reachable objects. */
+-        for (PyObject obj: pools[0].keySet()) {
++        pools[0].keySet().stream().forEach(obj -> {
+             traverse(obj, ReachableFinder.defaultInstance, pools);
+-        }
++        });
+         while (!pools[1].isEmpty()) {
+             tmp = pools[1];
+             pools[1] = toProcess;
+             toProcess = tmp;
+             pools[0].putAll(toProcess);
+-            for (PyObject obj: toProcess.keySet()) {
++            toProcess.keySet().stream().forEach(obj -> {
+                 traverse(obj, ReachableFinder.defaultInstance, pools);
+-            }
++            });
+             toProcess.clear();
+         }
+         /* pools[0] now is a closed set in the sense that it contains all PyObjects
+@@ -2744,9 +2724,7 @@
+                     done = false;
+                 }
+             }
+-            for (PyObject obj: toProcess.keySet()) {
+-                pools[1].remove(obj);
+-            }
++            toProcess.keySet().stream().forEach(obj -> pools[1].remove(obj));
+             toProcess.clear();
+             done = done && pools[0].size() == pools[1].size();
+             tmp = pools[0];
+@@ -2811,9 +2789,9 @@
+         reachSearch[1] = tmp;
+         while (!search.isEmpty()) {
+             reachSearch[0].putAll(search);
+-            for (PyObject obj: search.keySet()) {
++            search.keySet().stream().forEach(obj -> {
+                 traverse(obj, ReachableFinder.defaultInstance, reachSearch);
+-            }
++            });
+             tmp = search;
+             search = reachSearch[1];
+             tmp.clear();
+@@ -2836,9 +2814,7 @@
+             }
+             /* move all objects that can reach start from reachSearch[0] to search */
+             search.putAll(tmp);
+-            for (PyObject key: tmp.keySet()) {
+-                reachSearch[0].remove(key);
+-            }
++            tmp.keySet().stream().forEach(key -> reachSearch[0].remove(key));
+             tmp.clear();
+         }
+         return search;
+diff '--color=auto' -ur ./src/org/python/modules/jffi/CodegenUtils.java ../build/src/org/python/modules/jffi/CodegenUtils.java
+--- ./src/org/python/modules/jffi/CodegenUtils.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/modules/jffi/CodegenUtils.java	2026-06-29 11:43:51.586856263 +0100
+@@ -212,7 +212,7 @@
+     }
+ 
+     public static void visitAnnotationFields(AnnotationVisitor visitor, Map<String, Object> fields) {
+-        for (Map.Entry<String, Object> fieldEntry : fields.entrySet()) {
++        fields.entrySet().stream().forEach(fieldEntry -> {
+             Object value = fieldEntry.getValue();
+             if (value.getClass().isArray()) {
+                 Object[] values = (Object[]) value;
+@@ -228,7 +228,7 @@
+             } else {
+                 visitor.visit(fieldEntry.getKey(), value);
+             }
+-        }
++        });
+     }
+ 
+     public static Class getBoxType(Class type) {
+diff '--color=auto' -ur ./src/org/python/modules/posix/PosixModule.java ../build/src/org/python/modules/posix/PosixModule.java
+--- ./src/org/python/modules/posix/PosixModule.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/modules/posix/PosixModule.java	2026-06-29 11:43:51.587078795 +0100
+@@ -1285,12 +1285,12 @@
+         } catch (SecurityException se) {
+             return environ;
+         }
+-        for (Map.Entry<String, String> entry : env.entrySet()) {
++        env.entrySet().stream().forEach(entry -> {
+             // The shell restricts names to a subset of ASCII and values are encoded byte strings.
+             environ.__setitem__(
+                     Py.newString(entry.getKey()),
+                     Py.fileSystemEncode(entry.getValue()));
+-        }
++        });
+         return environ;
+     }
+ 
+diff '--color=auto' -ur ./src/org/python/modules/_weakref/GlobalRef.java ../build/src/org/python/modules/_weakref/GlobalRef.java
+--- ./src/org/python/modules/_weakref/GlobalRef.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/modules/_weakref/GlobalRef.java	2026-06-29 11:43:51.585734728 +0100
+@@ -134,9 +134,7 @@
+     public static void processDelayedCallbacks() {
+         if (delayedCallbacks != null) {
+             synchronized (delayedCallbacks) {
+-                for (GlobalRef gref: delayedCallbacks) {
+-                    gref.call();
+-                }
++                delayedCallbacks.stream().forEach(GlobalRef::call);
+                 delayedCallbacks.clear();
+             }
+         }
+diff '--color=auto' -ur ./src/org/python/util/JycompileAntTask.java ../build/src/org/python/util/JycompileAntTask.java
+--- ./src/org/python/util/JycompileAntTask.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/util/JycompileAntTask.java	2026-06-29 11:43:51.587338688 +0100
+@@ -29,7 +29,7 @@
+         Properties props = new Properties();
+         props.setProperty(RegistryKey.PYTHON_CACHEDIR_SKIP, "true");
+         PySystemState.initialize(System.getProperties(), props);
+-        for (File src : toCompile) {
++        toCompile.stream().forEach(src -> {
+             try {
+                 String name = _py_compile.getModuleName(src);
+                 String compiledFilePath = name.replace('.', '/');
+@@ -46,7 +46,7 @@
+                 log("Could not compile " + src);
+                 throw e;
+             }
+-        }
++        });
+     }
+ 
+     /**
+diff '--color=auto' -ur ./src/org/python/util/NameUnionAntType.java ../build/src/org/python/util/NameUnionAntType.java
+--- ./src/org/python/util/NameUnionAntType.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/util/NameUnionAntType.java	2026-06-29 11:43:51.587474623 +0100
+@@ -21,14 +21,14 @@
+         // preserve order-encountered using a list; keep track of the items with a set
+         Set<String> seenNames = Generic.set();
+         List<Resource> union = new ArrayList();
+-        for (ResourceCollection rc : collections) {
++        collections.stream().forEach(rc -> {
+             for (Iterator<Resource> resources = rc.iterator(); resources.hasNext();) {
+                 Resource r = resources.next();
+                 if (seenNames.add(r.getName())) {
+                     union.add(r);
+                 }
+             }
+-        }
++        });
+         return union;
+     }
+ }
+diff '--color=auto' -ur ./src/org/python/util/PyServlet.java ../build/src/org/python/util/PyServlet.java
+--- ./src/org/python/util/PyServlet.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/src/org/python/util/PyServlet.java	2026-06-29 11:43:51.587613737 +0100
+@@ -240,9 +240,7 @@
+     }
+ 
+     private void destroyCache() {
+-        for (CacheEntry entry : cache.values()) {
+-            entry.servlet.destroy();
+-        }
++        cache.values().stream().forEach(entry -> entry.servlet.destroy());
+         cache.clear();
+     }
+ 
+diff '--color=auto' -ur ./tests/java/javatests/Issue1972.java ../build/tests/java/javatests/Issue1972.java
+--- ./tests/java/javatests/Issue1972.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/tests/java/javatests/Issue1972.java	2026-06-29 11:43:51.587858106 +0100
+@@ -526,12 +526,7 @@
+      * @return
+      */
+     private static boolean beginsWithAnyOf(String s, List<Pattern> patterns) {
+-        for (Pattern p : patterns) {
+-            if (p.matcher(s).lookingAt()) {
+-                return true;
+-            }
+-        }
+-        return false;
++        return patterns.stream().anyMatch(p -> p.matcher(s).lookingAt());
+     }
+ 
+     /**
+@@ -652,15 +647,11 @@
+         PrintStream out = System.out;
+ 
+         out.println("Output stream:");
+-        for (String line : stdout) {
+-            out.println(line);
+-        }
++        stdout.stream().forEach(out::println);
+ 
+         if (stderr != null && stderr.size() > 0) {
+             out.println("Error stream:");
+-            for (String line : stderr) {
+-                out.println(line);
+-            }
++            stderr.stream().forEach(out::println);
+         }
+     }
+ 
+@@ -821,11 +812,11 @@
+ 
+             // Build a list of decoded buffers
+             List<String> list = new LinkedList<String>();
+-            for (ByteBuffer bb : this) {
++            this.stream().forEach(bb -> {
+                 stringDump(sb, bb);
+                 list.add(sb.toString());
+                 bb.rewind();
+-            }
++            });
+             return list;
+         }
+ 
+@@ -839,7 +830,7 @@
+             StringBuilder sb = new StringBuilder(4 * LEN + 20);
+             // Build a list of dumped buffer rows
+             List<String> list = new LinkedList<String>();
+-            for (ByteBuffer bb : this) {
++            this.stream().forEach(bb -> {
+                 int n;
+                 while ((n = bb.remaining()) >= LEN) {
+                     hexDump(sb, bb, n, LEN);
+@@ -850,7 +841,7 @@
+                     list.add(sb.toString());
+                 }
+                 bb.rewind();
+-            }
++            });
+             return list;
+         }
+ 
+diff '--color=auto' -ur ./tests/java/org/python/core/ConcurrentTypeTest.java ../build/tests/java/org/python/core/ConcurrentTypeTest.java
+--- ./tests/java/org/python/core/ConcurrentTypeTest.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/tests/java/org/python/core/ConcurrentTypeTest.java	2026-06-29 11:43:51.588121460 +0100
+@@ -96,10 +96,10 @@
+         awaitAll(runners);
+ 
+         // Check status of every thread
+-        for (SharedStateRunner r : runners) {
++        runners.stream().forEach(r -> {
+             PyObject e = r.globals.__finditem__("e");
+             assertEquals("Runner " + r.instance, null, e);
+-        }
++        });
+     }
+ 
+     /**
+@@ -155,10 +155,10 @@
+         awaitAll(runners);
+ 
+         // Check status of every thread
+-        for (SeparateStateRunner r : runners) {
++        runners.stream().forEach(r -> {
+             PyObject e = r.globals.__finditem__("e");
+             assertEquals("Runner " + r.instance, null, e);
+-        }
++        });
+     }
+ 
+     /**
+@@ -199,10 +199,10 @@
+         awaitAll(runners);
+ 
+         // Check status of every thread
+-        for (SeparateStateRunner r : runners) {
++        runners.stream().forEach(r -> {
+             PyObject e = r.globals.__finditem__("e");
+             assertEquals("Runner " + r.instance, null, e);
+-        }
++        });
+     }
+ 
+     /**
+@@ -239,7 +239,7 @@
+         awaitAll(runners);
+ 
+         // Check result of every thread
+-        for (SeparateLoaderRunner r : runners) {
++        runners.stream().forEach(r -> {
+             PyObject e = r.globals.__finditem__("e");
+             assertEquals("Runner " + r.instance, null, e);
+             PyObject staticConstant = r.globals.__finditem__("staticConstant");
+@@ -247,7 +247,7 @@
+             assertEquals(staticConstant.asInt(), 42);
+             PyObject x = r.globals.__finditem__("x");
+             assertEquals(x.asInt(), 42);
+-        }
++        });
+     }
+ 
+     /**
+@@ -305,7 +305,7 @@
+         Set<Object> classes = new HashSet<>();
+         Set<PyType> types = new HashSet<>();
+ 
+-        for (SeparateLoaderRunner r : runners) {
++        runners.stream().forEach(r -> {
+             PyObject e = r.globals.__finditem__("e");
+             assertEquals("Runner " + r.instance, null, e);
+             PyObject m = r.globals.__finditem__("m");
+@@ -316,7 +316,7 @@
+             types.add(f);
+             Object c = JyAttribute.getAttr(f, JyAttribute.JAVA_PROXY_ATTR);
+             classes.add(c);
+-        }
++        });
+ 
+         // XXX At the moment, these assertions fail (see https://bugs.jython.org/issue2834).
+         // assertEquals("Runners did not make a unique PyType Foo", runners.size(), types.size());
+@@ -466,9 +466,7 @@
+     /** Start each thread and wait for it to complete. */
+     private void awaitAll(List<? extends ScriptRunner> runners) {
+         // Start the runners in their threads
+-        for (ScriptRunner r : runners) {
+-            r.thread.start();
+-        }
++        runners.stream().forEach((ScriptRunner r) -> r.thread.start());
+ 
+         // Wait for all the runners to finish (but don't wait forever)
+         boolean running = true;
+diff '--color=auto' -ur ./tests/java/org/python/core/PyBufferTestSupport.java ../build/tests/java/org/python/core/PyBufferTestSupport.java
+--- ./tests/java/org/python/core/PyBufferTestSupport.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/tests/java/org/python/core/PyBufferTestSupport.java	2026-06-29 11:43:51.588347468 +0100
+@@ -166,9 +166,7 @@
+      */
+     List<TestSpec[]> getTestData() {
+         List<TestSpec[]> r = new ArrayList<TestSpec[]>(testSpecList.size());
+-        for (TestSpec spec : testSpecList) {
+-            r.add(new TestSpec[] {spec});
+-        }
++        testSpecList.stream().forEach(spec -> r.add(new TestSpec[] {spec}));
+         return r;
+     }
+ 
+diff '--color=auto' -ur ./tests/java/org/python/indexer/TestBase.java ../build/tests/java/org/python/indexer/TestBase.java
+--- ./tests/java/org/python/indexer/TestBase.java	2026-06-19 14:51:07.000000000 +0100
++++ ../build/tests/java/org/python/indexer/TestBase.java	2026-06-29 11:43:51.588560971 +0100
+@@ -96,11 +96,10 @@
+         String path = getTestFilePath(file);
+         StringBuilder sb = new StringBuilder();
+         BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(path)));
+-        String line;
+-        while ((line = in.readLine()) != null) {
++        in.lines().forEach(line -> {
+             sb.append(line);
+             sb.append("\n");
+-        }
++        });
+         in.close();  // not overly worried about resource cleanup in unit tests
+         return sb.toString();
+     }
+@@ -286,12 +285,7 @@
+     public Def getDefinition(String qname, int offset, int length) throws Exception {
+         NBinding b = getBinding(qname);
+         assertNotNull(b.getDefs());
+-        for (Def def : b.getDefs()) {
+-            if (offset == def.start() && length == def.end() - def.start()) {
+-                return def;
+-            }
+-        }
+-        return null;
++        return b.getDefs().stream().filter(def -> offset == def.start() && length == def.end() - def.start()).findFirst().orElse(null);
+     }
+ 
+     public void assertDefinition(String qname, int offset, int length) throws Exception {
+@@ -318,12 +312,7 @@
+     public Ref getRefOrNull(String qname, int offset, int length) throws Exception {
+         NBinding b = getBinding(qname);
+         assertNotNull("Null refs list for " + qname, b.getRefs());
+-        for (Ref ref : b.getRefs()) {
+-            if (offset == ref.start() && length == ref.length()) {
+-                return ref;
+-            }
+-        }
+-        return null;
++        return b.getRefs().stream().filter(ref -> offset == ref.start() && length == ref.length()).findFirst().orElse(null);
+     }
+ 
+     public Ref getRefOrFail(String qname, int offset, int length) throws Exception {
+--- ./src/org/python/util/StreamExtensions.java	1970-01-01 01:00:00.000000000 +0100
++++ ../build/src/org/python/util/StreamExtensions.java	2026-06-29 12:21:40.484280416 +0100
+@@ -0,0 +1,84 @@
++package org.python.util;
++
++import java.util.Objects;
++import java.util.Spliterator;
++import java.util.Spliterators;
++import java.util.function.Consumer;
++import java.util.function.Predicate;
++import java.util.function.UnaryOperator;
++import java.util.stream.Stream;
++import java.util.stream.StreamSupport;
++
++public final class StreamExtensions {
++
++    private StreamExtensions() {
++    }
++
++    public static <T> Stream<T> iterate(T seed, Predicate<? super T> hasNext, UnaryOperator<T> next) {
++        Objects.requireNonNull(hasNext, "hasNext must not be null");
++        Objects.requireNonNull(next, "next must not be null");
++        return StreamSupport.stream(new IterateSpliterator<>(seed, hasNext, next), false);
++    }
++
++    private static final class IterateSpliterator<T> extends Spliterators.AbstractSpliterator<T> {
++        private final T seed;
++        private final Predicate<? super T> hasNext;
++        private final UnaryOperator<T> next;
++
++        private T prev;
++        private boolean started;
++        private boolean finished;
++
++        private IterateSpliterator(T seed, Predicate<? super T> hasNext, UnaryOperator<T> next) {
++            super(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL);
++            this.seed = seed;
++            this.hasNext = hasNext;
++            this.next = next;
++            this.prev = null;
++            this.started = false;
++            this.finished = false;
++        }
++
++        @Override
++        public boolean tryAdvance(Consumer<? super T> action) {
++            Objects.requireNonNull(action, "action must not be null");
++            if (finished) {
++                return false;
++            }
++
++            T t;
++            if (started) {
++                t = next.apply(prev);
++            } else {
++                t = seed;
++                started = true;
++            }
++
++            if (!hasNext.test(t)) {
++                prev = null;
++                finished = true;
++                return false;
++            } else {
++                action.accept(t);
++                prev = t;
++                return true;
++            }
++        }
++
++        @Override
++        public void forEachRemaining(Consumer<? super T> action) {
++            Objects.requireNonNull(action, "action must not be null");
++            if (finished) {
++                return;
++            }
++
++            finished = true;
++            T t = started ? next.apply(prev) : seed;
++            prev = null;
++            while (hasNext.test(t)) {
++                action.accept(t);
++                t = next.apply(t);
++            }
++        }
++    }
++}
