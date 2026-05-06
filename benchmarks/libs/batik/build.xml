@@ -19,7 +19,7 @@
 
     <property name="lib-build-top" value="${lib-build-dir}/batik-${lib-version}"/>
 
-    <target name="unpack" depends="unzip"/>
+    <target name="unpack" depends="unzip, patch"/>
 
 
     <property name="batik-jar" value="${lib-build-top}/batik-${lib-version}/lib/batik-all-${lib-version}.jar"/>

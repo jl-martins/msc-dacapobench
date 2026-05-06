@@ -1,0 +1,1886 @@
+diff '--color=auto' -ur batik-1.16/batik-anim/src/main/java/org/apache/batik/anim/dom/SVGOMDocument.java ../build/batik-1.16/batik-anim/src/main/java/org/apache/batik/anim/dom/SVGOMDocument.java
+--- batik-1.16/batik-anim/src/main/java/org/apache/batik/anim/dom/SVGOMDocument.java	2022-10-14 11:26:16.000000000 +0100
++++ ../build/batik-1.16/batik-anim/src/main/java/org/apache/batik/anim/dom/SVGOMDocument.java	2026-07-05 13:13:56.944929161 +0100
+@@ -495,11 +495,11 @@
+      * modified.
+      */
+     protected void overrideStyleTextChanged(CSSStylableElement e, String text) {
+-        for (Object o : cssNavigableDocumentListeners.keySet()) {
++        cssNavigableDocumentListeners.keySet().stream().forEach(o -> {
+             CSSNavigableDocumentListener l =
+                     (CSSNavigableDocumentListener) o;
+             l.overrideStyleTextChanged(e, text);
+-        }
++        });
+     }
+ 
+     /**
+@@ -507,11 +507,11 @@
+      */
+     protected void overrideStylePropertyRemoved(CSSStylableElement e,
+                                                 String name) {
+-        for (Object o : cssNavigableDocumentListeners.keySet()) {
++        cssNavigableDocumentListeners.keySet().stream().forEach(o -> {
+             CSSNavigableDocumentListener l =
+                     (CSSNavigableDocumentListener) o;
+             l.overrideStylePropertyRemoved(e, name);
+-        }
++        });
+     }
+ 
+     /**
+@@ -519,11 +519,11 @@
+      */
+     protected void overrideStylePropertyChanged
+             (CSSStylableElement e, String name, String value, String prio) {
+-        for (Object o : cssNavigableDocumentListeners.keySet()) {
++        cssNavigableDocumentListeners.keySet().stream().forEach(o -> {
+             CSSNavigableDocumentListener l =
+                     (CSSNavigableDocumentListener) o;
+             l.overrideStylePropertyChanged(e, name, value, prio);
+-        }
++        });
+     }
+ 
+     /**
+@@ -697,11 +697,11 @@
+          */
+         public void animatedAttributeChanged(Element e,
+                                              AnimatedLiveAttributeValue alav) {
+-            for (Object animatedAttributeListener : animatedAttributeListeners) {
++            animatedAttributeListeners.stream().forEach(animatedAttributeListener -> {
+                 AnimatedAttributeListener aal =
+                         (AnimatedAttributeListener) animatedAttributeListener;
+                 aal.animatedAttributeChanged(e, alav);
+-            }
++            });
+         }
+ 
+         /**
+@@ -711,11 +711,11 @@
+          * @param type the type of animation whose value changed
+          */
+         public void otherAnimationChanged(Element e, String type) {
+-            for (Object animatedAttributeListener : animatedAttributeListeners) {
++            animatedAttributeListeners.stream().forEach(animatedAttributeListener -> {
+                 AnimatedAttributeListener aal =
+                         (AnimatedAttributeListener) animatedAttributeListener;
+                 aal.otherAnimationChanged(e, type);
+-            }
++            });
+         }
+     }
+ 
+diff '--color=auto' -ur batik-1.16/batik-awt-util/src/main/java/org/apache/batik/ext/awt/image/rendered/AbstractTiledRed.java ../build/batik-1.16/batik-awt-util/src/main/java/org/apache/batik/ext/awt/image/rendered/AbstractTiledRed.java
+--- batik-1.16/batik-awt-util/src/main/java/org/apache/batik/ext/awt/image/rendered/AbstractTiledRed.java	2022-10-14 11:26:16.000000000 +0100
++++ ../build/batik-1.16/batik-awt-util/src/main/java/org/apache/batik/ext/awt/image/rendered/AbstractTiledRed.java	2026-07-05 13:13:56.946711941 +0100
+@@ -25,8 +25,10 @@
+ import java.awt.image.Raster;
+ import java.awt.image.SampleModel;
+ import java.awt.image.WritableRaster;
++import java.util.Arrays;
+ import java.util.List;
+ import java.util.Map;
++import java.util.stream.IntStream;
+ 
+ import org.apache.batik.ext.awt.image.GraphicsUtil;
+ import org.apache.batik.util.HaltingThread;
+@@ -335,21 +337,15 @@
+ 
+     public void copyToRasterByBlocks(WritableRaster wr) {
+         final boolean is_INT_PACK =
+-            GraphicsUtil.is_INT_PACK_Data(getSampleModel(), false);
++                GraphicsUtil.is_INT_PACK_Data(getSampleModel(), false);
+ 
+         Rectangle bounds = getBounds();
+-        Rectangle wrR    = wr.getBounds();
+-
+-        int tx0 = getXTile(wrR.x);
+-        int ty0 = getYTile(wrR.y);
+-        int tx1 = getXTile(wrR.x+wrR.width -1);
+-        int ty1 = getYTile(wrR.y+wrR.height-1);
+-
+-        if (tx0 < minTileX) tx0 = minTileX;
+-        if (ty0 < minTileY) ty0 = minTileY;
++        Rectangle wrR = wr.getBounds();
+ 
+-        if (tx1 >= minTileX+numXTiles) tx1 = minTileX+numXTiles-1;
+-        if (ty1 >= minTileY+numYTiles) ty1 = minTileY+numYTiles-1;
++        final int tx0 = Math.max(minTileX, getXTile(wrR.x));
++        final int ty0 = Math.max(minTileY, getYTile(wrR.y));
++        final int tx1 = Math.min(minTileX + numXTiles - 1, getXTile(wrR.x + wrR.width - 1));
++        final int ty1 = Math.min(minTileY + numYTiles - 1, getYTile(wrR.y + wrR.height - 1));
+ 
+         if ((tx1 < tx0) || (ty1 < ty0))
+             return;
+@@ -357,66 +353,55 @@
+         // System.out.println("WR: " + wrR);
+         // System.out.println("ME: " + bounds);
+ 
+-        int insideTx0 = tx0;
+-        int insideTx1 = tx1;
++        // Now figure out what tiles lie completely inside wr...
++        final int txStart = tx0 * tileWidth + tileGridXOff;
++        final int insideTx0 = ((txStart < wrR.x) && (bounds.x != wrR.x)) ? tx0 + 1 : tx0;
+ 
+-        int insideTy0 = ty0;
+-        int insideTy1 = ty1;
++        final int tyStart = ty0 * tileHeight + tileGridYOff;
++        final int insideTy0 = ((tyStart < wrR.y) && (bounds.y != wrR.y)) ? ty0 + 1 : ty0;
+ 
+-        // Now figure out what tiles lie completely inside wr...
+-        int tx, ty;
+-        tx = tx0*tileWidth+tileGridXOff;
+-        if ((tx < wrR.x)  && (bounds.x != wrR.x))
+-            // Partial tile off the left.
+-            insideTx0++;
+-
+-        ty= ty0*tileHeight+tileGridYOff;
+-        if ((ty < wrR.y) && (bounds.y != wrR.y))
+-            // Partial tile off the top.
+-            insideTy0++;
+-
+-        tx= (tx1+1)*tileWidth+tileGridXOff-1;
+-        if ((tx >= (wrR.x+wrR.width)) &&
+-            ((bounds.x+bounds.width) != (wrR.x+wrR.width)))
+-            // Partial tile off right
+-            insideTx1--;
+-
+-        ty= (ty1+1)*tileHeight+tileGridYOff-1;
+-        if ((ty >= (wrR.y+wrR.height)) &&
+-            ((bounds.y+bounds.height) != (wrR.y+wrR.height)))
+-            // Partial tile off bottom
+-            insideTy1--;
+-
+-        int xtiles = insideTx1-insideTx0+1;
+-        int ytiles = insideTy1-insideTy0+1;
+-        boolean [] occupied = null;
+-        if ((xtiles > 0) && (ytiles > 0))
+-            occupied = new boolean[xtiles*ytiles];
+-
+-        boolean [] got = new boolean[2*(tx1-tx0+1) + 2*(ty1-ty0+1)];
+-        int idx = 0;
+-        int numFound = 0;
++        final int txEnd = (tx1 + 1) * tileWidth + tileGridXOff - 1;
++        final int insideTx1 = ((txEnd >= (wrR.x + wrR.width)) && ((bounds.x + bounds.width) != (wrR.x + wrR.width)))
++                ? tx1 - 1
++                : tx1;
++
++        final int tyEnd = (ty1 + 1) * tileHeight + tileGridYOff - 1;
++        final int insideTy1 = ((tyEnd >= (wrR.y + wrR.height)) && ((bounds.y + bounds.height) != (wrR.y + wrR.height)))
++                ? ty1 - 1
++                : ty1;
++
++        int xtiles = insideTx1 - insideTx0 + 1;
++        int ytiles = insideTy1 - insideTy0 + 1;
++        final boolean[] occupied = ((xtiles > 0) && (ytiles > 0)) ? new boolean[xtiles * ytiles] : null;
++
++        boolean[] got = new boolean[2 * (tx1 - tx0 + 1) + 2 * (ty1 - ty0 + 1)];
++        final class StreamState {
++            int idx = 0;
++            int numFound = 0;
++        }
++
++        final StreamState ss = new StreamState();
+         // Collect all the tiles that we currently have in cache...
+-        for (int y=ty0; y<=ty1; y++) {
+-            for (int x=tx0; x<=tx1; x++) {
++        IntStream.rangeClosed(ty0, ty1).forEach(y -> {
++            IntStream.rangeClosed(tx0, tx1).forEach(x -> {
+                 Raster ras = tiles.getTileNoCompute(x, y);
+                 boolean found = (ras != null);
+-                if ((y>=insideTy0) && (y<=insideTy1) &&
+-                    (x>=insideTx0) && (x<=insideTx1))
+-                    occupied[(x-insideTx0)+(y-insideTy0)*xtiles] = found;
++                if ((y >= insideTy0) && (y <= insideTy1) &&
++                        (x >= insideTx0) && (x <= insideTx1))
++                    occupied[(x - insideTx0) + (y - insideTy0) * xtiles] = found;
+                 else
+-                    got[idx++] = found;
++                    got[ss.idx++] = found;
+ 
+-                if (!found) continue;
++                if (!found) return;
+ 
+-                numFound++;
++                ss.numFound++;
+ 
+                 if (is_INT_PACK)
+                     GraphicsUtil.copyData_INT_PACK(ras, wr);
+                 else
+                     GraphicsUtil.copyData_FALLBACK(ras, wr);
+-            }
+-        }
++            });
++        });
+ 
+         // System.out.println("Found: " + numFound + " out of " +
+         //                    ((tx1-tx0+1)*(ty1-ty0+1)));
+@@ -424,8 +409,8 @@
+         // Compute the stuff from the middle in the largest possible Chunks.
+         if ((xtiles > 0) && (ytiles > 0)) {
+             TileBlock block = new TileBlock
+-                (insideTx0, insideTy0, xtiles, ytiles, occupied,
+-                 0, 0, xtiles, ytiles);
++                    (insideTx0, insideTy0, xtiles, ytiles, occupied,
++                            0, 0, xtiles, ytiles);
+             // System.out.println("Starting Splits");
+             drawBlock(block, wr);
+             // Exception e= new Exception("Foo");
+@@ -437,18 +422,19 @@
+         if (HaltingThread.hasBeenHalted())
+             return;
+ 
+-        idx = 0;
++        ss.idx = 0;
+         // Fill in the ones that weren't in the cache.
+-        for (ty=ty0; ty<=ty1; ty++) {
++        IntStream.rangeClosed(ty0, ty1).anyMatch(ty -> {
+ 
+-            for (tx=tx0; tx<=tx1; tx++) {
++            @SuppressWarnings("UnnecessaryLocalVariable")
++            final boolean hasBeenHalted = IntStream.rangeClosed(tx0, tx1).anyMatch(tx -> {
+                 // At least touch the tile...
+                 Raster ras = tiles.getTileNoCompute(tx, ty);
+ 
+-                if ((ty>=insideTy0) && (ty<=insideTy1) &&
+-                    (tx>=insideTx0) && (tx<=insideTx1)) {
++                if ((ty >= insideTy0) && (ty <= insideTy1) &&
++                        (tx >= insideTx0) && (tx <= insideTx1)) {
+ 
+-                    if (ras != null) continue;
++                    if (ras != null) return false;
+ 
+                     // Fill the tile from wr (since wr is full now
+                     // at least in the middle).
+@@ -459,24 +445,26 @@
+                         GraphicsUtil.copyData_FALLBACK(wr, tile);
+ 
+                     tiles.setTile(tx, ty, tile);
+-                }
+-                else {
+-                    if (got[idx++]) continue;
++                } else {
++                    if (got[ss.idx++]) return false;
+ 
+                     // System.out.println("Computing : " + x + "," + y);
+ 
+                     ras = getTile(tx, ty);// Compute the tile..
+                     // Check If we should halt early.
+-                    if (HaltingThread.hasBeenHalted( currentThread ))
+-                        return;
++                    if (HaltingThread.hasBeenHalted(currentThread))
++                        return true;
+ 
+                     if (is_INT_PACK)
+                         GraphicsUtil.copyData_INT_PACK(ras, wr);
+                     else
+                         GraphicsUtil.copyData_FALLBACK(ras, wr);
+                 }
+-            }
+-        }
++                return false;
++            });
++
++            return hasBeenHalted;
++        });
+ 
+         // System.out.println("Ending Computation: " + this);
+     }
+@@ -608,7 +596,7 @@
+         int workTileWidth = tileWidth;    // local is cheaper
+         int workTileHeight = tileHeight;  // local is cheaper
+ 
+-        for (TileBlock curr : blocks) {
++        Arrays.stream(blocks).anyMatch(curr -> {
+             // System.out.println("Block " + i + ":\n" + curr);
+ 
+             int xloc = curr.getXLoc() * workTileWidth + tileGridXOff;
+@@ -625,10 +613,8 @@
+             genRect(child);
+ 
+             // Check If we should halt early.
+-            if (HaltingThread.hasBeenHalted(currentThread)) {
+-                return;
+-            }
+-        }
++            return HaltingThread.hasBeenHalted(currentThread);
++        });
+     }
+ }
+ 
+diff '--color=auto' -ur batik-1.16/batik-awt-util/src/main/java/org/apache/batik/ext/awt/image/rendered/TurbulencePatternRed.java ../build/batik-1.16/batik-awt-util/src/main/java/org/apache/batik/ext/awt/image/rendered/TurbulencePatternRed.java
+--- batik-1.16/batik-awt-util/src/main/java/org/apache/batik/ext/awt/image/rendered/TurbulencePatternRed.java	2022-10-14 11:26:16.000000000 +0100
++++ ../build/batik-1.16/batik-awt-util/src/main/java/org/apache/batik/ext/awt/image/rendered/TurbulencePatternRed.java	2026-07-05 13:13:56.947540032 +0100
+@@ -29,6 +29,8 @@
+ import java.awt.image.DirectColorModel;
+ import java.awt.image.SinglePixelPackedSampleModel;
+ import java.awt.image.WritableRaster;
++import java.util.stream.IntStream;
++
+ /**
+  * This class creates a RenderedImage in conformance to the one
+  * defined for the feTurbulence filter of the SVG specification.  What
+@@ -239,7 +241,7 @@
+ 
+     public boolean[] getChannels(){
+         boolean[] channels = new boolean[4];
+-        for (int channel : this.channels) channels[channel] = true;
++        IntStream.of(this.channels).forEach(channel -> channels[channel] = true);
+ 
+         return channels;
+     }
+diff '--color=auto' -ur batik-1.16/batik-bridge/src/main/java/org/apache/batik/bridge/SVGFontUtilities.java ../build/batik-1.16/batik-bridge/src/main/java/org/apache/batik/bridge/SVGFontUtilities.java
+--- batik-1.16/batik-bridge/src/main/java/org/apache/batik/bridge/SVGFontUtilities.java	2022-10-14 11:26:18.000000000 +0100
++++ ../build/batik-1.16/batik-bridge/src/main/java/org/apache/batik/bridge/SVGFontUtilities.java	2026-07-05 13:13:56.948160787 +0100
+@@ -19,11 +19,14 @@
+ package org.apache.batik.bridge;
+ 
+ import java.util.ArrayList;
+-import java.util.Iterator;
+ import java.util.LinkedList;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Objects;
+ import java.util.StringTokenizer;
++import java.util.stream.Collectors;
++import java.util.stream.IntStream;
++import java.util.stream.Stream;
+ 
+ import org.apache.batik.gvt.font.GVTFontFamily;
+ import org.apache.batik.gvt.font.GVTFontFace;
+@@ -55,8 +58,6 @@
+         if (ret != null)
+             return ret;
+ 
+-        ret = new LinkedList();
+-
+         NodeList fontFaceElements = doc.getElementsByTagNameNS
+             (SVG_NAMESPACE_URI, SVG_FONT_FACE_TAG);
+ 
+@@ -64,19 +65,19 @@
+         fontFaceBridge = (SVGFontFaceElementBridge)ctx.getBridge
+             (SVG_NAMESPACE_URI, SVG_FONT_FACE_TAG);
+ 
+-        for (int i = 0; i < fontFaceElements.getLength(); i++) {
+-            Element fontFaceElement = (Element)fontFaceElements.item(i);
+-            ret.add(fontFaceBridge.createFontFace
+-                    (ctx, fontFaceElement));
+-        }
++        Stream<FontFace> svgFontFaces = IntStream.range(0, fontFaceElements.getLength())
++                .mapToObj(i -> (Element)fontFaceElements.item(i))
++                .map(fontFaceElement -> fontFaceBridge.createFontFace(ctx, fontFaceElement));
+ 
+         CSSEngine engine = ((SVGOMDocument)doc).getCSSEngine();
+         List sms = engine.getFontFaces();
+-        for (Object sm : sms) {
+-            FontFaceRule ffr = (FontFaceRule) sm;
+-            ret.add(CSSFontFace.createCSSFontFace(engine, ffr));
+-        }
+-        return ret;
++        Stream<FontFace> cssFontFaces = sms.stream()
++                .map(sm -> {
++                    FontFaceRule ffr = (FontFaceRule) sm;
++                    return CSSFontFace.createCSSFontFace(engine, ffr);
++                });
++
++        return Stream.concat(svgFontFaces, cssFontFaces).collect(Collectors.toCollection(LinkedList::new));
+     }
+ 
+ 
+@@ -129,23 +130,15 @@
+         }
+ 
+ 
+-        Iterator iter = fontFaces.iterator();
+-        List svgFontFamilies = new LinkedList();
+-        while (iter.hasNext()) {
+-            FontFace fontFace = (FontFace)iter.next();
+-
+-            if (!fontFace.hasFamilyName(fontFamilyName)) {
+-                continue;
+-            }
+-
+-            String fontFaceStyle = fontFace.getFontStyle();
+-            if (fontFaceStyle.equals(SVG_ALL_VALUE) ||
+-                fontFaceStyle.indexOf(fontStyle) != -1) {
+-                GVTFontFamily ffam = fontFace.getFontFamily(ctx);
+-                if (ffam != null)
+-                    svgFontFamilies.add(ffam);
+-            }
+-        }
++        List svgFontFamilies = ((Stream<FontFace>) fontFaces.stream())
++                .filter(fontFace -> fontFace.hasFamilyName(fontFamilyName))
++                .filter(fontFace -> {
++                    String fontFaceStyle = fontFace.getFontStyle();
++                    return fontFaceStyle.equals(SVG_ALL_VALUE) || fontFaceStyle.indexOf(fontStyle) != -1;
++                })
++                .map(fontFace -> fontFace.getFontFamily(ctx))
++                .filter(Objects::nonNull)
++                .collect(Collectors.toCollection(LinkedList::new));
+ 
+         if (svgFontFamilies.size() == 1) {
+             // only found one matching svg font family
+@@ -157,20 +150,20 @@
+             String fontWeightNumber = getFontWeightNumberString(fontWeight);
+ 
+             // create lists of font weight numbers for each font family
+-            List fontFamilyWeights = new ArrayList(svgFontFamilies.size());
+-            for (Object svgFontFamily : svgFontFamilies) {
+-                GVTFontFace fontFace;
+-                fontFace = ((GVTFontFamily) svgFontFamily).getFontFace();
+-                String fontFaceWeight = fontFace.getFontWeight();
+-                fontFaceWeight = getFontWeightNumberString(fontFaceWeight);
+-                fontFamilyWeights.add(fontFaceWeight);
+-            }
++            List<String> fontFamilyWeights = (List<String>) svgFontFamilies.stream()
++                    .map(svgFontFamily -> {
++                        GVTFontFace fontFace;
++                        fontFace = ((GVTFontFamily) svgFontFamily).getFontFace();
++                        String fontFaceWeight = fontFace.getFontWeight();
++                        return getFontWeightNumberString(fontFaceWeight);
++                    })
++                    .collect(Collectors.toCollection(() -> new ArrayList<>(svgFontFamilies.size())));
+ 
+             // make sure that each possible font-weight has been
+             // assigned to a font-face, if not then need to "fill the
+             // holes"
+ 
+-            List newFontFamilyWeights = new ArrayList(fontFamilyWeights);
++            List<String> newFontFamilyWeights = new ArrayList<>(fontFamilyWeights);
+             for (int i = 100; i <= 900; i+= 100) {
+                 String weightString = String.valueOf(i);
+                 boolean matched = false;
+@@ -204,16 +197,18 @@
+ 
+ 
+             // now find matching font weight
+-            for (int i = 0; i < svgFontFamilies.size(); i++) {
+-                String fontFaceWeight = (String)newFontFamilyWeights.get(i);
+-                if (fontFaceWeight.indexOf(fontWeightNumber) > -1) {
+-                    fontFamilyMap.put(fontKeyName, svgFontFamilies.get(i));
+-                    return (GVTFontFamily)svgFontFamilies.get(i);
+-                }
+-            }
+-            // should not get here, just return the first svg font family
+-            fontFamilyMap.put(fontKeyName, svgFontFamilies.get(0));
+-            return (GVTFontFamily) svgFontFamilies.get(0);
++            GVTFontFamily gvtFontFamily = IntStream.range(0, svgFontFamilies.size())
++                    .filter(i -> {
++                        String fontFaceWeight = newFontFamilyWeights.get(i);
++                        return fontFaceWeight.indexOf(fontWeightNumber) > -1;
++                    })
++                    .mapToObj(i -> (GVTFontFamily) svgFontFamilies.get(i))
++                    .findFirst()
++                    // should not get here, just return the first svg font family
++                    .orElseGet(() -> (GVTFontFamily) svgFontFamilies.get(0));
++
++            fontFamilyMap.put(fontKeyName, gvtFontFamily);
++            return gvtFontFamily;
+ 
+         } else {
+             // couldn't find one so return an UnresolvedFontFamily object
+diff '--color=auto' -ur batik-1.16/batik-bridge/src/main/java/org/apache/batik/bridge/SVGUseElementBridge.java ../build/batik-1.16/batik-bridge/src/main/java/org/apache/batik/bridge/SVGUseElementBridge.java
+--- batik-1.16/batik-bridge/src/main/java/org/apache/batik/bridge/SVGUseElementBridge.java	2022-10-14 11:26:18.000000000 +0100
++++ ../build/batik-1.16/batik-bridge/src/main/java/org/apache/batik/bridge/SVGUseElementBridge.java	2026-07-05 13:13:56.948747421 +0100
+@@ -22,6 +22,8 @@
+ import java.awt.RenderingHints;
+ import java.awt.geom.AffineTransform;
+ import java.awt.geom.Rectangle2D;
++import java.util.Objects;
++import java.util.stream.IntStream;
+ 
+ import org.apache.batik.anim.dom.AbstractSVGAnimatedLength;
+ import org.apache.batik.anim.dom.AnimatedLiveAttributeValue;
+@@ -35,6 +37,7 @@
+ import org.apache.batik.gvt.GraphicsNode;
+ import org.apache.batik.constants.XMLConstants;
+ 
++import org.apache.batik.util.StreamExtensions;
+ import org.w3c.dom.Attr;
+ import org.w3c.dom.Element;
+ import org.w3c.dom.NamedNodeMap;
+@@ -149,18 +152,14 @@
+             // move the attributes from <symbol> to the <svg> element
+             NamedNodeMap attrs = localRefElement.getAttributes();
+             int len = attrs.getLength();
+-            for (int i = 0; i < len; i++) {
+-                Attr attr = (Attr)attrs.item(i);
+-                svgElement.setAttributeNS(attr.getNamespaceURI(),
+-                                          attr.getName(),
+-                                          attr.getValue());
+-            }
++            final Element symbolElement = localRefElement;
++            IntStream.range(0, len)
++                    .mapToObj(attrs::item)
++                    .map(Attr.class::cast)
++                    .forEach(attr -> svgElement.setAttributeNS(attr.getNamespaceURI(), attr.getName(), attr.getValue()));
+             // move the children from <symbol> to the <svg> element
+-            for (Node n = localRefElement.getFirstChild();
+-                 n != null;
+-                 n = localRefElement.getFirstChild()) {
+-                svgElement.appendChild(n);
+-            }
++            StreamExtensions.iterate(symbolElement.getFirstChild(), Objects::nonNull, n -> symbolElement.getFirstChild())
++                    .forEach(svgElement::appendChild);
+             localRefElement = svgElement;
+         }
+ 
+@@ -197,8 +196,8 @@
+             associateSVGContext(ctx, e, node);
+         } else {
+             int s = gn.size();
+-            for (int i=0; i<s; i++)
+-                gn.remove(0);
++            final CompositeGraphicsNode effectiveGN = gn;
++            IntStream.range(0, s).forEach(i -> effectiveGN.remove(0));
+         }
+ 
+         Node oldRoot = ue.getCSSFirstChild();
+diff '--color=auto' -ur batik-1.16/batik-codec/src/main/java/org/apache/batik/ext/awt/image/codec/png/PNGEncodeParam.java ../build/batik-1.16/batik-codec/src/main/java/org/apache/batik/ext/awt/image/codec/png/PNGEncodeParam.java
+--- batik-1.16/batik-codec/src/main/java/org/apache/batik/ext/awt/image/codec/png/PNGEncodeParam.java	2022-10-14 11:26:18.000000000 +0100
++++ ../build/batik-1.16/batik-codec/src/main/java/org/apache/batik/ext/awt/image/codec/png/PNGEncodeParam.java	2026-07-05 13:13:56.949283262 +0100
+@@ -28,6 +28,7 @@
+ import java.util.Date;
+ import java.util.List;
+ import java.util.ArrayList;
++import java.util.stream.IntStream;
+ 
+ /**
+  * An instance of <code>ImageEncodeParam</code> for encoding images in
+@@ -1379,32 +1380,38 @@
+                          int bytesPerRow,
+                          int bytesPerPixel) {
+ 
+-        int [] badness = {0, 0, 0, 0, 0};
+-        int curr, left, up, upleft, diff;
+-        int pa, pb, pc;
+-        for (int i = bytesPerPixel; i < bytesPerRow + bytesPerPixel; i++) {
+-            curr   = currRow[i] & 0xff;
+-            left   = currRow[i - bytesPerPixel] & 0xff;
+-            up     = prevRow[i] & 0xff;
+-            upleft = prevRow[i - bytesPerPixel] & 0xff;
++        final class StreamState {
++            final int [] badness = {0, 0, 0, 0, 0};
++            int curr, left, up, upleft, diff;
++            int pa, pb, pc;
++            int filterType;
++            int minBadness;
++        }
++
++        final StreamState s = new StreamState();
++        IntStream.range(bytesPerPixel, bytesPerRow + bytesPerPixel).forEach(i -> {
++            s.curr   = currRow[i] & 0xff;
++            s.left   = currRow[i - bytesPerPixel] & 0xff;
++            s.up     = prevRow[i] & 0xff;
++            s.upleft = prevRow[i - bytesPerPixel] & 0xff;
+ 
+             // no filter
+-            badness[0] += curr;
++            s.badness[0] += s.curr;
+ 
+             // sub filter
+-            diff = curr - left;
+-            scratchRows[1][i]  = (byte)diff;
+-            badness    [1]    +=   (diff>0)?diff:-diff;
++            s.diff = s.curr - s.left;
++            scratchRows[1][i]  = (byte)s.diff;
++            s.badness    [1]    +=   (s.diff>0)?s.diff:-s.diff;
+ 
+             // up filter
+-            diff = curr - up;
+-            scratchRows[2][i]  = (byte)diff;
+-            badness    [2]    +=   (diff>=0)?diff:-diff;
++            s.diff = s.curr - s.up;
++            scratchRows[2][i]  = (byte)s.diff;
++            s.badness    [2]    +=   (s.diff>=0)?s.diff:-s.diff;
+ 
+             // average filter
+-            diff = curr - ((left+up)>>1);
+-            scratchRows[3][i]  = (byte)diff;
+-            badness    [3]    +=   (diff>=0)?diff:-diff;
++            s.diff = s.curr - ((s.left+s.up)>>1);
++            scratchRows[3][i]  = (byte)s.diff;
++            s.badness    [3]    +=   (s.diff>=0)?s.diff:-s.diff;
+ 
+             // paeth filter
+ 
+@@ -1424,82 +1431,82 @@
+             /// else
+             ///   diff = curr-upleft;
+ 
+-            pa = up  -upleft;
+-            pb = left-upleft;
+-            if (pa<0) {
+-              if (pb<0) {
+-                // both pa & pb neg so pc is always greater than or
+-                // equal to pa or pb;
+-                if (pa >= pb) // since pa & pb neg check sense is reversed.
+-                  diff = curr-left;
+-                else
+-                  diff = curr-up;
+-              } else {
+-                // pa neg pb pos so we must compute pc...
+-                pc = pa+pb;
+-                pa=-pa;
+-                if (pa <= pb)     // pc is positive and less than pb
+-                  if (pa <= pc)
+-                    diff = curr-left;
+-                  else
+-                    diff = curr-upleft;
+-                else
+-                  // pc is negative and less than or equal to pa,
+-                  // but since pa is greater than pb this isn't an issue...
+-                  if (pb <= -pc)
+-                    diff = curr-up;
+-                  else
+-                    diff = curr-upleft;
+-              }
++            s.pa = s.up  -s.upleft;
++            s.pb = s.left-s.upleft;
++            if (s.pa<0) {
++                if (s.pb<0) {
++                    // both pa & pb neg so pc is always greater than or
++                    // equal to pa or pb;
++                    if (s.pa >= s.pb) // since pa & pb neg check sense is reversed.
++                        s.diff = s.curr-s.left;
++                    else
++                        s.diff = s.curr-s.up;
++                } else {
++                    // pa neg pb pos so we must compute pc...
++                    s.pc = s.pa+s.pb;
++                    s.pa=-s.pa;
++                    if (s.pa <= s.pb)     // pc is positive and less than pb
++                        if (s.pa <= s.pc)
++                            s.diff = s.curr-s.left;
++                        else
++                            s.diff = s.curr-s.upleft;
++                    else
++                        // pc is negative and less than or equal to pa,
++                        // but since pa is greater than pb this isn't an issue...
++                        if (s.pb <= -s.pc)
++                            s.diff = s.curr-s.up;
++                        else
++                            s.diff = s.curr-s.upleft;
++                }
+             } else {
+-              if (pb<0) {
+-                pb =-pb; // make it positive...
+-                if (pa <= pb) {
+-                  // pc would be negative and less than or equal to pb
+-                  pc = pb-pa;
+-                  if (pa <= pc)
+-                    diff = curr-left;
+-                  else if (pb == pc)
+-                    // if pa is zero then pc==pb otherwise
+-                    // pc must be less than pb.
+-                    diff = curr-up;
+-                  else
+-                    diff = curr-upleft;
++                if (s.pb<0) {
++                    s.pb =-s.pb; // make it positive...
++                    if (s.pa <= s.pb) {
++                        // pc would be negative and less than or equal to pb
++                        s.pc = s.pb-s.pa;
++                        if (s.pa <= s.pc)
++                            s.diff = s.curr-s.left;
++                        else if (s.pb == s.pc)
++                            // if pa is zero then pc==pb otherwise
++                            // pc must be less than pb.
++                            s.diff = s.curr-s.up;
++                        else
++                            s.diff = s.curr-s.upleft;
++                    } else {
++                        // pc would be positive and less than pa.
++                        s.pc = s.pa-s.pb;
++                        if (s.pb <= s.pc)
++                            s.diff = s.curr-s.up;
++                        else
++                            s.diff = s.curr-s.upleft;
++                    }
+                 } else {
+-                  // pc would be positive and less than pa.
+-                  pc = pa-pb;
+-                  if (pb <= pc)
+-                    diff = curr-up;
+-                  else
+-                    diff = curr-upleft;
++                    // both pos so pa+pb is always greater than pa/pb
++                    if (s.pa <= s.pb)
++                        s.diff = s.curr-s.left;
++                    else
++                        s.diff = s.curr-s.up;
+                 }
+-              } else {
+-                // both pos so pa+pb is always greater than pa/pb
+-                if (pa <= pb)
+-                  diff = curr-left;
+-                else
+-                  diff = curr-up;
+-              }
+             }
+-            scratchRows[4][i]  = (byte)diff;
+-            badness    [4]    +=   (diff>=0)?diff:-diff;
+-        }
+-        int filterType = 0;
+-        int minBadness = badness[0];
+-
+-        for (int i = 1; i < 5; i++) {
+-            if (badness[i] < minBadness) {
+-                minBadness = badness[i];
+-                filterType = i;
++            scratchRows[4][i]  = (byte)s.diff;
++            s.badness    [4]    +=   (s.diff>=0)?s.diff:-s.diff;
++        });
++        s.filterType = 0;
++        s.minBadness = s.badness[0];
++
++        IntStream.range(1, 5).forEach(i -> {
++            if (s.badness[i] < s.minBadness) {
++                s.minBadness = s.badness[i];
++                s.filterType = i;
+             }
+-        }
++        });
+ 
+-        if (filterType == 0) {
++        if (s.filterType == 0) {
+             System.arraycopy(currRow, bytesPerPixel,
+                              scratchRows[0], bytesPerPixel,
+                              bytesPerRow);
+         }
+ 
+-        return filterType;
++        return s.filterType;
+     }
+ }
+diff '--color=auto' -ur batik-1.16/batik-codec/src/main/java/org/apache/batik/ext/awt/image/codec/png/PNGImageEncoder.java ../build/batik-1.16/batik-codec/src/main/java/org/apache/batik/ext/awt/image/codec/png/PNGImageEncoder.java
+--- batik-1.16/batik-codec/src/main/java/org/apache/batik/ext/awt/image/codec/png/PNGImageEncoder.java	2022-10-14 11:26:18.000000000 +0100
++++ ../build/batik-1.16/batik-codec/src/main/java/org/apache/batik/ext/awt/image/codec/png/PNGImageEncoder.java	2026-07-05 13:13:56.950092000 +0100
+@@ -19,6 +19,7 @@
+ package org.apache.batik.ext.awt.image.codec.png;
+ 
+ import org.apache.batik.ext.awt.image.codec.util.ImageEncoderImpl;
++import org.apache.batik.util.IntStreamExtensions;
+ 
+ import java.awt.Rectangle;
+ import java.awt.image.ColorModel;
+@@ -32,10 +33,12 @@
+ import java.io.FilterOutputStream;
+ import java.io.IOException;
+ import java.io.OutputStream;
++import java.io.UncheckedIOException;
+ import java.util.Calendar;
+ import java.util.Date;
+ import java.util.GregorianCalendar;
+ import java.util.TimeZone;
++import java.util.stream.IntStream;
+ import java.util.zip.Deflater;
+ import java.util.zip.DeflaterOutputStream;
+ 
+@@ -341,25 +344,27 @@
+                             int xOffset,     int yOffset,
+                             int xSkip,       int ySkip)
+         throws IOException {
+-        int minX   = ras.getMinX();
+-        int minY   = ras.getMinY();
+-        int width  = ras.getWidth();
++        int minX = ras.getMinX();
++        int minY = ras.getMinY();
++        int width = ras.getWidth();
+         int height = ras.getHeight();
+ 
+-        xOffset *= numBands;
+-        xSkip   *= numBands;
++        final int effectiveXOffset = xOffset * numBands;
++        final int effectiveXSkip = xSkip * numBands;
+ 
+-        int samplesPerByte = 8/bitDepth;
++        int samplesPerByte = 8 / bitDepth;
+ 
+-        int numSamples = width*numBands;
++        int numSamples = width * numBands;
+         int[] samples = new int[numSamples];
+ 
+-        int pixels = (numSamples - xOffset + xSkip - 1)/xSkip;
+-        int bytesPerRow = pixels*numBands;
++        int pixels = (numSamples - effectiveXOffset + effectiveXSkip - 1) / effectiveXSkip;
++        final int bytesPerRow;
+         if (bitDepth < 8) {
+-            bytesPerRow = (bytesPerRow + samplesPerByte - 1)/samplesPerByte;
++            bytesPerRow = (pixels * numBands + samplesPerByte - 1) / samplesPerByte;
+         } else if (bitDepth == 16) {
+-            bytesPerRow *= 2;
++            bytesPerRow = 2 * pixels * numBands;
++        } else {
++            bytesPerRow = pixels * numBands;
+         }
+ 
+         if (bytesPerRow == 0) {
+@@ -373,75 +378,92 @@
+ 
+         int maxValue = (1 << bitDepth) - 1;
+ 
+-        for (int row = minY + yOffset; row < minY + height; row += ySkip) {
+-            ras.getPixels(minX, row, width, 1, samples);
+-
+-            if (compressGray) {
+-                int shift = 8 - bitDepth;
+-                for (int i = 0; i < width; i++) {
+-                    samples[i] >>= shift;
+-                }
+-            }
+-
+-            int count = bpp; // leave first 'bpp' bytes zero
+-            int pos = 0;
+-            int tmp = 0;
+-
+-            switch (bitDepth) {
+-            case 1: case 2: case 4:
+-                // Image can only have a single band
+-
+-                int mask = samplesPerByte - 1;
+-                for (int s = xOffset; s < numSamples; s += xSkip) {
+-                    int val = clamp(samples[s] >> bitShift, maxValue);
+-                    tmp = (tmp << bitDepth) | val;
+-
+-                    if (pos++  == mask) {
+-                        currRow[count++] = (byte)tmp;
+-                        tmp = 0;
+-                        pos = 0;
+-                    }
+-                }
++        final class StreamState {
++            private int count = bpp;
++            private int pos = 0;
++            private int tmp = 0;
++        }
+ 
+-                // Left shift the last byte
+-                if (pos != 0) {
+-                    tmp <<= (samplesPerByte - pos)*bitDepth;
+-                    currRow[count++] = (byte)tmp;
++        final StreamState ss = new StreamState();
++        try {
++            IntStreamExtensions.iterate(minY + yOffset, row -> row < minY + height, row -> row + ySkip).forEach(row -> {
++                ras.getPixels(minX, row, width, 1, samples);
++
++                if (compressGray) {
++                    int shift = 8 - bitDepth;
++                    IntStream.range(0, width).forEach(i -> samples[i] >>= shift);
+                 }
+-                break;
+ 
+-            case 8:
+-                for (int s = xOffset; s < numSamples; s += xSkip) {
+-                    for (int b = 0; b < numBands; b++) {
+-                        currRow[count++] =
+-                            (byte)clamp(samples[s + b] >> bitShift, maxValue);
+-                    }
++                ss.count = bpp; // leave first 'bpp' bytes zero
++                ss.pos = 0;
++                ss.tmp = 0;
++
++                switch (bitDepth) {
++                    case 1:
++                    case 2:
++                    case 4:
++                        // Image can only have a single band
++
++                        int mask = samplesPerByte - 1;
++                        IntStreamExtensions.iterate(effectiveXOffset, s -> s < numSamples, s -> s + effectiveXSkip)
++                                .forEach(s -> {
++                                    int val = clamp(samples[s] >> bitShift, maxValue);
++                                    ss.tmp = (ss.tmp << bitDepth) | val;
++
++                                    if (ss.pos++ == mask) {
++                                        currRow[ss.count++] = (byte) ss.tmp;
++                                        ss.tmp = 0;
++                                        ss.pos = 0;
++                                    }
++                                });
++
++                        // Left shift the last byte
++                        if (ss.pos != 0) {
++                            ss.tmp <<= (samplesPerByte - ss.pos) * bitDepth;
++                            currRow[ss.count++] = (byte) ss.tmp;
++                        }
++                        break;
++
++                    case 8:
++                        IntStreamExtensions.iterate(effectiveXOffset, s -> s < numSamples, s -> s + effectiveXSkip)
++                                .forEach(s -> {
++                                    IntStream.range(0, numBands).forEach(b -> {
++                                        currRow[ss.count++] = (byte) clamp(samples[s + b] >> bitShift, maxValue);
++                                    });
++                                });
++                        break;
++
++                    case 16:
++                        IntStreamExtensions.iterate(effectiveXOffset, s -> s < numSamples, s -> s + effectiveXSkip)
++                                .forEach(s -> {
++                                    IntStream.range(0, numBands).forEach(b -> {
++                                        int val = clamp(samples[s + b] >> bitShift, maxValue);
++                                        currRow[ss.count++] = (byte) (val >> 8);
++                                        currRow[ss.count++] = (byte) (val & 0xff);
++                                    });
++                                });
++                        break;
+                 }
+-                break;
+ 
+-            case 16:
+-                for (int s = xOffset; s < numSamples; s += xSkip) {
+-                    for (int b = 0; b < numBands; b++) {
+-                        int val = clamp(samples[s + b] >> bitShift, maxValue);
+-                        currRow[count++] = (byte)(val >> 8);
+-                        currRow[count++] = (byte)(val & 0xff);
+-                    }
++                // Perform filtering
++                int filterType = param.filterRow(currRow, prevRow,
++                        filteredRows,
++                        bytesPerRow, bpp);
++
++                try {
++                    os.write(filterType);
++                    os.write(filteredRows[filterType], bpp, bytesPerRow);
++                } catch (IOException e) {
++                    throw new UncheckedIOException(e);
+                 }
+-                break;
+-            }
+ 
+-            // Perform filtering
+-            int filterType = param.filterRow(currRow, prevRow,
+-                                             filteredRows,
+-                                             bytesPerRow, bpp);
+-
+-            os.write(filterType);
+-            os.write(filteredRows[filterType], bpp, bytesPerRow);
+-
+-            // Swap current and previous rows
+-            byte[] swap = currRow;
+-            currRow = prevRow;
+-            prevRow = swap;
++                // Swap current and previous rows
++                byte[] swap = currRow;
++                currRow = prevRow;
++                prevRow = swap;
++            });
++        } catch (UncheckedIOException e) {
++            throw e.getCause();
+         }
+     }
+ 
+diff '--color=auto' -ur batik-1.16/batik-css/src/main/java/org/apache/batik/css/engine/CSSEngine.java ../build/batik-1.16/batik-css/src/main/java/org/apache/batik/css/engine/CSSEngine.java
+--- batik-1.16/batik-css/src/main/java/org/apache/batik/css/engine/CSSEngine.java	2022-10-14 11:26:18.000000000 +0100
++++ ../build/batik-1.16/batik-css/src/main/java/org/apache/batik/css/engine/CSSEngine.java	2026-07-05 13:13:56.951013933 +0100
+@@ -21,11 +21,14 @@
+ import java.io.IOException;
+ import java.io.StringReader;
+ import java.util.ArrayList;
++import java.util.Arrays;
+ import java.util.Collections;
+ import java.util.HashSet;
+ import java.util.LinkedList;
+ import java.util.List;
+ import java.util.Set;
++import java.util.stream.IntStream;
++import java.util.stream.Stream;
+ 
+ import org.apache.batik.css.engine.sac.CSSConditionFactory;
+ import org.apache.batik.css.engine.sac.CSSSelectorFactory;
+@@ -786,17 +789,18 @@
+             int slen = snodes.size();
+             if (slen > 0) {
+                 ArrayList rules = new ArrayList();
+-                for (Object snode : snodes) {
+-                    CSSStyleSheetNode ssn = (CSSStyleSheetNode) snode;
+-                    StyleSheet ss = ssn.getCSSStyleSheet();
+-                    if (ss != null &&
+-                            (!ss.isAlternate() ||
+-                                    ss.getTitle() == null ||
+-                                    ss.getTitle().equals(alternateStyleSheet)) &&
+-                            mediaMatch(ss.getMedia())) {
+-                        addMatchingRules(rules, ss, elt, pseudo);
+-                    }
+-                }
++                ((List<CSSStyleSheetNode>) snodes)
++                        .stream()
++                        .map(CSSStyleSheetNode::getCSSStyleSheet)
++                        .filter(ss ->
++                                ss != null &&
++                                        (!ss.isAlternate() ||
++                                                ss.getTitle() == null ||
++                                                ss.getTitle().equals(alternateStyleSheet)) &&
++                                        mediaMatch(ss.getMedia())
++                        )
++                        .forEach(ss -> addMatchingRules(rules, ss, elt, pseudo));
++
+                 addRules(elt, pseudo, result, rules, StyleMap.AUTHOR_ORIGIN);
+             }
+ 
+@@ -1826,9 +1830,7 @@
+         int len = ll.length;
+         if (len > 0) {
+             CSSEngineEvent evt = new CSSEngineEvent(this, target, props);
+-            for (CSSEngineListener aLl : ll) {
+-                aLl.propertiesChanged(evt);
+-            }
++            Arrays.stream(ll).forEach(aLl -> aLl.propertiesChanged(evt));
+         }
+     }
+ 
+@@ -2235,9 +2237,7 @@
+         }
+ 
+         boolean[] updated = styleDeclarationUpdateHandler.updatedProperties;
+-        for (int i = getNumberOfProperties() - 1; i >= 0; --i) {
+-            updated[i] = false;
+-        }
++        IntStream.range(0, getNumberOfProperties()).forEach(i -> updated[i] = false);
+         updated[idx] = true;
+ 
+         // Invalidate the relative values
+diff '--color=auto' -ur batik-1.16/batik-dom/src/main/java/org/apache/batik/dom/AbstractDocument.java ../build/batik-1.16/batik-dom/src/main/java/org/apache/batik/dom/AbstractDocument.java
+--- batik-1.16/batik-dom/src/main/java/org/apache/batik/dom/AbstractDocument.java	2022-10-14 11:26:18.000000000 +0100
++++ ../build/batik-1.16/batik-dom/src/main/java/org/apache/batik/dom/AbstractDocument.java	2026-07-05 13:13:56.951929504 +0100
+@@ -30,7 +30,9 @@
+ import java.util.Locale;
+ import java.util.Map;
+ import java.util.MissingResourceException;
++import java.util.Objects;
+ import java.util.WeakHashMap;
++import java.util.stream.IntStream;
+ 
+ import org.apache.batik.dom.events.DocumentEventSupport;
+ import org.apache.batik.dom.events.EventSupport;
+@@ -45,6 +47,7 @@
+ import org.apache.batik.util.SoftDoublyIndexedTable;
+ import org.apache.batik.constants.XMLConstants;
+ 
++import org.apache.batik.util.StreamExtensions;
+ import org.w3c.dom.Attr;
+ import org.w3c.dom.Document;
+ import org.w3c.dom.DocumentType;
+@@ -352,14 +355,16 @@
+             if (importedNode.hasAttributes()) {
+                 NamedNodeMap attr = importedNode.getAttributes();
+                 int len = attr.getLength();
+-                for (int i = 0; i < len; i++) {
+-                    Attr a = (Attr)attr.item(i);
+-                    if (!a.getSpecified()) continue;
+-                    AbstractAttr aa = (AbstractAttr)importNode(a, true);
+-                    if (trimId && aa.isId())
+-                        aa.setIsId(false); // don't consider this an Id.
+-                    e.setAttributeNodeNS(aa);
+-                }
++                IntStream.range(0, len)
++                        .mapToObj(i -> (Attr) attr.item(i))
++                        .filter(Attr::getSpecified)
++                        .map(a -> (AbstractAttr) importNode(a, true))
++                        .forEach(aa -> {
++                            if (trimId && aa.isId())
++                                aa.setIsId(false); // don't consider this an Id.
++
++                            e.setAttributeNodeNS(aa);
++                        });
+             }
+             break;
+ 
+@@ -421,11 +426,8 @@
+         }
+ 
+         if (deep) {
+-            for (Node n = importedNode.getFirstChild();
+-                 n != null;
+-                 n = n.getNextSibling()) {
+-                result.appendChild(importNode(n, true));
+-            }
++            StreamExtensions.iterate(importedNode.getFirstChild(), Objects::nonNull, Node::getNextSibling)
++                    .forEach(n -> result.appendChild(importNode(n, true)));
+         }
+         return result;
+     }
+diff '--color=auto' -ur batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/CompositeGraphicsNode.java ../build/batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/CompositeGraphicsNode.java
+--- batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/CompositeGraphicsNode.java	2022-10-14 11:26:20.000000000 +0100
++++ ../build/batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/CompositeGraphicsNode.java	2026-07-05 14:18:02.123462160 +0100
+@@ -25,14 +25,19 @@
+ import java.awt.geom.GeneralPath;
+ import java.awt.geom.Point2D;
+ import java.awt.geom.Rectangle2D;
++import java.util.Arrays;
+ import java.util.Collection;
+ import java.util.ConcurrentModificationException;
+ import java.util.Iterator;
+ import java.util.List;
+ import java.util.ListIterator;
+ import java.util.NoSuchElementException;
++import java.util.Objects;
++import java.util.OptionalInt;
++import java.util.stream.IntStream;
+ 
+ import org.apache.batik.util.HaltingThread;
++import org.apache.batik.util.IntStreamExtensions;
+ 
+ /**
+  * A CompositeGraphicsNode is a graphics node that can contain graphics nodes.
+@@ -154,17 +159,10 @@
+         Thread currentThread = Thread.currentThread();
+ 
+         // Paint children
+-        for (int i=0; i < count; ++i) {
+-            if (HaltingThread.hasBeenHalted( currentThread ))
+-                return;
+-
+-            GraphicsNode node = children[i];
+-            if (node == null) {
+-                continue;
+-            }
+-            node.paint(g2d);
+-
+-        }
++        IntStreamExtensions.takeWhile(IntStream.range(0, count), i -> !HaltingThread.hasBeenHalted(currentThread))
++                .mapToObj(i -> children[i])
++                .filter(Objects::nonNull)
++                .forEach(node -> node.paint(g2d));
+     }
+ 
+     //
+@@ -201,48 +199,53 @@
+         // Thread.currentThread() is potentially expensive, so reuse my instance in hasBeenHalted()
+         Thread currentThread = Thread.currentThread();
+ 
+-        int i=0;
+-        Rectangle2D bounds = null;
+-        while ((bounds == null) && i < count) {
+-            bounds = children[i++].getTransformedBounds(IDENTITY);
+-            if (((i & 0x0F) == 0) && HaltingThread.hasBeenHalted( currentThread ))
+-                break; // check every 16 children if we have been interrupted.
+-        }
+-        if (HaltingThread.hasBeenHalted( currentThread )) {
++        OptionalInt maybeBoundsIndex = IntStreamExtensions.takeWhile(IntStream.range(0, count), i -> {
++                    // check every 16 children if we have been interrupted.
++                    return ((i + 1) & 0x0F) != 0 || !HaltingThread.hasBeenHalted(currentThread);
++                })
++                .filter(i -> children[i].getTransformedBounds(IDENTITY) != null)
++                .findFirst();
++
++        if (HaltingThread.hasBeenHalted(currentThread)) {
+             invalidateGeometryCache();
+             return null;
+         }
+ 
+-        if (bounds == null) {
++        if (!maybeBoundsIndex.isPresent()) {
+             primitiveBounds = NULL_RECT;
+             return null;
+         }
+ 
+-        primitiveBounds = bounds;
++        final int b = maybeBoundsIndex.getAsInt();
++        primitiveBounds = children[b].getTransformedBounds(IDENTITY);
+ 
+-        while (i < count) {
+-            Rectangle2D ctb = children[i++].getTransformedBounds(IDENTITY);
+-            if (ctb != null) {
+-                if (primitiveBounds == null) {
+-                    // another thread has set the primitive bounds to null,
+-                    // need to recall this function
+-                    return null;
+-                } else {
+-                    primitiveBounds.add(ctb);
+-                }
+-            }
++        BoundsScanResult boundsScanResult = IntStream.range(b + 1, count)
++                .mapToObj(i -> {
++                    Rectangle2D ctb = children[i].getTransformedBounds(IDENTITY);
++
++                    if (ctb != null) {
++                        if (primitiveBounds == null) {
++                            // another thread has set the primitive bounds to null,
++                            // need to recall this function
++                            return BoundsScanResult.RETURN_NULL;
++                        } else {
++                            primitiveBounds.add(ctb);
++                        }
++                    }
+ 
+-            if (((i & 0x0F) == 0) && HaltingThread.hasBeenHalted( currentThread ))
+-                break; // check every 16 children if we have been interrupted.
+-        }
++                    if (((i + 1 & 0x0F) == 0) && HaltingThread.hasBeenHalted(currentThread))
++                        return BoundsScanResult.BREAK; // check every 16 children if we have been interrupted.
++                    else
++                        return BoundsScanResult.CONTINUE;
++                }).filter(r -> r != BoundsScanResult.CONTINUE).findFirst().orElse(BoundsScanResult.CONTINUE);
+ 
+         // Check If we should halt early.
+-        if (HaltingThread.hasBeenHalted( currentThread )) {
++        if (HaltingThread.hasBeenHalted(currentThread)) {
+             // The Thread has been halted.
+             // Invalidate any cached values and proceed.
+             invalidateGeometryCache();
+         }
+-        return primitiveBounds;
++        return boundsScanResult == BoundsScanResult.RETURN_NULL ? null : primitiveBounds;
+     }
+ 
+     /**
+@@ -284,10 +287,12 @@
+      *        be concatenated. Should not be null.
+      */
+     public Rectangle2D getTransformedPrimitiveBounds(AffineTransform txf) {
+-        AffineTransform t = txf;
++        final AffineTransform t;
+         if (transform != null) {
+             t = new AffineTransform(txf);
+             t.concatenate(transform);
++        } else {
++            t = txf;
+         }
+ 
+         if ((t == null) || ((t.getShearX() == 0) && (t.getShearY() == 0))) {
+@@ -295,20 +300,15 @@
+             return getTransformedBBox(getPrimitiveBounds(), t);
+         }
+ 
+-        int i = 0;
+-        Rectangle2D tpb = null;
+-        while (tpb == null && i < count) {
+-            tpb = children[i++].getTransformedBounds(t);
+-        }
+-
+-        while (i < count) {
+-            Rectangle2D ctb = children[i++].getTransformedBounds(t);
+-            if(ctb != null){
+-                tpb.add(ctb);
+-            }
+-        }
+-
+-        return tpb;
++        return IntStream.range(0, count)
++                .mapToObj(i -> children[i])
++                .map(child -> child.getTransformedBounds(t))
++                .filter(Objects::nonNull)
++                .reduce((tpb, nextBounds) -> {
++                    tpb.add(nextBounds);
++                    return tpb;
++                })
++                .orElse(null);
+     }
+ 
+     /**
+@@ -1115,4 +1115,6 @@
+             }
+         }
+     }
++
++    private enum BoundsScanResult {CONTINUE, BREAK, RETURN_NULL}
+ }
+diff '--color=auto' -ur batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/CompositeShapePainter.java ../build/batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/CompositeShapePainter.java
+--- batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/CompositeShapePainter.java	2022-10-14 11:26:20.000000000 +0100
++++ ../build/batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/CompositeShapePainter.java	2026-07-05 13:13:56.953450780 +0100
+@@ -23,6 +23,7 @@
+ import java.awt.geom.Area;
+ import java.awt.geom.Point2D;
+ import java.awt.geom.Rectangle2D;
++import java.util.stream.IntStream;
+ 
+ /**
+  * A shape painter which consists of multiple shape painters.
+@@ -122,9 +123,7 @@
+      */
+     public void paint(Graphics2D g2d) {
+         if (painters != null) {
+-            for (int i=0; i < count; ++i) {
+-                painters[i].paint(g2d);
+-            }
++            IntStream.range(0, count).forEach(i -> painters[i].paint(g2d));
+         }
+     }
+ 
+diff '--color=auto' -ur batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/event/AWTEventDispatcher.java ../build/batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/event/AWTEventDispatcher.java
+--- batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/event/AWTEventDispatcher.java	2022-10-14 11:26:20.000000000 +0100
++++ ../build/batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/event/AWTEventDispatcher.java	2026-07-05 13:13:56.953806737 +0100
+@@ -32,6 +32,7 @@
+ import java.awt.geom.NoninvertibleTransformException;
+ import java.awt.geom.Point2D;
+ import java.lang.reflect.Array;
++import java.util.Arrays;
+ import java.util.EventListener;
+ import java.util.EventObject;
+ import java.util.LinkedList;
+@@ -609,39 +610,25 @@
+                 getListeners(GraphicsNodeMouseListener.class);
+             switch (evt.getID()) {
+             case GraphicsNodeMouseEvent.MOUSE_MOVED:
+-                for (GraphicsNodeMouseListener listener6 : listeners) {
+-                    listener6.mouseMoved(evt);
+-                }
++                Arrays.stream(listeners).forEach(listener -> listener.mouseMoved(evt));
+                 break;
+             case GraphicsNodeMouseEvent.MOUSE_DRAGGED:
+-                for (GraphicsNodeMouseListener listener5 : listeners) {
+-                    listener5.mouseDragged(evt);
+-                }
++                Arrays.stream(listeners).forEach(listener -> listener.mouseDragged(evt));
+                 break;
+             case GraphicsNodeMouseEvent.MOUSE_ENTERED:
+-                for (GraphicsNodeMouseListener listener4 : listeners) {
+-                    listener4.mouseEntered(evt);
+-                }
++                Arrays.stream(listeners).forEach(listener -> listener.mouseEntered(evt));
+                 break;
+             case GraphicsNodeMouseEvent.MOUSE_EXITED:
+-                for (GraphicsNodeMouseListener listener3 : listeners) {
+-                    listener3.mouseExited(evt);
+-                }
++                Arrays.stream(listeners).forEach(listener -> listener.mouseExited(evt));
+                 break;
+             case GraphicsNodeMouseEvent.MOUSE_CLICKED:
+-                for (GraphicsNodeMouseListener listener2 : listeners) {
+-                    listener2.mouseClicked(evt);
+-                }
++                Arrays.stream(listeners).forEach(listener -> listener.mouseClicked(evt));
+                 break;
+             case GraphicsNodeMouseEvent.MOUSE_PRESSED:
+-                for (GraphicsNodeMouseListener listener1 : listeners) {
+-                    listener1.mousePressed(evt);
+-                }
++                Arrays.stream(listeners).forEach(listener -> listener.mousePressed(evt));
+                 break;
+             case GraphicsNodeMouseEvent.MOUSE_RELEASED:
+-                for (GraphicsNodeMouseListener listener : listeners) {
+-                    listener.mouseReleased(evt);
+-                }
++                Arrays.stream(listeners).forEach(listener -> listener.mouseReleased(evt));
+                 break;
+             default:
+                 throw new IllegalArgumentException("Unknown Mouse Event type: "+evt.getID());
+@@ -659,9 +646,7 @@
+             GraphicsNodeMouseWheelListener[] listeners =
+                 (GraphicsNodeMouseWheelListener[])
+                 getListeners(GraphicsNodeMouseWheelListener.class);
+-            for (GraphicsNodeMouseWheelListener listener : listeners) {
+-                listener.mouseWheelMoved(evt);
+-            }
++            Arrays.stream(listeners).forEach(listener -> listener.mouseWheelMoved(evt));
+         }
+     }
+ 
+@@ -679,19 +664,13 @@
+ 
+             switch (evt.getID()) {
+             case GraphicsNodeKeyEvent.KEY_PRESSED:
+-                for (GraphicsNodeKeyListener listener2 : listeners) {
+-                    listener2.keyPressed(evt);
+-                }
++                Arrays.stream(listeners).forEach(listener -> listener.keyPressed(evt));
+                 break;
+             case GraphicsNodeKeyEvent.KEY_RELEASED:
+-                for (GraphicsNodeKeyListener listener1 : listeners) {
+-                    listener1.keyReleased(evt);
+-                }
++                Arrays.stream(listeners).forEach(listener -> listener.keyReleased(evt));
+                 break;
+             case GraphicsNodeKeyEvent.KEY_TYPED:
+-                for (GraphicsNodeKeyListener listener : listeners) {
+-                    listener.keyTyped(evt);
+-                }
++                Arrays.stream(listeners).forEach(listener -> listener.keyTyped(evt));
+                 break;
+             default:
+                 throw new IllegalArgumentException("Unknown Key Event type: "+evt.getID());
+diff '--color=auto' -ur batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/font/MultiGlyphVector.java ../build/batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/font/MultiGlyphVector.java
+--- batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/font/MultiGlyphVector.java	2022-10-14 11:26:20.000000000 +0100
++++ ../build/batik-1.16/batik-gvt/src/main/java/org/apache/batik/gvt/font/MultiGlyphVector.java	2026-07-05 13:13:56.954216104 +0100
+@@ -27,8 +27,10 @@
+ import java.awt.geom.Point2D;
+ import java.awt.geom.Rectangle2D;
+ import java.text.AttributedCharacterIterator;
++import java.util.Arrays;
+ import java.util.Iterator;
+ import java.util.List;
++import java.util.stream.IntStream;
+ 
+ import org.apache.batik.gvt.text.AttributedCharacterSpanIterator;
+ 
+@@ -75,9 +77,10 @@
+     int getGVIdx(int glyphIdx) {
+         if (glyphIdx > nGlyph) return -1;
+         if (glyphIdx == nGlyph) return gvs.length-1;
+-        for (int i=0; i<nGlyphs.length; i++)
+-            if (glyphIdx-off[i] < nGlyphs[i]) return i;
+-        return -1;
++        return IntStream.range(0, nGlyphs.length)
++                .filter(i -> glyphIdx-off[i] < nGlyphs[i])
++                .findFirst()
++                .orElse(-1);
+     }
+ 
+     /**
+@@ -285,14 +288,13 @@
+      *  Returns the logical bounds of this GlyphVector.
+      */
+     public Rectangle2D getLogicalBounds() {
+-        Rectangle2D ret = null;
+-        for (GVTGlyphVector gv : gvs) {
+-            Rectangle2D b = gv.getLogicalBounds();
+-            if (ret == null) ret = b;
+-                //else ret = ret.createUnion(b);
+-            else ret.add(b);   //  same as union
+-        }
+-        return ret;
++        return Arrays.stream(gvs)
++                .map(GVTGlyphVector::getLogicalBounds)
++                .reduce((ret, b) -> {
++                    ret.add(b);
++                    return ret;
++                })
++                .orElse(null);
+     }
+ 
+     /**
+@@ -345,20 +347,17 @@
+      * disregarding stroking.
+      */
+     public Rectangle2D getGeometricBounds() {
+-        Rectangle2D ret = null;
+-        for (GVTGlyphVector gv : gvs) {
+-            Rectangle2D b = gv.getGeometricBounds();
+-            if (ret == null) ret = b;
+-                //else ret = ret.createUnion(b);
+-            else ret.add(b);
+-        }
+-        return ret;
++        return Arrays.stream(gvs)
++                .map(GVTGlyphVector::getGeometricBounds)
++                .reduce((ret, b) -> {
++                    ret.add(b);
++                    return ret;
++                })
++                .orElse(null);
+     }
+ 
+     public void performDefaultLayout() {
+-        for (GVTGlyphVector gv : gvs) {
+-            gv.performDefaultLayout();
+-        }
++        Arrays.stream(gvs).forEach(GVTGlyphVector::performDefaultLayout);
+     }
+ 
+ 
+diff '--color=auto' -ur batik-1.16/batik-svgbrowser/src/main/java/org/apache/batik/apps/svgbrowser/XMLPreferenceManager.java ../build/batik-1.16/batik-svgbrowser/src/main/java/org/apache/batik/apps/svgbrowser/XMLPreferenceManager.java
+--- batik-1.16/batik-svgbrowser/src/main/java/org/apache/batik/apps/svgbrowser/XMLPreferenceManager.java	2022-10-14 11:26:20.000000000 +0100
++++ ../build/batik-1.16/batik-svgbrowser/src/main/java/org/apache/batik/apps/svgbrowser/XMLPreferenceManager.java	2026-07-05 13:13:56.954709556 +0100
+@@ -189,9 +189,7 @@
+                     m.put(k, defaults.get(k));
+                 }
+             }
+-            for (Object k : keySet()) {
+-                m.put(k, get(k));
+-            }
++            keySet().stream().forEach(k -> m.put(k, get(k)));
+         }
+         
+     }
+diff '--color=auto' -ur batik-1.16/batik-svg-dom/src/main/java/org/apache/batik/dom/svg/AbstractSVGList.java ../build/batik-1.16/batik-svg-dom/src/main/java/org/apache/batik/dom/svg/AbstractSVGList.java
+--- batik-1.16/batik-svg-dom/src/main/java/org/apache/batik/dom/svg/AbstractSVGList.java	2022-10-14 11:26:20.000000000 +0100
++++ ../build/batik-1.16/batik-svg-dom/src/main/java/org/apache/batik/dom/svg/AbstractSVGList.java	2026-07-05 13:13:56.955063277 +0100
+@@ -21,6 +21,7 @@
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ import java.util.List;
++import java.util.stream.Collectors;
+ 
+ import org.apache.batik.parser.ParseException;
+ import org.w3c.dom.DOMException;
+@@ -420,17 +421,10 @@
+      */
+     protected void setValueAsString(List value) throws DOMException {
+         String finalValue = null;
+-        Iterator it = value.iterator();
+-        if (it.hasNext()) {
+-            SVGItem item = (SVGItem) it.next();
+-            StringBuffer buf = new StringBuffer( value.size() * 8 );
+-            buf.append(  item.getValueAsString() );
+-            while (it.hasNext()) {
+-                item = (SVGItem) it.next();
+-                buf.append(getItemSeparator());
+-                buf.append(item.getValueAsString());
+-            }
+-            finalValue = buf.toString();
++        if (!value.isEmpty()) {
++            finalValue = (String)value.stream()
++                    .map(obj -> ((SVGItem) obj).getValueAsString())
++                    .collect(Collectors.joining(getItemSeparator()));
+         }
+         setAttributeValue(finalValue);
+         valid = true;
+diff '--color=auto' -ur batik-1.16/batik-svgrasterizer/src/main/java/org/apache/batik/apps/rasterizer/SVGConverter.java ../build/batik-1.16/batik-svgrasterizer/src/main/java/org/apache/batik/apps/rasterizer/SVGConverter.java
+--- batik-1.16/batik-svgrasterizer/src/main/java/org/apache/batik/apps/rasterizer/SVGConverter.java	2022-10-14 11:26:22.000000000 +0100
++++ ../build/batik-1.16/batik-svgrasterizer/src/main/java/org/apache/batik/apps/rasterizer/SVGConverter.java	2026-07-05 13:13:56.955584666 +0100
+@@ -28,10 +28,13 @@
+ import java.io.InputStream;
+ import java.io.OutputStream;
+ import java.net.URL;
++import java.util.Arrays;
+ import java.util.HashMap;
+ import java.util.Map;
+ import java.util.List;
+ import java.util.ArrayList;
++import java.util.Objects;
++import java.util.stream.Collectors;
+ 
+ import org.apache.batik.transcoder.Transcoder;
+ import org.apache.batik.transcoder.TranscoderInput;
+@@ -471,12 +474,9 @@
+             this.sources = null;
+         }
+         else{
+-            this.sources = new ArrayList();
+-            for (String source : sources) {
+-                if (source != null) {
+-                    this.sources.add(source);
+-                }
+-            }
++            this.sources = Arrays.stream(sources)
++                    .filter(Objects::nonNull)
++                    .collect(Collectors.toCollection(ArrayList::new));
+ 
+             if (this.sources.size() == 0){
+                 this.sources = null;
+@@ -727,7 +727,7 @@
+      */
+     protected List computeDstFiles(List sources)
+     throws SVGConverterException {
+-        List dstFiles = new ArrayList();
++        List dstFiles;
+         if (dst != null) {
+             if (dst.exists() && dst.isFile()) {
+                 throw new SVGConverterException(ERROR_CANNOT_USE_DST_FILE);
+@@ -738,20 +738,18 @@
+             // exist and we may fail later on in createOutputDir
+             //
+             int n = sources.size();
+-            for (Object source : sources) {
++            dstFiles = (List)sources.stream().map(source -> {
+                 SVGConverterSource src = (SVGConverterSource) source;
+-                // Generate output filename from input filename.
+-                File outputName = new File(dst.getPath(),
++                return new File(dst.getPath(),
+                         getDestinationFile(src.getName()));
+-                dstFiles.add(outputName);
+-
+-            }
++            }).collect(Collectors.toCollection(ArrayList::new));
+         } else {
+             //
+             // No destination directory has been specified.
+             // Try and create files in the same directory as the
+             // sources. This only work if sources are files.
+             //
++            dstFiles = new ArrayList();
+             int n = sources.size();
+             for (Object source : sources) {
+                 SVGConverterSource src = (SVGConverterSource) source;
+diff '--color=auto' -ur batik-1.16/batik-util/src/main/java/org/apache/batik/util/ClassFileUtilities.java ../build/batik-1.16/batik-util/src/main/java/org/apache/batik/util/ClassFileUtilities.java
+--- batik-1.16/batik-util/src/main/java/org/apache/batik/util/ClassFileUtilities.java	2022-10-14 11:26:22.000000000 +0100
++++ ../build/batik-1.16/batik-util/src/main/java/org/apache/batik/util/ClassFileUtilities.java	2026-07-05 13:13:56.956087347 +0100
+@@ -23,7 +23,11 @@
+ import java.io.FileInputStream;
+ import java.io.IOException;
+ import java.io.InputStream;
++import java.util.Collection;
++import java.util.Objects;
+ import java.util.jar.JarFile;
++import java.util.stream.Collectors;
++import java.util.stream.Stream;
+ import java.util.zip.ZipEntry;
+ import java.util.ArrayList;
+ import java.util.Collections;
+@@ -110,13 +114,12 @@
+             Map js = new HashMap();
+             collectJars(buildDir, js, cs);
+ 
+-            Set classpath = new HashSet();
+-            Iterator i = js.values().iterator();
+-            while (i.hasNext()) {
+-                classpath.add(((Jar) i.next()).jarFile);
+-            }
++            Set classpath = ((Collection<Jar>) js.values())
++                    .stream()
++                    .map(jar -> jar.jarFile)
++                    .collect(Collectors.toCollection(HashSet::new));
+ 
+-            i = cs.values().iterator();
++            Iterator i = cs.values().iterator();
+             while (i.hasNext()) {
+                 ClassFile fromFile = (ClassFile) i.next();
+                 // System.out.println(fromFile.name);
+@@ -376,19 +379,10 @@
+             }
+         }
+ 
+-        Set result = new HashSet();
+-
+-        Iterator it = classes.iterator();
+-        while (it.hasNext()) {
+-            result.add(strs[((Integer) it.next())]);
+-        }
+-
+-        it = desc.iterator();
+-        while (it.hasNext()) {
+-            result.addAll(getDescriptorClasses(strs[((Integer) it.next())]));
+-        }
+-
+-        return result;
++        return (Set) Stream.concat(
++                classes.stream().map(c -> strs[(Integer) c]),
++                desc.stream().flatMap(d -> getDescriptorClasses(strs[(Integer) d]).stream())
++        ).collect(Collectors.toCollection(HashSet::new));
+     }
+ 
+     /**
+--- ./batik-1.16/batik-util/src/main/java/org/apache/batik/util/IntStreamExtensions.java	1970-01-01 01:00:00.000000000 +0100
++++ ../build/batik-1.16/batik-util/src/main/java/org/apache/batik/util/IntStreamExtensions.java	2026-07-05 13:13:56.956407494 +0100
+@@ -0,0 +1,151 @@
++package org.apache.batik.util;
++
++import java.util.Comparator;
++import java.util.Objects;
++import java.util.Spliterator;
++import java.util.Spliterators;
++import java.util.function.IntConsumer;
++import java.util.function.IntPredicate;
++import java.util.function.IntUnaryOperator;
++import java.util.stream.IntStream;
++import java.util.stream.StreamSupport;
++
++public final class IntStreamExtensions {
++
++    private IntStreamExtensions() {
++    }
++
++    public static IntStream iterate(int seed, IntPredicate hasNext, IntUnaryOperator next) {
++        Objects.requireNonNull(hasNext, "hasNext must not be null");
++        Objects.requireNonNull(next, "next must not be null");
++        return StreamSupport.intStream(new IterateSpliterator(seed, hasNext, next), false);
++    }
++
++    public static IntStream takeWhile(IntStream stream, IntPredicate predicate) {
++        Objects.requireNonNull(stream, "stream must not be null");
++        Objects.requireNonNull(predicate, "predicate must not be null");
++
++        Spliterator.OfInt source = stream.spliterator();
++        Spliterator.OfInt takeWhileSpliterator = new TakeWhileSpliterator(source, predicate);
++
++        return StreamSupport.intStream(takeWhileSpliterator, stream.isParallel()).onClose(stream::close);
++    }
++
++    private static final class IterateSpliterator extends Spliterators.AbstractIntSpliterator {
++        private final int seed;
++        private final IntPredicate hasNext;
++        private final IntUnaryOperator next;
++
++        private int prev;
++        private boolean started;
++        private boolean finished;
++
++        private IterateSpliterator(int seed, IntPredicate hasNext, IntUnaryOperator next) {
++            super(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL);
++            this.seed = seed;
++            this.hasNext = hasNext;
++            this.next = next;
++            this.started = false;
++            this.finished = false;
++        }
++
++
++        @Override
++        public boolean tryAdvance(IntConsumer action) {
++            Objects.requireNonNull(action, "action must not be null");
++            if (finished) {
++                return false;
++            }
++
++            int t;
++            if (started) {
++                t = next.applyAsInt(prev);
++            } else {
++                t = seed;
++                started = true;
++            }
++
++            if (!hasNext.test(t)) {
++                finished = true;
++                return false;
++            } else {
++                action.accept(t);
++                prev = t;
++                return true;
++            }
++        }
++
++        @Override
++        public void forEachRemaining(IntConsumer action) {
++            Objects.requireNonNull(action, "action must not be null");
++            if (finished) {
++                return;
++            }
++
++            finished = true;
++            int t = started ? next.applyAsInt(prev) : seed;
++            while (hasNext.test(t)) {
++                action.accept(t);
++                t = next.applyAsInt(t);
++            }
++        }
++    }
++
++    private static final class TakeWhileSpliterator implements Spliterator.OfInt, IntConsumer {
++        private final Spliterator.OfInt source;
++        private final IntPredicate predicate;
++
++        private boolean taking = true;
++        private int currentElement;
++
++        public TakeWhileSpliterator(Spliterator.OfInt source, IntPredicate predicate) {
++            this.source = source;
++            this.predicate = predicate;
++        }
++
++        @Override
++        public void accept(int t) {
++            this.currentElement = t;
++        }
++
++        @Override
++        public boolean tryAdvance(IntConsumer action) {
++            Objects.requireNonNull(action, "action must not be null");
++            if (!taking) {
++                return false;
++            }
++
++            taking = source.tryAdvance(this) && predicate.test(currentElement);
++            if (taking) {
++                action.accept(currentElement);
++            }
++
++            return taking;
++        }
++
++        @Override
++        public Spliterator.OfInt trySplit() {
++            return null; // preserve ordered takeWhile semantics
++        }
++
++        @Override
++        public long estimateSize() {
++            return taking ? source.estimateSize() : 0;
++        }
++
++        @Override
++        public int characteristics() {
++            return source.characteristics() & ~(Spliterator.SIZED | Spliterator.SUBSIZED);
++        }
++
++        @Override
++        public Comparator<? super Integer> getComparator() {
++            return source.getComparator();
++        }
++
++        @Override
++        public long getExactSizeIfKnown() {
++            return -1L;
++        }
++    }
++}
+--- ./batik-1.16/batik-util/src/main/java/org/apache/batik/util/StreamExtensions.java	1970-01-01 01:00:00.000000000 +0100
++++ ../build/batik-1.16/batik-util/src/main/java/org/apache/batik/util/StreamExtensions.java	2026-07-05 13:13:56.956784004 +0100
+@@ -0,0 +1,84 @@
++package org.apache.batik.util;
++
++import java.util.Objects;
++import java.util.Spliterator;
++import java.util.Spliterators;
++import java.util.function.Consumer;
++import java.util.function.Predicate;
++import java.util.function.UnaryOperator;
++import java.util.stream.Stream;
++import java.util.stream.StreamSupport;
++
++public final class StreamExtensions {
++
++    private StreamExtensions() {
++    }
++
++    public static <T> Stream<T> iterate(T seed, Predicate<? super T> hasNext, UnaryOperator<T> next) {
++        Objects.requireNonNull(hasNext, "hasNext must not be null");
++        Objects.requireNonNull(next, "next must not be null");
++        return StreamSupport.stream(new IterateSpliterator<>(seed, hasNext, next), false);
++    }
++
++    private static final class IterateSpliterator<T> extends Spliterators.AbstractSpliterator<T> {
++        private final T seed;
++        private final Predicate<? super T> hasNext;
++        private final UnaryOperator<T> next;
++
++        private T prev;
++        private boolean started;
++        private boolean finished;
++
++        private IterateSpliterator(T seed, Predicate<? super T> hasNext, UnaryOperator<T> next) {
++            super(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL);
++            this.seed = seed;
++            this.hasNext = hasNext;
++            this.next = next;
++            this.prev = null;
++            this.started = false;
++            this.finished = false;
++        }
++
++        @Override
++        public boolean tryAdvance(Consumer<? super T> action) {
++            Objects.requireNonNull(action, "action must not be null");
++            if (finished) {
++                return false;
++            }
++
++            T t;
++            if (started) {
++                t = next.apply(prev);
++            } else {
++                t = seed;
++                started = true;
++            }
++
++            if (!hasNext.test(t)) {
++                prev = null;
++                finished = true;
++                return false;
++            } else {
++                action.accept(t);
++                prev = t;
++                return true;
++            }
++        }
++
++        @Override
++        public void forEachRemaining(Consumer<? super T> action) {
++            Objects.requireNonNull(action, "action must not be null");
++            if (finished) {
++                return;
++            }
++
++            finished = true;
++            T t = started ? next.apply(prev) : seed;
++            prev = null;
++            while (hasNext.test(t)) {
++                action.accept(t);
++                t = next.apply(t);
++            }
++        }
++    }
++}
