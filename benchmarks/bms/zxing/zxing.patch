@@ -1,6 +1,2521 @@
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/client/result/VCardResultParser.java ../build/core/src/main/java/com/google/zxing/client/result/VCardResultParser.java
+--- ./core/src/main/java/com/google/zxing/client/result/VCardResultParser.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/client/result/VCardResultParser.java	2026-07-05 18:00:34.909194885 +0100
+@@ -84,8 +84,8 @@
+     }
+     return new AddressBookParsedResult(toPrimaryValues(names),
+                                        nicknames,
+-                                       null, 
+-                                       toPrimaryValues(phoneNumbers), 
++                                       null,
++                                       toPrimaryValues(phoneNumbers),
+                                        toTypes(phoneNumbers),
+                                        toPrimaryValues(emails),
+                                        toTypes(emails),
+@@ -110,7 +110,7 @@
+ 
+     while (i < max) {
+ 
+-      // At start or after newline, match prefix, followed by optional metadata 
++      // At start or after newline, match prefix, followed by optional metadata
+       // (led by ;) ultimately ending in colon
+       Matcher matcher = Pattern.compile("(?:^|\n)" + prefix + "(?:;([^:]*))?:",
+                                         Pattern.CASE_INSENSITIVE).matcher(rawText);
+@@ -280,25 +280,25 @@
+     List<List<String>> values = matchVCardPrefixedField(prefix, rawText, trim, parseFieldDivider);
+     return values == null || values.isEmpty() ? null : values.get(0);
+   }
+-  
++
+   private static String toPrimaryValue(List<String> list) {
+     return list == null || list.isEmpty() ? null : list.get(0);
+   }
+-  
++
+   private static String[] toPrimaryValues(Collection<List<String>> lists) {
+     if (lists == null || lists.isEmpty()) {
+       return null;
+     }
+     List<String> result = new ArrayList<>(lists.size());
+-    for (List<String> list : lists) {
++    lists.stream().forEach(list -> {
+       String value = list.get(0);
+       if (value != null && !value.isEmpty()) {
+         result.add(value);
+       }
+-    }
++    });
+     return result.toArray(EMPTY_STR_ARRAY);
+   }
+-  
++
+   private static String[] toTypes(Collection<List<String>> lists) {
+     if (lists == null || lists.isEmpty()) {
+       return null;
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/common/detector/MathUtils.java ../build/core/src/main/java/com/google/zxing/common/detector/MathUtils.java
+--- ./core/src/main/java/com/google/zxing/common/detector/MathUtils.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/common/detector/MathUtils.java	2026-07-05 18:00:34.909547082 +0100
+@@ -16,6 +16,8 @@
+ 
+ package com.google.zxing.common.detector;
+ 
++import java.util.Arrays;
++
+ /**
+  * General math-related and numeric utility functions.
+  */
+@@ -68,11 +70,7 @@
+    * @return sum of values in array
+    */
+   public static int sum(int[] array) {
+-    int count = 0;
+-    for (int a : array) {
+-      count += a;
+-    }
+-    return count;
++    return Arrays.stream(array).sum();
+   }
+ 
+ }
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/common/ECIEncoderSet.java ../build/core/src/main/java/com/google/zxing/common/ECIEncoderSet.java
+--- ./core/src/main/java/com/google/zxing/common/ECIEncoderSet.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/common/ECIEncoderSet.java	2026-07-05 18:00:34.909794494 +0100
+@@ -21,7 +21,12 @@
+ import java.nio.charset.StandardCharsets;
+ import java.nio.charset.UnsupportedCharsetException;
+ import java.util.ArrayList;
++import java.util.Arrays;
+ import java.util.List;
++import java.util.Objects;
++import java.util.Optional;
++import java.util.stream.Collectors;
++import java.util.stream.IntStream;
+ 
+ /**
+  * Set of CharsetEncoders for a given input string
+@@ -40,7 +45,7 @@
+ public final class ECIEncoderSet {
+ 
+   // List of encoders that potentially encode characters not in ISO-8859-1 in one byte.
+-  private static final List<CharsetEncoder> ENCODERS = new ArrayList<>();
++  private static final List<CharsetEncoder> ENCODERS;
+   static {
+     String[] names = { "IBM437",
+                        "ISO-8859-2",
+@@ -62,15 +67,17 @@
+                        "windows-1252",
+                        "windows-1256",
+                        "Shift_JIS" };
+-    for (String name : names) {
+-      if (CharacterSetECI.getCharacterSetECIByName(name) != null) {
++    ENCODERS = Arrays.stream(names)
++      .filter(name -> CharacterSetECI.getCharacterSetECIByName(name) != null)
++      .map(name -> {
+         try {
+-          ENCODERS.add(Charset.forName(name).newEncoder());
++          return Charset.forName(name).newEncoder();
+         } catch (UnsupportedCharsetException e) {
+-          // continue
++          return null;
+         }
+-      }
+-    }
++      })
++      .filter(Objects::nonNull)
++      .collect(Collectors.toCollection(ArrayList::new));
+   }
+ 
+   private final CharsetEncoder[] encoders;
+@@ -90,65 +97,49 @@
+     //we always need the ISO-8859-1 encoder. It is the default encoding
+     neededEncoders.add(StandardCharsets.ISO_8859_1.newEncoder());
+     boolean needUnicodeEncoder = priorityCharset != null && priorityCharset.name().startsWith("UTF");
++    //Walk over the input string and see if all characters can be encoded with the list of encoders.
++    //Do NOT short-circuit: use bitwise OR and `reduce` to collect all required encoders.
++    needUnicodeEncoder |= IntStream.range(0, stringToEncode.length())
++      .mapToObj(i -> {
++        boolean canEncode = neededEncoders.stream().anyMatch(encoder -> {
++          char c = stringToEncode.charAt(i);
++          return c == fnc1 || encoder.canEncode(c);
++        });
++
++        if (!canEncode) {
++          Optional<CharsetEncoder> maybeEncoder = ENCODERS.stream()
++              .filter(encoder -> encoder.canEncode(stringToEncode.charAt(i)))
++              .findFirst();
+ 
+-    //Walk over the input string and see if all characters can be encoded with the list of encoders 
+-    for (int i = 0; i < stringToEncode.length(); i++) {
+-      boolean canEncode = false;
+-      for (CharsetEncoder encoder : neededEncoders) {
+-        char c = stringToEncode.charAt(i);
+-        if (c == fnc1 || encoder.canEncode(c)) {
+-          canEncode = true;
+-          break;
++          maybeEncoder.ifPresent(neededEncoders::add);
++          canEncode = maybeEncoder.isPresent();
+         }
+-      }
+ 
+-      if (!canEncode) {
+-        //for the character at position i we don't yet have an encoder in the list
+-        for (CharsetEncoder encoder : ENCODERS) {
+-          if (encoder.canEncode(stringToEncode.charAt(i))) {
+-            //Good, we found an encoder that can encode the character. We add him to the list and continue scanning
+-            //the input
+-            neededEncoders.add(encoder);
+-            canEncode = true;
+-            break;
+-          }
+-        }
+-      }
++        return !canEncode;
++      })
++      .reduce(false, Boolean::logicalOr);
+ 
+-      if (!canEncode) {
+-        //The character is not encodeable by any of the single byte encoders so we remember that we will need a
+-        //Unicode encoder.
+-        needUnicodeEncoder = true;
+-      }
+-    }
+-  
+     if (neededEncoders.size() == 1 && !needUnicodeEncoder) {
+       //the entire input can be encoded by the ISO-8859-1 encoder
+       encoders = new CharsetEncoder[] { neededEncoders.get(0) };
+     } else {
+       // we need more than one single byte encoder or we need a Unicode encoder.
+       // In this case we append a UTF-8 and UTF-16 encoder to the list
+-      encoders = new CharsetEncoder[neededEncoders.size() + 2];
+-      int index = 0;
+-      for (CharsetEncoder encoder : neededEncoders) {
+-        encoders[index++] = encoder;
+-      }
++      int size = neededEncoders.size();
++      encoders = new CharsetEncoder[size + 2];
++      IntStream.range(0, size).forEach(i -> encoders[i] = neededEncoders.get(i));
+ 
+-      encoders[index] = StandardCharsets.UTF_8.newEncoder();
+-      encoders[index + 1] = StandardCharsets.UTF_16BE.newEncoder();
++      encoders[size] = StandardCharsets.UTF_8.newEncoder();
++      encoders[size + 1] = StandardCharsets.UTF_16BE.newEncoder();
+     }
+-  
++
+     //Compute priorityEncoderIndex by looking up priorityCharset in encoders
+-    int priorityEncoderIndexValue = -1;
+-    if (priorityCharset != null) {
+-      for (int i = 0; i < encoders.length; i++) {
+-        if (encoders[i] != null && priorityCharset.name().equals(encoders[i].charset().name())) {
+-          priorityEncoderIndexValue = i;
+-          break;
+-        }
+-      }
+-    }
+-    priorityEncoderIndex = priorityEncoderIndexValue;
++    priorityEncoderIndex = priorityCharset == null ? -1 :
++      IntStream.range(0, encoders.length)
++        .filter(i -> encoders[i] != null && priorityCharset.name().equals(encoders[i].charset().name()))
++        .findFirst()
++        .orElse(-1);
++
+     //invariants
+     assert encoders[0].charset().equals(StandardCharsets.ISO_8859_1);
+   }
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/common/GlobalHistogramBinarizer.java ../build/core/src/main/java/com/google/zxing/common/GlobalHistogramBinarizer.java
+--- ./core/src/main/java/com/google/zxing/common/GlobalHistogramBinarizer.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/common/GlobalHistogramBinarizer.java	2026-07-05 18:00:34.910044525 +0100
+@@ -20,6 +20,8 @@
+ import com.google.zxing.LuminanceSource;
+ import com.google.zxing.NotFoundException;
+ 
++import java.util.stream.IntStream;
++
+ /**
+  * This Binarizer implementation uses the old ZXing global histogram approach. It is suitable
+  * for low-end mobile devices which don't have enough CPU or memory to use a local thresholding
+@@ -52,41 +54,44 @@
+   public BitArray getBlackRow(int y, BitArray row) throws NotFoundException {
+     LuminanceSource source = getLuminanceSource();
+     int width = source.getWidth();
++    final BitArray finalRow;
+     if (row == null || row.getSize() < width) {
+-      row = new BitArray(width);
++      finalRow = new BitArray(width);
+     } else {
+       row.clear();
++      finalRow = row;
+     }
+ 
+     initArrays(width);
+     byte[] localLuminances = source.getRow(y, luminances);
+     int[] localBuckets = buckets;
+-    for (int x = 0; x < width; x++) {
+-      localBuckets[(localLuminances[x] & 0xff) >> LUMINANCE_SHIFT]++;
+-    }
++    IntStream.range(0, width)
++        .forEach(x -> localBuckets[(localLuminances[x] & 0xff) >> LUMINANCE_SHIFT]++);
+     int blackPoint = estimateBlackPoint(localBuckets);
+ 
+     if (width < 3) {
+       // Special case for very small images
+-      for (int x = 0; x < width; x++) {
+-        if ((localLuminances[x] & 0xff) < blackPoint) {
+-          row.set(x);
+-        }
+-      }
++      IntStream.range(0, width)
++          .filter(x -> (localLuminances[x] & 0xff) < blackPoint)
++          .forEach(finalRow::set);
+     } else {
+-      int left = localLuminances[0] & 0xff;
+-      int center = localLuminances[1] & 0xff;
+-      for (int x = 1; x < width - 1; x++) {
++      final class StreamState {
++        private int left = localLuminances[0] & 0xff;
++        private int center = localLuminances[1] & 0xff;
++      }
++
++      final StreamState s = new StreamState();
++      IntStream.range(1, width - 1).forEach(x -> {
+         int right = localLuminances[x + 1] & 0xff;
+         // A simple -1 4 -1 box filter with a weight of 2.
+-        if (((center * 4) - left - right) / 2 < blackPoint) {
+-          row.set(x);
++        if (((s.center * 4) - s.left - right) / 2 < blackPoint) {
++          finalRow.set(x);
+         }
+-        left = center;
+-        center = right;
+-      }
++        s.left = s.center;
++        s.center = right;
++      });
+     }
+-    return row;
++    return finalRow;
+   }
+
+   // Does not sharpen the data, as this call is intended to only be used by 2D Readers.
+@@ -145,59 +150,65 @@
+ 
+   private static int estimateBlackPoint(int[] buckets) throws NotFoundException {
+     // Find the tallest peak in the histogram.
+-    int numBuckets = buckets.length;
+-    int maxBucketCount = 0;
+-    int firstPeak = 0;
+-    int firstPeakSize = 0;
+-    for (int x = 0; x < numBuckets; x++) {
+-      if (buckets[x] > firstPeakSize) {
+-        firstPeak = x;
+-        firstPeakSize = buckets[x];
++    final class StreamState {
++      private final int numBuckets = buckets.length;
++      private int maxBucketCount = 0;
++      private int firstPeak = 0;
++      private int firstPeakSize = 0;
++      private int secondPeak = 0;
++      private int secondPeakScore = 0;
++      private int bestValley = -1;
++      private int bestValleyScore = -1;
++    }
++
++    final StreamState s = new StreamState();
++    IntStream.range(0, s.numBuckets).forEach(x -> {
++      if (buckets[x] > s.firstPeakSize) {
++        s.firstPeak = x;
++        s.firstPeakSize = buckets[x];
+       }
+-      if (buckets[x] > maxBucketCount) {
+-        maxBucketCount = buckets[x];
++      if (buckets[x] > s.maxBucketCount) {
++        s.maxBucketCount = buckets[x];
+       }
+-    }
++    });
+ 
+     // Find the second-tallest peak which is somewhat far from the tallest peak.
+-    int secondPeak = 0;
+-    int secondPeakScore = 0;
+-    for (int x = 0; x < numBuckets; x++) {
+-      int distanceToBiggest = x - firstPeak;
++    IntStream.range(0, s.numBuckets).forEach(x -> {
++      int distanceToBiggest = x - s.firstPeak;
+       // Encourage more distant second peaks by multiplying by square of distance.
+       int score = buckets[x] * distanceToBiggest * distanceToBiggest;
+-      if (score > secondPeakScore) {
+-        secondPeak = x;
+-        secondPeakScore = score;
++      if (score > s.secondPeakScore) {
++        s.secondPeak = x;
++        s.secondPeakScore = score;
+       }
+-    }
++    });
+ 
+     // Make sure firstPeak corresponds to the black peak.
+-    if (firstPeak > secondPeak) {
+-      int temp = firstPeak;
+-      firstPeak = secondPeak;
+-      secondPeak = temp;
++    if (s.firstPeak > s.secondPeak) {
++      int temp = s.firstPeak;
++      s.firstPeak = s.secondPeak;
++      s.secondPeak = temp;
+     }
+ 
+     // If there is too little contrast in the image to pick a meaningful black point, throw rather
+     // than waste time trying to decode the image, and risk false positives.
+-    if (secondPeak - firstPeak <= numBuckets / 16) {
++    if (s.secondPeak - s.firstPeak <= s.numBuckets / 16) {
+       throw NotFoundException.getNotFoundInstance();
+     }
+ 
+     // Find a valley between them that is low and closer to the white peak.
+-    int bestValley = secondPeak - 1;
+-    int bestValleyScore = -1;
+-    for (int x = secondPeak - 1; x > firstPeak; x--) {
+-      int fromFirst = x - firstPeak;
+-      int score = fromFirst * fromFirst * (secondPeak - x) * (maxBucketCount - buckets[x]);
+-      if (score > bestValleyScore) {
+-        bestValley = x;
+-        bestValleyScore = score;
+-      }
+-    }
++    IntStream.range(1, s.secondPeak - s.firstPeak)
++        .map(i -> s.secondPeak - i) // iterate in reverse order
++        .forEach(x -> {
++          int fromFirst = x - s.firstPeak;
++          int score = fromFirst * fromFirst * (s.secondPeak - x) * (s.maxBucketCount - buckets[x]);
++          if (score > s.bestValleyScore) {
++            s.bestValley = x;
++            s.bestValleyScore = score;
++          }
++        });
+ 
+-    return bestValley << LUMINANCE_SHIFT;
++    return s.bestValley << LUMINANCE_SHIFT;
+   }
+ 
+ }
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/common/HybridBinarizer.java ../build/core/src/main/java/com/google/zxing/common/HybridBinarizer.java
+--- ./core/src/main/java/com/google/zxing/common/HybridBinarizer.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/common/HybridBinarizer.java	2026-07-05 18:00:34.910264662 +0100
+@@ -20,6 +20,9 @@
+ import com.google.zxing.LuminanceSource;
+ import com.google.zxing.NotFoundException;
+ 
++import java.util.IntSummaryStatistics;
++import java.util.stream.IntStream;
++
+ /**
+  * This class implements a local thresholding algorithm, which while slower than the
+  * GlobalHistogramBinarizer, is fairly efficient for what it does. It is designed for
+@@ -107,27 +110,24 @@
+                                                  BitMatrix matrix) {
+     int maxYOffset = height - BLOCK_SIZE;
+     int maxXOffset = width - BLOCK_SIZE;
+-    for (int y = 0; y < subHeight; y++) {
+-      int yoffset = y << BLOCK_SIZE_POWER;
+-      if (yoffset > maxYOffset) {
+-        yoffset = maxYOffset;
+-      }
+-      int top = cap(y, subHeight - 3);
+-      for (int x = 0; x < subWidth; x++) {
++    IntStream.range(0, subHeight).forEach(y -> {
++      final int yoffset = Math.min(y << BLOCK_SIZE_POWER, maxYOffset);
++      final int top = cap(y, subHeight - 3);
++      IntStream.range(0, subWidth).forEach(x -> {
+         int xoffset = x << BLOCK_SIZE_POWER;
+         if (xoffset > maxXOffset) {
+           xoffset = maxXOffset;
+         }
+         int left = cap(x, subWidth - 3);
+-        int sum = 0;
+-        for (int z = -2; z <= 2; z++) {
+-          int[] blackRow = blackPoints[top + z];
+-          sum += blackRow[left - 2] + blackRow[left - 1] + blackRow[left] + blackRow[left + 1] + blackRow[left + 2];
+-        }
++        int sum = IntStream.rangeClosed(-2, 2)
++            .mapToObj(z -> blackPoints[top + z])
++            .mapToInt(blackRow -> blackRow[left - 2] + blackRow[left - 1] +
++                blackRow[left] + blackRow[left + 1] + blackRow[left + 2])
++            .sum();
+         int average = sum / 25;
+         thresholdBlock(luminances, xoffset, yoffset, average, width, matrix);
+-      }
+-    }
++      });
++    });
+   }
+ 
+   private static int cap(int value, int max) {
+@@ -163,45 +163,23 @@
+                                               int subHeight,
+                                               int width,
+                                               int height) {
+-    int maxYOffset = height - BLOCK_SIZE;
+-    int maxXOffset = width - BLOCK_SIZE;
++    final int maxYOffset = height - BLOCK_SIZE;
++    final int maxXOffset = width - BLOCK_SIZE;
+     int[][] blackPoints = new int[subHeight][subWidth];
+-    for (int y = 0; y < subHeight; y++) {
+-      int yoffset = y << BLOCK_SIZE_POWER;
+-      if (yoffset > maxYOffset) {
+-        yoffset = maxYOffset;
+-      }
+-      for (int x = 0; x < subWidth; x++) {
+-        int xoffset = x << BLOCK_SIZE_POWER;
+-        if (xoffset > maxXOffset) {
+-          xoffset = maxXOffset;
+-        }
+-        int sum = 0;
+-        int min = 0xFF;
+-        int max = 0;
+-        for (int yy = 0, offset = yoffset * width + xoffset; yy < BLOCK_SIZE; yy++, offset += width) {
+-          for (int xx = 0; xx < BLOCK_SIZE; xx++) {
+-            int pixel = luminances[offset + xx] & 0xFF;
+-            sum += pixel;
+-            // still looking for good contrast
+-            if (pixel < min) {
+-              min = pixel;
+-            }
+-            if (pixel > max) {
+-              max = pixel;
+-            }
+-          }
+-          // short-circuit min/max tests once dynamic range is met
+-          if (max - min > MIN_DYNAMIC_RANGE) {
+-            // finish the rest of the rows quickly
+-            for (yy++, offset += width; yy < BLOCK_SIZE; yy++, offset += width) {
+-              for (int xx = 0; xx < BLOCK_SIZE; xx++) {
+-                sum += luminances[offset + xx] & 0xFF;
+-              }
+-            }
+-          }
+-        }
+-
++    IntStream.range(0, subHeight).forEach(y -> {
++      int yoffset = Math.min(y << BLOCK_SIZE_POWER, maxYOffset);
++      IntStream.range(0, subWidth).forEach(x -> {
++        int xoffset = Math.min(x << BLOCK_SIZE_POWER, maxXOffset);
++        IntSummaryStatistics stats = IntStream.range(0, BLOCK_SIZE)
++            .flatMap(yy -> {
++              int rowOffset = (yoffset + yy) * width + xoffset;
++              return IntStream.range(0, BLOCK_SIZE).map(xx -> luminances[rowOffset + xx] & 0xFF);
++            })
++            .summaryStatistics();
++
++        int sum = (int) stats.getSum();
++        int min = stats.getMin();
++        int max = stats.getMax();
+         // The default estimate is the average of the values in the block.
+         int average = sum >> (BLOCK_SIZE_POWER * 2);
+         if (max - min <= MIN_DYNAMIC_RANGE) {
+@@ -229,8 +207,9 @@
+           }
+         }
+         blackPoints[y][x] = average;
+-      }
+-    }
++      });
++    });
++
+     return blackPoints;
+   }
+ 
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/common/reedsolomon/GenericGFPoly.java ../build/core/src/main/java/com/google/zxing/common/reedsolomon/GenericGFPoly.java
+--- ./core/src/main/java/com/google/zxing/common/reedsolomon/GenericGFPoly.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/common/reedsolomon/GenericGFPoly.java	2026-07-05 18:00:34.910513379 +0100
+@@ -16,6 +16,8 @@
+ 
+ package com.google.zxing.common.reedsolomon;
+ 
++import java.util.Arrays;
++
+ /**
+  * <p>Represents a polynomial whose coefficients are elements of a GF.
+  * Instances of this class are immutable.</p>
+@@ -101,11 +103,7 @@
+     }
+     if (a == 1) {
+       // Just the sum of the coefficients
+-      int result = 0;
+-      for (int coefficient : coefficients) {
+-        result = GenericGF.addOrSubtract(result, coefficient);
+-      }
+-      return result;
++      return Arrays.stream(coefficients).reduce(0, GenericGF::addOrSubtract);
+     }
+     int result = coefficients[0];
+     int size = coefficients.length;
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/datamatrix/decoder/DataBlock.java ../build/core/src/main/java/com/google/zxing/datamatrix/decoder/DataBlock.java
+--- ./core/src/main/java/com/google/zxing/datamatrix/decoder/DataBlock.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/datamatrix/decoder/DataBlock.java	2026-07-05 18:00:34.910791718 +0100
+@@ -16,6 +16,9 @@
+ 
+ package com.google.zxing.datamatrix.decoder;
+ 
++import java.util.Arrays;
++import java.util.stream.IntStream;
++
+ /**
+  * <p>Encapsulates a block of data within a Data Matrix Code. Data Matrix Codes may split their data into
+  * multiple blocks, each of which is a unit of data and error-correction codewords. Each
+@@ -49,22 +52,18 @@
+     Version.ECBlocks ecBlocks = version.getECBlocks();
+ 
+     // First count the total number of data blocks
+-    int totalBlocks = 0;
+     Version.ECB[] ecBlockArray = ecBlocks.getECBlocks();
+-    for (Version.ECB ecBlock : ecBlockArray) {
+-      totalBlocks += ecBlock.getCount();
+-    }
++    int totalBlocks = Arrays.stream(ecBlockArray).mapToInt(Version.ECB::getCount).sum();
+ 
+     // Now establish DataBlocks of the appropriate size and number of data codewords
+-    DataBlock[] result = new DataBlock[totalBlocks];
+-    int numResultBlocks = 0;
+-    for (Version.ECB ecBlock : ecBlockArray) {
+-      for (int i = 0; i < ecBlock.getCount(); i++) {
+-        int numDataCodewords = ecBlock.getDataCodewords();
+-        int numBlockCodewords = ecBlocks.getECCodewords() + numDataCodewords;
+-        result[numResultBlocks++] = new DataBlock(numDataCodewords, new byte[numBlockCodewords]);
+-      }
+-    }
++    DataBlock[] result = Arrays.stream(ecBlockArray).flatMap(ecBlock ->
++        IntStream.range(0, ecBlock.getCount()).mapToObj(i -> {
++          int numDataCodewords = ecBlock.getDataCodewords();
++          int numBlockCodewords = ecBlocks.getECCodewords() + numDataCodewords;
++          return new DataBlock(numDataCodewords, new byte[numBlockCodewords]);
++        })
++    ).toArray(DataBlock[]::new);
++    int numResultBlocks = result.length;
+ 
+     // All blocks have the same amount of data, except that the last n
+     // (where n may be 0) have 1 less byte. Figure out where these start.
+@@ -76,30 +75,35 @@
+     int shorterBlocksNumDataCodewords = longerBlocksNumDataCodewords - 1;
+     // The last elements of result may be 1 element shorter for 144 matrix
+     // first fill out as many elements as all of them have minus 1
+-    int rawCodewordsOffset = 0;
+-    for (int i = 0; i < shorterBlocksNumDataCodewords; i++) {
+-      for (int j = 0; j < numResultBlocks; j++) {
+-        result[j].codewords[i] = rawCodewords[rawCodewordsOffset++];
+-      }
+-    }
++    IntStream.range(0, shorterBlocksNumDataCodewords).forEach(i ->
++        IntStream.range(0, numResultBlocks).forEach(j -> {
++          int rawCodewordsOffset = i * numResultBlocks + j;
++          result[j].codewords[i] = rawCodewords[rawCodewordsOffset];
++        })
++    );
++    int shorterBlocksRawOffset = shorterBlocksNumDataCodewords * numResultBlocks;
+ 
+     // Fill out the last data block in the longer ones
+     boolean specialVersion = version.getVersionNumber() == 24;
+     int numLongerBlocks = specialVersion ? 8 : numResultBlocks;
+-    for (int j = 0; j < numLongerBlocks; j++) {
+-      result[j].codewords[longerBlocksNumDataCodewords - 1] = rawCodewords[rawCodewordsOffset++];
+-    }
++    IntStream.range(0, numLongerBlocks).forEach(j -> {
++      int rawCodewordsOffset =  shorterBlocksRawOffset + j;
++      result[j].codewords[longerBlocksNumDataCodewords - 1] = rawCodewords[rawCodewordsOffset];
++    });
++    int longerBlocksRawOffset = shorterBlocksRawOffset + numLongerBlocks;
+ 
+     // Now add in error correction blocks
+     int max = result[0].codewords.length;
+-    for (int i = longerBlocksNumDataCodewords; i < max; i++) {
+-      for (int j = 0; j < numResultBlocks; j++) {
+-        int jOffset = specialVersion ? (j + 8) % numResultBlocks : j;
+-        int iOffset = specialVersion && jOffset > 7 ? i - 1 : i;
+-        result[jOffset].codewords[iOffset] = rawCodewords[rawCodewordsOffset++];
+-      }
+-    }
++    IntStream.range(longerBlocksNumDataCodewords, max).forEach(i ->
++        IntStream.range(0, numResultBlocks).forEach(j -> {
++          int jOffset = specialVersion ? (j + 8) % numResultBlocks : j;
++          int iOffset = specialVersion && jOffset > 7 ? i - 1 : i;
++          int rawCodewordsOffset = longerBlocksRawOffset + ((i - longerBlocksNumDataCodewords) * numResultBlocks + j);
++          result[jOffset].codewords[iOffset] = rawCodewords[rawCodewordsOffset];
++        })
++    );
+ 
++    int rawCodewordsOffset = longerBlocksRawOffset + (max - longerBlocksNumDataCodewords) * numResultBlocks;
+     if (rawCodewordsOffset != rawCodewords.length) {
+       throw new IllegalArgumentException();
+     }
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/datamatrix/decoder/Decoder.java ../build/core/src/main/java/com/google/zxing/datamatrix/decoder/Decoder.java
+--- ./core/src/main/java/com/google/zxing/datamatrix/decoder/Decoder.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/datamatrix/decoder/Decoder.java	2026-07-05 18:00:34.910985227 +0100
+@@ -24,6 +24,8 @@
+ import com.google.zxing.common.reedsolomon.ReedSolomonDecoder;
+ import com.google.zxing.common.reedsolomon.ReedSolomonException;
+ 
++import java.util.Arrays;
++
+ /**
+  * <p>The main class which implements Data Matrix Code decoding -- as opposed to locating and extracting
+  * the Data Matrix Code from an image.</p>
+@@ -72,10 +74,7 @@
+     DataBlock[] dataBlocks = DataBlock.getDataBlocks(codewords, version);
+ 
+     // Count total number of data bytes
+-    int totalBytes = 0;
+-    for (DataBlock db : dataBlocks) {
+-      totalBytes += db.getNumDataCodewords();
+-    }
++    int totalBytes = Arrays.stream(dataBlocks).mapToInt(DataBlock::getNumDataCodewords).sum();
+     byte[] resultBytes = new byte[totalBytes];
+ 
+     int errorsCorrected = 0;
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/datamatrix/decoder/Version.java ../build/core/src/main/java/com/google/zxing/datamatrix/decoder/Version.java
+--- ./core/src/main/java/com/google/zxing/datamatrix/decoder/Version.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/datamatrix/decoder/Version.java	2026-07-05 18:00:34.911181110 +0100
+@@ -18,6 +18,8 @@
+ 
+ import com.google.zxing.FormatException;
+ 
++import java.util.Arrays;
++
+ /**
+  * The Version object encapsulates attributes about a particular
+  * size Data Matrix Code.
+@@ -50,13 +52,11 @@
+     this.ecBlocks = ecBlocks;
+ 
+     // Calculate the total number of codewords
+-    int total = 0;
+     int ecCodewords = ecBlocks.getECCodewords();
+     ECB[] ecbArray = ecBlocks.getECBlocks();
+-    for (ECB ecBlock : ecbArray) {
+-      total += ecBlock.getCount() * (ecBlock.getDataCodewords() + ecCodewords);
+-    }
+-    this.totalCodewords = total;
++    this.totalCodewords = Arrays.stream(ecbArray)
++      .mapToInt(ecBlock -> ecBlock.getCount() * (ecBlock.getDataCodewords() + ecCodewords))
++      .sum();
+   }
+ 
+   public int getVersionNumber() {
+@@ -100,13 +100,10 @@
+       throw FormatException.getFormatInstance();
+     }
+ 
+-    for (Version version : VERSIONS) {
+-      if (version.symbolSizeRows == numRows && version.symbolSizeColumns == numColumns) {
+-        return version;
+-      }
+-    }
+-
+-    throw FormatException.getFormatInstance();
++    return Arrays.stream(VERSIONS)
++      .filter(version -> version.symbolSizeRows == numRows && version.symbolSizeColumns == numColumns)
++      .findFirst()
++      .orElseThrow(FormatException::getFormatInstance);
+   }
+ 
+   /**
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/datamatrix/encoder/SymbolInfo.java ../build/core/src/main/java/com/google/zxing/datamatrix/encoder/SymbolInfo.java
+--- ./core/src/main/java/com/google/zxing/datamatrix/encoder/SymbolInfo.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/datamatrix/encoder/SymbolInfo.java	2026-07-05 18:00:34.911390610 +0100
+@@ -18,6 +18,8 @@
+ 
+ import com.google.zxing.Dimension;
+ 
++import java.util.Arrays;
++
+ /**
+  * Symbol info table for DataMatrix.
+  *
+@@ -123,33 +125,25 @@
+                                   Dimension minSize,
+                                   Dimension maxSize,
+                                   boolean fail) {
+-    for (SymbolInfo symbol : symbols) {
+-      if (shape == SymbolShapeHint.FORCE_SQUARE && symbol.rectangular) {
+-        continue;
+-      }
+-      if (shape == SymbolShapeHint.FORCE_RECTANGLE && !symbol.rectangular) {
+-        continue;
+-      }
+-      if (minSize != null
+-          && (symbol.getSymbolWidth() < minSize.getWidth()
+-          || symbol.getSymbolHeight() < minSize.getHeight())) {
+-        continue;
+-      }
+-      if (maxSize != null
+-          && (symbol.getSymbolWidth() > maxSize.getWidth()
+-          || symbol.getSymbolHeight() > maxSize.getHeight())) {
+-        continue;
+-      }
+-      if (dataCodewords <= symbol.dataCapacity) {
+-        return symbol;
+-      }
+-    }
+-    if (fail) {
++    SymbolInfo symbolInfo = Arrays.stream(symbols)
++        .filter(s -> shape != SymbolShapeHint.FORCE_SQUARE || !s.rectangular)
++        .filter(s -> shape != SymbolShapeHint.FORCE_RECTANGLE || s.rectangular)
++        .filter(s -> minSize == null
++          || (s.getSymbolWidth() >= minSize.getWidth()
++          &&  s.getSymbolHeight() >= minSize.getHeight()))
++        .filter(s -> maxSize == null
++          || (s.getSymbolWidth() <= maxSize.getWidth()
++          &&  s.getSymbolHeight() <= maxSize.getHeight()))
++        .filter(s -> dataCodewords <= s.dataCapacity)
++        .findFirst()
++        .orElse(null);
++
++    if (symbolInfo == null && fail) {
+       throw new IllegalArgumentException(
+           "Can't find a symbol arrangement that matches the message. Data codewords: "
+               + dataCodewords);
+     }
+-    return null;
++    return symbolInfo;
+   }
+ 
+   private int getHorizontalDataRegions() {
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/multi/GenericMultipleBarcodeReader.java ../build/core/src/main/java/com/google/zxing/multi/GenericMultipleBarcodeReader.java
+--- ./core/src/main/java/com/google/zxing/multi/GenericMultipleBarcodeReader.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/multi/GenericMultipleBarcodeReader.java	2026-07-05 18:00:34.911612844 +0100
+@@ -25,8 +25,12 @@
+ import com.google.zxing.ResultPoint;
+ 
+ import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.DoubleSummaryStatistics;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Objects;
++import java.util.stream.IntStream;
+ 
+ /**
+  * <p>Attempts to locate multiple barcodes in an image by repeatedly decoding portion of the image.
+@@ -87,13 +91,9 @@
+     } catch (ReaderException ignored) {
+       return;
+     }
+-    boolean alreadyFound = false;
+-    for (Result existingResult : results) {
+-      if (existingResult.getText().equals(result.getText())) {
+-        alreadyFound = true;
+-        break;
+-      }
+-    }
++    boolean alreadyFound = results.stream()
++        .map(Result::getText)
++        .anyMatch(result.getText()::equals);
+     if (!alreadyFound) {
+       results.add(translateResultPoints(result, xOffset, yOffset));
+     }
+@@ -101,31 +101,23 @@
+     if (resultPoints == null || resultPoints.length == 0) {
+       return;
+     }
++    DoubleSummaryStatistics xStats = Arrays.stream(resultPoints)
++        .filter(Objects::nonNull)
++        .mapToDouble(ResultPoint::getX)
++        .summaryStatistics();
++
++    // Calculate Y statistics
++    DoubleSummaryStatistics yStats = Arrays.stream(resultPoints)
++        .filter(Objects::nonNull)
++        .mapToDouble(ResultPoint::getY)
++        .summaryStatistics();
++
+     int width = image.getWidth();
+     int height = image.getHeight();
+-    float minX = width;
+-    float minY = height;
+-    float maxX = 0.0f;
+-    float maxY = 0.0f;
+-    for (ResultPoint point : resultPoints) {
+-      if (point == null) {
+-        continue;
+-      }
+-      float x = point.getX();
+-      float y = point.getY();
+-      if (x < minX) {
+-        minX = x;
+-      }
+-      if (y < minY) {
+-        minY = y;
+-      }
+-      if (x > maxX) {
+-        maxX = x;
+-      }
+-      if (y > maxY) {
+-        maxY = y;
+-      }
+-    }
++    float minX = xStats.getCount() > 0 ? (float) xStats.getMin() : width;
++    float maxX = xStats.getCount() > 0 ? (float) xStats.getMax() : 0.0f;
++    float minY = yStats.getCount() > 0 ? (float) yStats.getMin() : height;
++    float maxY = yStats.getCount() > 0 ? (float) yStats.getMax() : 0.0f;
+ 
+     // Decode left of barcode
+     if (minX > MIN_DIMENSION_TO_RECUR) {
+@@ -162,13 +154,12 @@
+     if (oldResultPoints == null) {
+       return result;
+     }
+-    ResultPoint[] newResultPoints = new ResultPoint[oldResultPoints.length];
+-    for (int i = 0; i < oldResultPoints.length; i++) {
+-      ResultPoint oldPoint = oldResultPoints[i];
+-      if (oldPoint != null) {
+-        newResultPoints[i] = new ResultPoint(oldPoint.getX() + xOffset, oldPoint.getY() + yOffset);
+-      }
+-    }
++    ResultPoint[] newResultPoints = IntStream.range(0, oldResultPoints.length)
++        .mapToObj(i -> {
++          ResultPoint oldPoint = oldResultPoints[i];
++          return oldPoint == null ? null : new ResultPoint(oldPoint.getX() + xOffset, oldPoint.getY() + yOffset);
++        })
++        .toArray(ResultPoint[]::new);
+     Result newResult = new Result(result.getText(),
+                                   result.getRawBytes(),
+                                   result.getNumBits(),
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/multi/qrcode/detector/MultiFinderPatternFinder.java ../build/core/src/main/java/com/google/zxing/multi/qrcode/detector/MultiFinderPatternFinder.java
+--- ./core/src/main/java/com/google/zxing/multi/qrcode/detector/MultiFinderPatternFinder.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/multi/qrcode/detector/MultiFinderPatternFinder.java	2026-07-05 18:00:34.911864716 +0100
+@@ -27,10 +27,12 @@
+ 
+ import java.io.Serializable;
+ import java.util.ArrayList;
++import java.util.Arrays;
+ import java.util.Collections;
+ import java.util.Comparator;
+ import java.util.List;
+ import java.util.Map;
++import java.util.stream.Collectors;
+ 
+ /**
+  * <p>This class attempts to find finder patterns in a QR Code. Finder patterns are the square
+@@ -97,12 +99,10 @@
+    * @throws NotFoundException if 3 such finder patterns do not exist
+    */
+   private FinderPattern[][] selectMultipleBestPatterns() throws NotFoundException {
+-    List<FinderPattern> possibleCenters = new ArrayList<>();
+-    for (FinderPattern fp : getPossibleCenters()) {
+-      if (fp.getCount() >= 2) {
+-        possibleCenters.add(fp);
+-      }
+-    }
++    List<FinderPattern> possibleCenters = getPossibleCenters()
++        .stream()
++        .filter(fp -> fp.getCount() >= 2)
++        .collect(Collectors.toCollection(ArrayList::new));
+     int size = possibleCenters.size();
+ 
+     if (size < 3) {
+@@ -274,11 +274,12 @@
+       }
+     } // for i=iSkip-1 ...
+     FinderPattern[][] patternInfo = selectMultipleBestPatterns();
+-    List<FinderPatternInfo> result = new ArrayList<>();
+-    for (FinderPattern[] pattern : patternInfo) {
+-      ResultPoint.orderBestPatterns(pattern);
+-      result.add(new FinderPatternInfo(pattern));
+-    }
++    List<FinderPatternInfo> result = Arrays.stream(patternInfo)
++        .map(pattern -> {
++          ResultPoint.orderBestPatterns(pattern);
++          return new FinderPatternInfo(pattern);
++        })
++        .collect(Collectors.toCollection(ArrayList::new));
+ 
+     if (result.isEmpty()) {
+       return EMPTY_RESULT_ARRAY;
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/multi/qrcode/QRCodeMultiReader.java ../build/core/src/main/java/com/google/zxing/multi/qrcode/QRCodeMultiReader.java
+--- ./core/src/main/java/com/google/zxing/multi/qrcode/QRCodeMultiReader.java	2026-06-19 15:15:55.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/multi/qrcode/QRCodeMultiReader.java	2026-07-05 18:00:34.912076145 +0100
+@@ -99,13 +99,13 @@
+   static List<Result> processStructuredAppend(List<Result> results) {
+     List<Result> newResults = new ArrayList<>();
+     List<Result> saResults = new ArrayList<>();
+-    for (Result result : results) {
++    results.stream().forEach(result -> {
+       if (result.getResultMetadata().containsKey(ResultMetadataType.STRUCTURED_APPEND_SEQUENCE)) {
+         saResults.add(result);
+       } else {
+         newResults.add(result);
+       }
+-    }
++    });
+     if (saResults.isEmpty()) {
+       return results;
+     }
+@@ -115,7 +115,7 @@
+     StringBuilder newText = new StringBuilder();
+     ByteArrayOutputStream newRawBytes = new ByteArrayOutputStream();
+     ByteArrayOutputStream newByteSegment = new ByteArrayOutputStream();
+-    for (Result saResult : saResults) {
++    saResults.stream().forEach(saResult -> {
+       newText.append(saResult.getText());
+       byte[] saBytes = saResult.getRawBytes();
+       newRawBytes.write(saBytes, 0, saBytes.length);
+@@ -127,7 +127,7 @@
+           newByteSegment.write(segment, 0, segment.length);
+         }
+       }
+-    }
++    });
+ 
+     Result newResult = new Result(newText.toString(), newRawBytes.toByteArray(), NO_POINTS, BarcodeFormat.QR_CODE);
+     if (newByteSegment.size() > 0) {
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/oned/CodaBarReader.java ../build/core/src/main/java/com/google/zxing/oned/CodaBarReader.java
+--- ./core/src/main/java/com/google/zxing/oned/CodaBarReader.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/oned/CodaBarReader.java	2026-07-05 18:00:34.912314958 +0100
+@@ -26,6 +26,7 @@
+ 
+ import java.util.Arrays;
+ import java.util.Map;
++import java.util.stream.IntStream;
+ 
+ /**
+  * <p>Decodes Codabar barcodes.</p>
+@@ -228,24 +229,29 @@
+   private void setCounters(BitArray row) throws NotFoundException {
+     counterLength = 0;
+     // Start from the first white bit.
+-    int i = row.getNextUnset(0);
++    int startIndex = row.getNextUnset(0);
+     int end = row.getSize();
+-    if (i >= end) {
++    if (startIndex >= end) {
+       throw NotFoundException.getNotFoundInstance();
+     }
+-    boolean isWhite = true;
+-    int count = 0;
+-    while (i < end) {
+-      if (row.get(i) != isWhite) {
+-        count++;
++
++    final class StreamState {
++      private boolean isWhite = true;
++      private int count = 0;
++    }
++
++    final StreamState s = new StreamState();
++    IntStream.range(startIndex, end).forEach(i -> {
++      if (row.get(i) != s.isWhite) {
++        s.count++;
+       } else {
+-        counterAppend(count);
+-        count = 1;
+-        isWhite = !isWhite;
++        counterAppend(s.count);
++        s.count = 1;
++        s.isWhite = !s.isWhite;
+       }
+-      i++;
+-    }
+-    counterAppend(count);
++    });
++
++    counterAppend(s.count);
+   }
+ 
+   private void counterAppend(int e) {
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/oned/Code128Reader.java ../build/core/src/main/java/com/google/zxing/oned/Code128Reader.java
+--- ./core/src/main/java/com/google/zxing/oned/Code128Reader.java	2026-06-19 15:15:55.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/oned/Code128Reader.java	2026-07-05 18:00:34.912574858 +0100
+@@ -29,6 +29,7 @@
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Map;
++import java.util.stream.IntStream;
+ 
+ /**
+  * <p>Decodes Code 128 barcodes.</p>
+@@ -171,45 +172,52 @@
+     int width = row.getSize();
+     int rowOffset = row.getNextSet(0);
+ 
+-    int counterPosition = 0;
+-    int[] counters = new int[6];
+-    int patternStart = rowOffset;
+-    boolean isWhite = false;
+-    int patternLength = counters.length;
+-
+-    for (int i = rowOffset; i < width; i++) {
+-      if (row.get(i) != isWhite) {
+-        counters[counterPosition]++;
++    final class StreamState {
++      private final int[] counters = new int[6];
++      private final int patternLength = counters.length;
++      private int counterPosition = 0;
++      private int patternStart = rowOffset;
++      private boolean isWhite = false;
++      private float bestVariance = MAX_AVG_VARIANCE;
++      private int bestMatch = -1;
++    }
++
++    final StreamState s = new StreamState();
++    final int[] emptyIntArray = new int[0];
++    return IntStream.range(rowOffset, width).mapToObj(i -> {
++      if (row.get(i) != s.isWhite) {
++        s.counters[s.counterPosition]++;
+       } else {
+-        if (counterPosition == patternLength - 1) {
+-          float bestVariance = MAX_AVG_VARIANCE;
+-          int bestMatch = -1;
+-          for (int startCode = CODE_START_A; startCode <= CODE_START_C; startCode++) {
+-            float variance = patternMatchVariance(counters, CODE_PATTERNS[startCode],
++        if (s.counterPosition == s.patternLength - 1) {
++          s.bestVariance = MAX_AVG_VARIANCE;
++          s.bestMatch = -1;
++          IntStream.rangeClosed(CODE_START_A, CODE_START_C).forEach(startCode -> {
++            float variance = patternMatchVariance(s.counters, CODE_PATTERNS[startCode],
+                 MAX_INDIVIDUAL_VARIANCE);
+-            if (variance < bestVariance) {
+-              bestVariance = variance;
+-              bestMatch = startCode;
++            if (variance < s.bestVariance) {
++              s.bestVariance = variance;
++              s.bestMatch = startCode;
+             }
+-          }
++          });
+           // Look for whitespace before start pattern, >= 50% of width of start pattern
+-          if (bestMatch >= 0 &&
+-              row.isRange(Math.max(0, patternStart - (i - patternStart) / 2), patternStart, false)) {
+-            return new int[]{patternStart, i, bestMatch};
++          if (s.bestMatch >= 0 &&
++              row.isRange(Math.max(0, s.patternStart - (i - s.patternStart) / 2), s.patternStart, false)) {
++            return new int[] {s.patternStart, i, s.bestMatch};
+           }
+-          patternStart += counters[0] + counters[1];
+-          System.arraycopy(counters, 2, counters, 0, counterPosition - 1);
+-          counters[counterPosition - 1] = 0;
+-          counters[counterPosition] = 0;
+-          counterPosition--;
++          s.patternStart += s.counters[0] + s.counters[1];
++          System.arraycopy(s.counters, 2, s.counters, 0, s.counterPosition - 1);
++          s.counters[s.counterPosition - 1] = 0;
++          s.counters[s.counterPosition] = 0;
++          s.counterPosition--;
+         } else {
+-          counterPosition++;
++          s.counterPosition++;
+         }
+-        counters[counterPosition] = 1;
+-        isWhite = !isWhite;
++        s.counters[s.counterPosition] = 1;
++        s.isWhite = !s.isWhite;
+       }
+-    }
+-    throw NotFoundException.getNotFoundInstance();
++
++      return emptyIntArray;
++    }).filter(a -> a != emptyIntArray).findFirst().orElseThrow(NotFoundException::getNotFoundInstance);
+   }
+ 
+   private static int decodeCode(BitArray row, int[] counters, int rowOffset)
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/oned/Code128Writer.java ../build/core/src/main/java/com/google/zxing/oned/Code128Writer.java
+--- ./core/src/main/java/com/google/zxing/oned/Code128Writer.java	2026-06-19 15:15:55.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/oned/Code128Writer.java	2026-07-05 18:00:34.912849983 +0100
+@@ -21,6 +21,7 @@
+ import com.google.zxing.common.BitMatrix;
+ 
+ import java.util.ArrayList;
++import java.util.Arrays;
+ import java.util.Collection;
+ import java.util.Collections;
+ import java.util.Map;
+@@ -261,12 +262,7 @@
+     patterns.add(Code128Reader.CODE_PATTERNS[CODE_STOP]);
+ 
+     // Compute code width
+-    int codeWidth = 0;
+-    for (int[] pattern : patterns) {
+-      for (int width : pattern) {
+-        codeWidth += width;
+-      }
+-    }
++    int codeWidth = patterns.stream().flatMapToInt(Arrays::stream).sum();
+ 
+     // Compute result
+     boolean[] result = new boolean[codeWidth];
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/oned/MultiFormatOneDReader.java ../build/core/src/main/java/com/google/zxing/oned/MultiFormatOneDReader.java
+--- ./core/src/main/java/com/google/zxing/oned/MultiFormatOneDReader.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/oned/MultiFormatOneDReader.java	2026-07-05 18:00:34.913079573 +0100
+@@ -19,7 +19,6 @@
+ import com.google.zxing.BarcodeFormat;
+ import com.google.zxing.DecodeHintType;
+ import com.google.zxing.NotFoundException;
+-import com.google.zxing.Reader;
+ import com.google.zxing.ReaderException;
+ import com.google.zxing.Result;
+ import com.google.zxing.common.BitArray;
+@@ -27,6 +26,7 @@
+ import com.google.zxing.oned.rss.expanded.RSSExpandedReader;
+ 
+ import java.util.ArrayList;
++import java.util.Arrays;
+ import java.util.Collection;
+ import java.util.Map;
+ 
+@@ -106,9 +106,7 @@
+ 
+   @Override
+   public void reset() {
+-    for (Reader reader : readers) {
+-      reader.reset();
+-    }
++    Arrays.stream(readers).forEach(OneDReader::reset);
+   }
+ 
+ }
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/oned/MultiFormatUPCEANReader.java ../build/core/src/main/java/com/google/zxing/oned/MultiFormatUPCEANReader.java
+--- ./core/src/main/java/com/google/zxing/oned/MultiFormatUPCEANReader.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/oned/MultiFormatUPCEANReader.java	2026-07-05 18:00:34.913286441 +0100
+@@ -19,14 +19,15 @@
+ import com.google.zxing.BarcodeFormat;
+ import com.google.zxing.DecodeHintType;
+ import com.google.zxing.NotFoundException;
+-import com.google.zxing.Reader;
+ import com.google.zxing.ReaderException;
+ import com.google.zxing.Result;
+ import com.google.zxing.common.BitArray;
+ 
+ import java.util.ArrayList;
++import java.util.Arrays;
+ import java.util.Collection;
+ import java.util.Map;
++import java.util.Objects;
+ 
+ /**
+  * <p>A reader that can read all available UPC/EAN formats. If a caller wants to try to
+@@ -74,52 +75,53 @@
+                           Map<DecodeHintType,?> hints) throws NotFoundException {
+     // Compute this location once and reuse it on multiple implementations
+     int[] startGuardPattern = UPCEANReader.findStartGuardPattern(row);
+-    for (UPCEANReader reader : readers) {
+-      try {
+-        Result result = reader.decodeRow(rowNumber, row, startGuardPattern, hints);
+-        // Special case: a 12-digit code encoded in UPC-A is identical to a "0"
+-        // followed by those 12 digits encoded as EAN-13. Each will recognize such a code,
+-        // UPC-A as a 12-digit string and EAN-13 as a 13-digit string starting with "0".
+-        // Individually these are correct and their readers will both read such a code
+-        // and correctly call it EAN-13, or UPC-A, respectively.
+-        //
+-        // In this case, if we've been looking for both types, we'd like to call it
+-        // a UPC-A code. But for efficiency we only run the EAN-13 decoder to also read
+-        // UPC-A. So we special case it here, and convert an EAN-13 result to a UPC-A
+-        // result if appropriate.
+-        //
+-        // But, don't return UPC-A if UPC-A was not a requested format!
+-        boolean ean13MayBeUPCA =
+-            result.getBarcodeFormat() == BarcodeFormat.EAN_13 &&
+-                result.getText().charAt(0) == '0';
+-        @SuppressWarnings("unchecked")
+-        Collection<BarcodeFormat> possibleFormats =
+-            hints == null ? null : (Collection<BarcodeFormat>) hints.get(DecodeHintType.POSSIBLE_FORMATS);
+-        boolean canReturnUPCA = possibleFormats == null || possibleFormats.contains(BarcodeFormat.UPC_A);
+-  
+-        if (ean13MayBeUPCA && canReturnUPCA) {
+-          // Transfer the metadata across
+-          Result resultUPCA = new Result(result.getText().substring(1),
+-                                         result.getRawBytes(),
+-                                         result.getResultPoints(),
+-                                         BarcodeFormat.UPC_A);
+-          resultUPCA.putAllMetadata(result.getResultMetadata());
+-          return resultUPCA;
++    return Arrays.stream(readers)
++      .map(reader -> {
++        try {
++          Result result = reader.decodeRow(rowNumber, row, startGuardPattern, hints);
++          // Special case: a 12-digit code encoded in UPC-A is identical to a "0"
++          // followed by those 12 digits encoded as EAN-13. Each will recognize such a code,
++          // UPC-A as a 12-digit string and EAN-13 as a 13-digit string starting with "0".
++          // Individually these are correct and their readers will both read such a code
++          // and correctly call it EAN-13, or UPC-A, respectively.
++          //
++          // In this case, if we've been looking for both types, we'd like to call it
++          // a UPC-A code. But for efficiency we only run the EAN-13 decoder to also read
++          // UPC-A. So we special case it here, and convert an EAN-13 result to a UPC-A
++          // result if appropriate.
++          //
++          // But, don't return UPC-A if UPC-A was not a requested format!
++          boolean ean13MayBeUPCA =
++              result.getBarcodeFormat() == BarcodeFormat.EAN_13 &&
++              result.getText().charAt(0) == '0';
++          @SuppressWarnings("unchecked")
++          Collection<BarcodeFormat> possibleFormats =
++              hints == null ? null : (Collection<BarcodeFormat>) hints.get(DecodeHintType.POSSIBLE_FORMATS);
++          boolean canReturnUPCA = possibleFormats == null || possibleFormats.contains(BarcodeFormat.UPC_A);
++
++          if (ean13MayBeUPCA && canReturnUPCA) {
++            // Transfer the metadata across
++            Result resultUPCA = new Result(result.getText().substring(1),
++                result.getRawBytes(),
++                result.getResultPoints(),
++                BarcodeFormat.UPC_A);
++            resultUPCA.putAllMetadata(result.getResultMetadata());
++            return resultUPCA;
++          }
++          return result;
++        } catch (ReaderException ignored) {
++          // continue
+         }
+-        return result;
+-      } catch (ReaderException ignored) {
+-        // continue
+-      }
+-    }
+-
+-    throw NotFoundException.getNotFoundInstance();
++        return null;
++      })
++      .filter(Objects::nonNull)
++      .findFirst()
++      .orElseThrow(NotFoundException::getNotFoundInstance);
+   }
+ 
+   @Override
+   public void reset() {
+-    for (Reader reader : readers) {
+-      reader.reset();
+-    }
++    Arrays.stream(readers).forEach(OneDReader::reset);
+   }
+ 
+ }
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/oned/OneDReader.java ../build/core/src/main/java/com/google/zxing/oned/OneDReader.java
+--- ./core/src/main/java/com/google/zxing/oned/OneDReader.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/oned/OneDReader.java	2026-07-05 18:04:26.381782026 +0100
+@@ -31,6 +31,7 @@
+ import java.util.Arrays;
+ import java.util.EnumMap;
+ import java.util.Map;
++import java.util.stream.IntStream;
+ 
+ /**
+  * Encapsulates functionality and implementation that is common to all families
+@@ -246,16 +247,11 @@
+    * @param maxIndividualVariance The most any counter can differ before we give up
+    * @return ratio of total variance between counters and pattern compared to total pattern size
+    */
+-  protected static float patternMatchVariance(int[] counters,
+-                                              int[] pattern,
+-                                              float maxIndividualVariance) {
++  protected static float patternMatchVariance(int[] counters, int[] pattern, float maxIndividualVariance) {
+     int numCounters = counters.length;
+-    int total = 0;
+-    int patternLength = 0;
+-    for (int i = 0; i < numCounters; i++) {
+-      total += counters[i];
+-      patternLength += pattern[i];
+-    }
++    int total = Arrays.stream(counters).sum();
++    int patternLength = Arrays.stream(pattern, 0, numCounters).sum();
++
+     if (total < patternLength) {
+       // If we don't even have one pixel per unit of bar width, assume this is too small
+       // to reliably match, so fail:
+@@ -263,19 +259,28 @@
+     }
+ 
+     float unitBarWidth = (float) total / patternLength;
+-    maxIndividualVariance *= unitBarWidth;
++    float maxVariance = maxIndividualVariance * unitBarWidth;
+ 
+-    float totalVariance = 0.0f;
+-    for (int x = 0; x < numCounters; x++) {
+-      int counter = counters[x];
+-      float scaledPattern = pattern[x] * unitBarWidth;
+-      float variance = counter > scaledPattern ? counter - scaledPattern : scaledPattern - counter;
+-      if (variance > maxIndividualVariance) {
+-        return Float.POSITIVE_INFINITY;
++    final class StreamState {
++      private float individualVariance = 0.0f;
++      private float totalVariance = 0.0f;
++
++      private StreamState accumulate(float individualVariance) {
++        this.individualVariance = individualVariance;
++        this.totalVariance += individualVariance;
++        return this;
+       }
+-      totalVariance += variance;
+     }
+-    return totalVariance / total;
++
++    final StreamState streamState = new StreamState();
++    boolean exceededMax = IntStream.range(0, numCounters)
++        .mapToObj(i -> {
++          float individualVariance = Math.abs(counters[i] - pattern[i] * unitBarWidth);
++          return streamState.accumulate(individualVariance);
++        })
++        .anyMatch(s -> s.individualVariance > maxVariance);
++
++    return exceededMax ? Float.POSITIVE_INFINITY : streamState.totalVariance / total;
+   }
+ 
+   /**
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/oned/rss/expanded/RSSExpandedReader.java ../build/core/src/main/java/com/google/zxing/oned/rss/expanded/RSSExpandedReader.java
+--- ./core/src/main/java/com/google/zxing/oned/rss/expanded/RSSExpandedReader.java	2026-06-19 15:15:55.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/oned/rss/expanded/RSSExpandedReader.java	2026-07-05 18:00:34.913792143 +0100
+@@ -48,6 +48,8 @@
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Collections;
++import java.util.Objects;
++import java.util.stream.IntStream;
+ 
+ /**
+  * @author Pablo Orduña, University of Deusto (pablo.orduna@deusto.es)
+@@ -216,53 +218,42 @@
+   // Try to construct a valid rows sequence
+   // Recursion is used to implement backtracking
+   private List<ExpandedPair> checkRows(List<ExpandedRow> collectedRows, int currentRow) throws NotFoundException {
+-    for (int i = currentRow; i < rows.size(); i++) {
+-      ExpandedRow row = rows.get(i);
+-      this.pairs.clear();
+-      for (ExpandedRow collectedRow : collectedRows) {
+-        this.pairs.addAll(collectedRow.getPairs());
+-      }
+-      this.pairs.addAll(row.getPairs());
+-
+-      if (isValidSequence(this.pairs)) {
+-        if (checkChecksum()) {
+-          return this.pairs;
+-        }
++    return IntStream.range(currentRow, rows.size())
++      .mapToObj(i -> {
++        ExpandedRow row = rows.get(i);
++        this.pairs.clear();
++        collectedRows.stream().forEach(collectedRow -> this.pairs.addAll(collectedRow.getPairs()));
++        this.pairs.addAll(row.getPairs());
++
++        if (isValidSequence(this.pairs)) {
++          if (checkChecksum()) {
++            return this.pairs;
++          }
+ 
+-        List<ExpandedRow> rs = new ArrayList<>(collectedRows);
+-        rs.add(row);
+-        try {
+-          // Recursion: try to add more rows
+-          return checkRows(rs, i + 1);
+-        } catch (NotFoundException e) {
+-          // We failed, try the next candidate
++          List<ExpandedRow> rs = new ArrayList<>(collectedRows);
++          rs.add(row);
++          try {
++            // Recursion: try to add more rows
++            return checkRows(rs, i + 1);
++          } catch (NotFoundException e) {
++            // We failed, try the next candidate
++          }
+         }
+-      }
+-    }
+-
+-    throw NotFoundException.getNotFoundInstance();
++        return null;
++      })
++      .filter(Objects::nonNull)
++      .findFirst()
++      .orElseThrow(NotFoundException::getNotFoundInstance);
+   }
+ 
+   // Whether the pairs form a valid find pattern sequence,
+   // either complete or a prefix
+   private static boolean isValidSequence(List<ExpandedPair> pairs) {
+-    for (int[] sequence : FINDER_PATTERN_SEQUENCES) {
+-      if (pairs.size() <= sequence.length) {
+-        boolean stop = true;
+-        for (int j = 0; j < pairs.size(); j++) {
+-          if (pairs.get(j).getFinderPattern().getValue() != sequence[j]) {
+-            stop = false;
+-            break;
+-          }
+-        }
+-        if (stop) {
+-          return true;
+-        }
+-      }
+-
+-    }
+-
+-    return false;
++    return Arrays.stream(FINDER_PATTERN_SEQUENCES)
++      .filter(sequence -> sequence.length >= pairs.size())
++      .anyMatch(sequence -> IntStream.range(0, pairs.size())
++          .allMatch(j -> pairs.get(j).getFinderPattern().getValue() == sequence[j])
++      );
+   }
+ 
+   private void storeRow(int rowNumber) {
+@@ -302,13 +293,7 @@
+     for (Iterator<ExpandedRow> iterator = rows.iterator(); iterator.hasNext();) {
+       ExpandedRow r = iterator.next();
+       if (r.getPairs().size() != pairs.size()) {
+-        boolean allFound = true;
+-        for (ExpandedPair p : r.getPairs()) {
+-          if (!pairs.contains(p)) {
+-            allFound = false;
+-            break;
+-          }
+-        }
++        boolean allFound = r.getPairs().stream().allMatch(pairs::contains);
+         if (allFound) {
+           // 'pairs' contains all the pairs from the row 'r'
+           iterator.remove();
+@@ -322,13 +307,7 @@
+     for (ExpandedRow r : rows) {
+       boolean allFound = true;
+       for (ExpandedPair p : pairs) {
+-        boolean found = false;
+-        for (ExpandedPair pp : r.getPairs()) {
+-          if (p.equals(pp)) {
+-            found = true;
+-            break;
+-          }
+-        }
++        boolean found = r.getPairs().stream().anyMatch(p::equals);
+         if (!found) {
+           allFound = false;
+           break;
+@@ -521,11 +500,11 @@
+ 
+   private static void reverseCounters(int [] counters) {
+     int length = counters.length;
+-    for (int i = 0; i < length / 2; ++i) {
++    IntStream.range(0, length / 2).forEach(i -> {
+       int tmp = counters[i];
+       counters[i] = counters[length - i - 1];
+       counters[length - i - 1] = tmp;
+-    }
++    });
+   }
+ 
+   private FinderPattern parseFoundFinderPattern(BitArray row, int rowNumber, boolean oddPattern) {
+@@ -583,11 +562,12 @@
+     } else {
+       recordPattern(row, pattern.getStartEnd()[1], counters);
+       // reverse it
+-      for (int i = 0, j = counters.length - 1; i < j; i++, j--) {
++      IntStream.range(0, counters.length / 2).forEach(i -> {
++        int j = counters.length - 1 - i;
+         int temp = counters[i];
+         counters[i] = counters[j];
+         counters[j] = temp;
+-      }
++      });
+     } //counters[] has the pixels of the module
+ 
+     int numModules = 17; //left and right data characters have all the same length
+@@ -632,22 +612,22 @@
+ 
+     int weightRowNumber = 4 * pattern.getValue() + (isOddPattern ? 0 : 2) + (leftChar ? 0 : 1) - 1;
+ 
+-    int oddSum = 0;
+-    int oddChecksumPortion = 0;
+-    for (int i = oddCounts.length - 1; i >= 0; i--) {
+-      if (isNotA1left(pattern, isOddPattern, leftChar)) {
+-        int weight = WEIGHTS[weightRowNumber][2 * i];
+-        oddChecksumPortion += oddCounts[i] * weight;
+-      }
+-      oddSum += oddCounts[i];
+-    }
+-    int evenChecksumPortion = 0;
+-    for (int i = evenCounts.length - 1; i >= 0; i--) {
+-      if (isNotA1left(pattern, isOddPattern, leftChar)) {
+-        int weight = WEIGHTS[weightRowNumber][2 * i + 1];
+-        evenChecksumPortion += evenCounts[i] * weight;
+-      }
+-    }
++    int oddSum = Arrays.stream(oddCounts).sum();
++    int oddChecksumPortion = IntStream.range(0, oddCounts.length)
++        .map(i -> oddCounts.length - 1 - i) // iterate in reverse order
++        .filter(i -> isNotA1left(pattern, isOddPattern, leftChar))
++        .reduce(0, (acc, i) -> {
++          int weight = WEIGHTS[weightRowNumber][2 * i];
++          return acc + oddCounts[i] * weight;
++        });
++
++    int evenChecksumPortion = IntStream.range(0, evenCounts.length)
++        .map(i -> evenCounts.length - 1 - i)
++        .filter(i -> isNotA1left(pattern, isOddPattern, leftChar))
++        .reduce(0, (acc, i) -> {
++          int weight = WEIGHTS[weightRowNumber][2 * i + 1];
++          return acc + evenCounts[i] * weight;
++        });
+     int checksumPortion = oddChecksumPortion + evenChecksumPortion;
+ 
+     if ((oddSum & 0x01) != 0 || oddSum > 13 || oddSum < 4) {
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/oned/rss/RSS14Reader.java ../build/core/src/main/java/com/google/zxing/oned/rss/RSS14Reader.java
+--- ./core/src/main/java/com/google/zxing/oned/rss/RSS14Reader.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/oned/rss/RSS14Reader.java	2026-07-05 18:00:34.914127197 +0100
+@@ -31,6 +31,8 @@
+ import java.util.Collection;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Optional;
++import java.util.stream.IntStream;
+ 
+ /**
+  * Decodes RSS-14, including truncated and stacked variants. See ISO/IEC 24724:2006.
+@@ -74,31 +76,27 @@
+     Pair rightPair = decodePair(row, true, rowNumber, hints);
+     addOrTally(possibleRightPairs, rightPair);
+     row.reverse();
+-    for (Pair left : possibleLeftPairs) {
+-      if (left.getCount() > 1) {
+-        for (Pair right : possibleRightPairs) {
+-          if (right.getCount() > 1 && checkChecksum(left, right)) {
+-            return constructResult(left, right);
+-          }
+-        }
+-      }
+-    }
+-    throw NotFoundException.getNotFoundInstance();
++    return possibleLeftPairs.stream()
++      .filter(left -> left.getCount() > 1)
++      .flatMap(left -> possibleRightPairs.stream()
++        .filter(right -> right.getCount() > 1 && checkChecksum(left, right))
++        .map(right -> constructResult(left, right)))
++      .findFirst()
++      .orElseThrow(NotFoundException::getNotFoundInstance);
+   }
+ 
+   private static void addOrTally(Collection<Pair> possiblePairs, Pair pair) {
+     if (pair == null) {
+       return;
+     }
+-    boolean found = false;
+-    for (Pair other : possiblePairs) {
+-      if (other.getValue() == pair.getValue()) {
+-        other.incrementCount();
+-        found = true;
+-        break;
+-      }
+-    }
+-    if (!found) {
++
++    Optional<Pair> match = possiblePairs.stream()
++        .filter(other -> other.getValue() == pair.getValue())
++        .findFirst();
++
++    if (match.isPresent()) {
++      match.get().incrementCount();
++    } else {
+       possiblePairs.add(pair);
+     }
+   }
+@@ -114,16 +112,14 @@
+     String text = String.valueOf(symbolValue);
+ 
+     StringBuilder buffer = new StringBuilder(14);
+-    for (int i = 13 - text.length(); i > 0; i--) {
+-      buffer.append('0');
+-    }
++    IntStream.rangeClosed(1, 13 - text.length()).forEach(i -> buffer.append('0'));
+     buffer.append(text);
+ 
+-    int checkDigit = 0;
+-    for (int i = 0; i < 13; i++) {
++    int checkDigit = IntStream.range(0, 13).reduce(0, (currentCheckDigit, i) -> {
+       int digit = buffer.charAt(i) - '0';
+-      checkDigit += (i & 0x01) == 0 ? 3 * digit : digit;
+-    }
++      return currentCheckDigit + ((i & 0x01) == 0 ? 3 * digit : digit);
++    });
++
+     checkDigit = 10 - (checkDigit % 10);
+     if (checkDigit == 10) {
+       checkDigit = 0;
+@@ -193,11 +189,13 @@
+     } else {
+       recordPattern(row, pattern.getStartEnd()[1], counters);
+       // reverse it
+-      for (int i = 0, j = counters.length - 1; i < j; i++, j--) {
+-        int temp = counters[i];
+-        counters[i] = counters[j];
+-        counters[j] = temp;
+-      }
++      IntStream.range(0, counters.length / 2)
++          .forEach(i -> {
++            int j = counters.length - 1 - i;
++            int temp = counters[i];
++            counters[i] = counters[j];
++            counters[j] = temp;
++          });
+     }
+ 
+     int numModules = outsideChar ? 16 : 15;
+@@ -208,7 +206,7 @@
+     float[] oddRoundingErrors = this.getOddRoundingErrors();
+     float[] evenRoundingErrors = this.getEvenRoundingErrors();
+ 
+-    for (int i = 0; i < counters.length; i++) {
++    IntStream.range(0, counters.length).forEach(i -> {
+       float value = counters[i] / elementWidth;
+       int count = (int) (value + 0.5f); // Round
+       if (count < 1) {
+@@ -224,24 +222,19 @@
+         evenCounts[offset] = count;
+         evenRoundingErrors[offset] = value - count;
+       }
+-    }
++    });
+ 
+     adjustOddEvenCounts(outsideChar, numModules);
+ 
+-    int oddSum = 0;
+-    int oddChecksumPortion = 0;
+-    for (int i = oddCounts.length - 1; i >= 0; i--) {
+-      oddChecksumPortion *= 9;
+-      oddChecksumPortion += oddCounts[i];
+-      oddSum += oddCounts[i];
+-    }
+-    int evenChecksumPortion = 0;
+-    int evenSum = 0;
+-    for (int i = evenCounts.length - 1; i >= 0; i--) {
+-      evenChecksumPortion *= 9;
+-      evenChecksumPortion += evenCounts[i];
+-      evenSum += evenCounts[i];
+-    }
++    int oddSum = Arrays.stream(oddCounts).sum();
++    int oddChecksumPortion = IntStream.range(0, oddCounts.length)
++        .map(i -> oddCounts[oddCounts.length - 1 - i]) // iterate in reverse order
++        .reduce(0, (acc, count) -> acc * 9 + count);
++
++    int evenChecksumPortion = IntStream.range(0, evenCounts.length)
++        .map(i -> evenCounts[evenCounts.length - 1 - i]) // iterate in reverse order
++        .reduce(0, (acc, count) -> acc * 9 + count);
++    int evenSum = Arrays.stream(evenCounts).sum();
+     int checksumPortion = oddChecksumPortion + 3 * evenChecksumPortion;
+ 
+     if (outsideChar) {
+@@ -282,16 +275,14 @@
+     counters[3] = 0;
+ 
+     int width = row.getSize();
+-    boolean isWhite = false;
+-    int rowOffset = 0;
+-    while (rowOffset < width) {
+-      isWhite = !row.get(rowOffset);
+-      if (rightFinderPattern == isWhite) {
+-        // Will encounter white first when searching for right finder pattern
+-        break;
+-      }
+-      rowOffset++;
+-    }
++    int rowOffset = IntStream.range(0, width)
++        .filter(i -> {
++          boolean isWhite = !row.get(i);
++          return rightFinderPattern == isWhite;
++        })
++        .findFirst()
++        .orElse(width);
++    boolean isWhite = rowOffset < width && !row.get(rowOffset);
+ 
+     int counterPosition = 0;
+     int patternStart = rowOffset;
+@@ -324,12 +315,14 @@
+       throws NotFoundException {
+     // Actually we found elements 2-5
+     boolean firstIsBlack = row.get(startEnd[0]);
+-    int firstElementStart = startEnd[0] - 1;
++    int firstElementStartUpperBound = startEnd[0] - 1;
+     // Locate element 1
+-    while (firstElementStart >= 0 && firstIsBlack != row.get(firstElementStart)) {
+-      firstElementStart--;
+-    }
+-    firstElementStart++;
++    int firstElementStart = IntStream.rangeClosed(0, firstElementStartUpperBound)
++        .map(i -> firstElementStartUpperBound - i) // iterate in reverse order
++        .filter(i -> firstIsBlack == row.get(i))
++        .findFirst()
++        .orElse(-1) + 1;
++
+     int firstCounter = startEnd[0] - firstElementStart;
+     // Make 'counters' hold 1-4
+     int[] counters = getDecodeFinderCounters();
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/oned/UPCEANReader.java ../build/core/src/main/java/com/google/zxing/oned/UPCEANReader.java
+--- ./core/src/main/java/com/google/zxing/oned/UPCEANReader.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/oned/UPCEANReader.java	2026-07-05 18:00:34.914400711 +0100
+@@ -30,6 +30,7 @@
+ 
+ import java.util.Arrays;
+ import java.util.Map;
++import java.util.stream.IntStream;
+ 
+ /**
+  * <p>Encapsulates functionality and implementation that is common to UPC and EAN families
+@@ -367,19 +368,29 @@
+   static int decodeDigit(BitArray row, int[] counters, int rowOffset, int[][] patterns)
+       throws NotFoundException {
+     recordPattern(row, rowOffset, counters);
+-    float bestVariance = MAX_AVG_VARIANCE; // worst variance we'll accept
+-    int bestMatch = -1;
+-    int max = patterns.length;
+-    for (int i = 0; i < max; i++) {
+-      int[] pattern = patterns[i];
+-      float variance = patternMatchVariance(counters, pattern, MAX_INDIVIDUAL_VARIANCE);
+-      if (variance < bestVariance) {
+-        bestVariance = variance;
+-        bestMatch = i;
++
++    final class IndexAndVariance {
++      private final int index;
++      private final float variance;
++
++      private IndexAndVariance(int index, float variance) {
++        this.index = index;
++        this.variance = variance;
+       }
+     }
+-    if (bestMatch >= 0) {
+-      return bestMatch;
++
++    int max = patterns.length;
++    IndexAndVariance identity = new IndexAndVariance(-1, MAX_AVG_VARIANCE);
++    IndexAndVariance p = IntStream.range(0, max)
++        .mapToObj(i -> {
++          int[] pattern = patterns[i];
++          float variance = patternMatchVariance(counters, pattern, MAX_INDIVIDUAL_VARIANCE);
++          return new IndexAndVariance(i, variance);
++        })
++        .reduce(identity, (best, current) -> current.variance < best.variance ? current : best);
++
++    if (p.index >= 0) {
++      return p.index;
+     } else {
+       throw NotFoundException.getNotFoundInstance();
+     }
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/pdf417/decoder/DetectionResultRowIndicatorColumn.java ../build/core/src/main/java/com/google/zxing/pdf417/decoder/DetectionResultRowIndicatorColumn.java
+--- ./core/src/main/java/com/google/zxing/pdf417/decoder/DetectionResultRowIndicatorColumn.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/pdf417/decoder/DetectionResultRowIndicatorColumn.java	2026-07-05 18:00:34.914646457 +0100
+@@ -19,6 +19,9 @@
+ import com.google.zxing.ResultPoint;
+ import com.google.zxing.pdf417.PDF417Common;
+ 
++import java.util.Arrays;
++import java.util.Objects;
++
+ /**
+  * @author Guenther Grau
+  */
+@@ -32,11 +35,9 @@
+   }
+ 
+   private void setRowNumbers() {
+-    for (Codeword codeword : getCodewords()) {
+-      if (codeword != null) {
+-        codeword.setRowNumberAsRowIndicatorColumn();
+-      }
+-    }
++    Arrays.stream(getCodewords())
++        .filter(Objects::nonNull)
++        .forEach(Codeword::setRowNumberAsRowIndicatorColumn);
+   }
+ 
+   // TODO implement properly
+@@ -109,16 +110,11 @@
+     }
+     adjustIncompleteIndicatorColumnRowNumbers(barcodeMetadata);
+     int[] result = new int[barcodeMetadata.getRowCount()];
+-    for (Codeword codeword : getCodewords()) {
+-      if (codeword != null) {
+-        int rowNumber = codeword.getRowNumber();
+-        if (rowNumber >= result.length) {
+-          // We have more rows than the barcode metadata allows for, ignore them.
+-          continue;
+-        }
+-        result[rowNumber]++;
+-      } // else throw exception?
+-    }
++    Arrays.stream(getCodewords())
++        .filter(Objects::nonNull)
++        .mapToInt(Codeword::getRowNumber)
++        .filter(rowNumber -> rowNumber < result.length)
++        .forEach(rowNumber -> result[rowNumber]++);
+     return result;
+   }
+ 
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/pdf417/decoder/ec/ModulusPoly.java ../build/core/src/main/java/com/google/zxing/pdf417/decoder/ec/ModulusPoly.java
+--- ./core/src/main/java/com/google/zxing/pdf417/decoder/ec/ModulusPoly.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/pdf417/decoder/ec/ModulusPoly.java	2026-07-05 18:00:34.914875751 +0100
+@@ -16,6 +16,9 @@
+ 
+ package com.google.zxing.pdf417.decoder.ec;
+ 
++import java.util.Arrays;
++import java.util.stream.IntStream;
++
+ /**
+  * @author Sean Owen
+  */
+@@ -86,18 +89,15 @@
+     }
+     if (a == 1) {
+       // Just the sum of the coefficients
+-      int result = 0;
+-      for (int coefficient : coefficients) {
+-        result = field.add(result, coefficient);
+-      }
+-      return result;
++      return Arrays.stream(coefficients).reduce(0, field::add);
+     }
+-    int result = coefficients[0];
++
+     int size = coefficients.length;
+-    for (int i = 1; i < size; i++) {
+-      result = field.add(field.multiply(a, result), coefficients[i]);
+-    }
+-    return result;
++    return IntStream.range(1, size)
++      .reduce(
++        coefficients[0],
++        (result, i) -> field.add(field.multiply(a, result), coefficients[i])
++      );
+   }
+ 
+   ModulusPoly add(ModulusPoly other) {
+@@ -152,21 +152,20 @@
+     int[] bCoefficients = other.coefficients;
+     int bLength = bCoefficients.length;
+     int[] product = new int[aLength + bLength - 1];
+-    for (int i = 0; i < aLength; i++) {
++    IntStream.range(0, aLength).forEach(i -> {
+       int aCoeff = aCoefficients[i];
+-      for (int j = 0; j < bLength; j++) {
+-        product[i + j] = field.add(product[i + j], field.multiply(aCoeff, bCoefficients[j]));
+-      }
+-    }
++      IntStream.range(0, bLength).forEach(j ->
++          product[i + j] = field.add(product[i + j], field.multiply(aCoeff, bCoefficients[j]))
++      );
++    });
+     return new ModulusPoly(field, product);
+   }
+ 
+   ModulusPoly negative() {
+     int size = coefficients.length;
+-    int[] negativeCoefficients = new int[size];
+-    for (int i = 0; i < size; i++) {
+-      negativeCoefficients[i] = field.subtract(0, coefficients[i]);
+-    }
++    int[] negativeCoefficients = IntStream.range(0, size)
++        .map(i -> field.subtract(0, coefficients[i]))
++        .toArray();
+     return new ModulusPoly(field, negativeCoefficients);
+   }
+ 
+@@ -178,10 +177,9 @@
+       return this;
+     }
+     int size = coefficients.length;
+-    int[] product = new int[size];
+-    for (int i = 0; i < size; i++) {
+-      product[i] = field.multiply(coefficients[i], scalar);
+-    }
++    int[] product = IntStream.range(0, size)
++        .map(i -> field.multiply(coefficients[i], scalar))
++        .toArray();
+     return new ModulusPoly(field, product);
+   }
+ 
+@@ -193,40 +191,42 @@
+       return field.getZero();
+     }
+     int size = coefficients.length;
+-    int[] product = new int[size + degree];
+-    for (int i = 0; i < size; i++) {
+-      product[i] = field.multiply(coefficients[i], coefficient);
+-    }
++    int[] product = IntStream.range(0, size + degree)
++        .map(i -> i >= size ? 0 : field.multiply(coefficients[i], coefficient))
++        .toArray();
+     return new ModulusPoly(field, product);
+   }
+ 
+   @Override
+   public String toString() {
+-    StringBuilder result = new StringBuilder(8 * getDegree());
+-    for (int degree = getDegree(); degree >= 0; degree--) {
+-      int coefficient = getCoefficient(degree);
+-      if (coefficient != 0) {
+-        if (coefficient < 0) {
+-          result.append(" - ");
+-          coefficient = -coefficient;
+-        } else {
+-          if (result.length() > 0) {
+-            result.append(" + ");
++    int maxDegree = getDegree();
++    StringBuilder result = new StringBuilder(8 * maxDegree);
++    IntStream.rangeClosed(0, maxDegree)
++        .map(i -> maxDegree - i) // iterate in reverse order
++        .forEach(degree -> {
++          int coefficient = getCoefficient(degree);
++          if (coefficient != 0) {
++            if (coefficient < 0) {
++              result.append(" - ");
++              coefficient = -coefficient;
++            } else {
++              if (result.length() > 0) {
++                result.append(" + ");
++              }
++            }
++            if (degree == 0 || coefficient != 1) {
++              result.append(coefficient);
++            }
++            if (degree != 0) {
++              if (degree == 1) {
++                result.append('x');
++              } else {
++                result.append("x^");
++                result.append(degree);
++              }
++            }
+           }
+-        }
+-        if (degree == 0 || coefficient != 1) {
+-          result.append(coefficient);
+-        }
+-        if (degree != 0) {
+-          if (degree == 1) {
+-            result.append('x');
+-          } else {
+-            result.append("x^");
+-            result.append(degree);
+-          }
+-        }
+-      }
+-    }
++        });
+     return result.toString();
+   }
+ 
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/pdf417/decoder/PDF417CodewordDecoder.java ../build/core/src/main/java/com/google/zxing/pdf417/decoder/PDF417CodewordDecoder.java
+--- ./core/src/main/java/com/google/zxing/pdf417/decoder/PDF417CodewordDecoder.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/pdf417/decoder/PDF417CodewordDecoder.java	2026-07-05 18:00:34.915107190 +0100
+@@ -19,6 +19,8 @@
+ import com.google.zxing.common.detector.MathUtils;
+ import com.google.zxing.pdf417.PDF417Common;
+ 
++import java.util.stream.IntStream;
++
+ /**
+  * @author Guenther Grau
+  * @author creatale GmbH (christoph.schulz@creatale.de)
+@@ -93,28 +95,33 @@
+     int bitCountSum = MathUtils.sum(moduleBitCount);
+     float[] bitCountRatios = new float[PDF417Common.BARS_IN_MODULE];
+     if (bitCountSum > 1) {
+-      for (int i = 0; i < bitCountRatios.length; i++) {
+-        bitCountRatios[i] = moduleBitCount[i] / (float) bitCountSum;
+-      }
++      IntStream.range(0, bitCountRatios.length)
++          .forEach(i -> bitCountRatios[i] = moduleBitCount[i] / (float) bitCountSum);
+     }
+-    float bestMatchError = Float.MAX_VALUE;
+-    int bestMatch = -1;
+-    for (int j = 0; j < RATIOS_TABLE.length; j++) {
++
++    final class StreamState {
++      private float bestMatchError = Float.MAX_VALUE;
++      private int bestMatch = -1;
+       float error = 0.0f;
+-      float[] ratioTableRow = RATIOS_TABLE[j];
+-      for (int k = 0; k < PDF417Common.BARS_IN_MODULE; k++) {
+-        float diff = ratioTableRow[k] - bitCountRatios[k];
+-        error += diff * diff;
+-        if (error >= bestMatchError) {
+-          break;
+-        }
+-      }
+-      if (error < bestMatchError) {
+-        bestMatchError = error;
+-        bestMatch = PDF417Common.SYMBOL_TABLE[j];
+-      }
++      float[] ratioTableRow = null;
+     }
+-    return bestMatch;
++
++    final StreamState s = new StreamState();
++    IntStream.range(0, RATIOS_TABLE.length).forEach(j -> {
++      s.error = 0.0f;
++      s.ratioTableRow = RATIOS_TABLE[j];
++      IntStream.range(0, PDF417Common.BARS_IN_MODULE).anyMatch(k -> {
++        float diff = s.ratioTableRow[k] - bitCountRatios[k];
++        s.error += diff * diff;
++        return s.error >= s.bestMatchError;
++      });
++      if (s.error < s.bestMatchError) {
++        s.bestMatchError = s.error;
++        s.bestMatch = PDF417Common.SYMBOL_TABLE[j];
++      }
++    });
++
++    return s.bestMatch;
+   }
+ 
+ }
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/pdf417/decoder/PDF417ScanningDecoder.java ../build/core/src/main/java/com/google/zxing/pdf417/decoder/PDF417ScanningDecoder.java
+--- ./core/src/main/java/com/google/zxing/pdf417/decoder/PDF417ScanningDecoder.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/pdf417/decoder/PDF417ScanningDecoder.java	2026-07-05 18:00:34.915314974 +0100
+@@ -27,6 +27,7 @@
+ import com.google.zxing.pdf417.decoder.ec.ErrorCorrection;
+ 
+ import java.util.ArrayList;
++import java.util.Arrays;
+ import java.util.Collection;
+ import java.util.Formatter;
+ import java.util.List;
+@@ -176,11 +177,7 @@
+   }
+ 
+   private static int getMax(int[] values) {
+-    int maxValue = -1;
+-    for (int value : values) {
+-      maxValue = Math.max(maxValue, value);
+-    }
+-    return maxValue;
++    return Arrays.stream(values).max().orElse(-1);
+   }
+ 
+   private static BarcodeMetadata getBarcodeMetadata(DetectionResultRowIndicatorColumn leftRowIndicatorColumn,
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/pdf417/detector/Detector.java ../build/core/src/main/java/com/google/zxing/pdf417/detector/Detector.java
+--- ./core/src/main/java/com/google/zxing/pdf417/detector/Detector.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/pdf417/detector/Detector.java	2026-07-05 18:00:34.915570281 +0100
+@@ -26,6 +26,9 @@
+ import java.util.Arrays;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Objects;
++import java.util.stream.IntStream;
++import java.util.stream.Stream;
+ 
+ /**
+  * <p>Encapsulates logic that can detect a PDF417 Code in an image, even if the
+@@ -80,14 +83,15 @@
+     //boolean tryHarder = hints != null && hints.containsKey(DecodeHintType.TRY_HARDER);
+ 
+     BitMatrix originalMatrix = image.getBlackMatrix();
+-    for (int rotation : ROTATIONS) {
+-      BitMatrix bitMatrix = applyRotation(originalMatrix, rotation);
+-      List<ResultPoint[]> barcodeCoordinates = detect(multiple, bitMatrix);
+-      if (!barcodeCoordinates.isEmpty()) {
+-        return new PDF417DetectorResult(bitMatrix, barcodeCoordinates, rotation);
+-      }
+-    }
+-    return new PDF417DetectorResult(originalMatrix, new ArrayList<>(), 0);
++    return Arrays.stream(ROTATIONS)
++      .mapToObj(rotation -> {
++        BitMatrix bitMatrix = applyRotation(originalMatrix, rotation);
++        List<ResultPoint[]> barcodeCoordinates = detect(multiple, bitMatrix);
++        return barcodeCoordinates.isEmpty() ? null : new PDF417DetectorResult(bitMatrix, barcodeCoordinates, rotation);
++      })
++      .filter(Objects::nonNull)
++      .findFirst()
++      .orElseGet(() -> new PDF417DetectorResult(originalMatrix, new ArrayList<>(), 0));
+   }
+ 
+   /**
+@@ -130,14 +134,12 @@
+         // below the lowest barcode we found so far.
+         foundBarcodeInRow = false;
+         column = 0;
+-        for (ResultPoint[] barcodeCoordinate : barcodeCoordinates) {
+-          if (barcodeCoordinate[1] != null) {
+-            row = (int) Math.max(row, barcodeCoordinate[1].getY());
+-          }
+-          if (barcodeCoordinate[3] != null) {
+-            row = Math.max(row, (int) barcodeCoordinate[3].getY());
+-          }
+-        }
++        row = (int) barcodeCoordinates.stream()
++          .flatMap(barcodeCoordinate -> Stream.of(barcodeCoordinate[1], barcodeCoordinate[3]))
++          .filter(Objects::nonNull)
++          .mapToDouble(ResultPoint::getY)
++          .reduce(row, Math::max);
++
+         row += ROW_STEP;
+         continue;
+       }
+@@ -198,9 +200,9 @@
+   }
+ 
+   private static void copyToResult(ResultPoint[] result, ResultPoint[] tmpResult, int[] destinationIndexes) {
+-    for (int i = 0; i < destinationIndexes.length; i++) {
+-      result[destinationIndexes[i]] = tmpResult[i];
+-    }
++    IntStream.range(0, destinationIndexes.length).forEach(i ->
++        result[destinationIndexes[i]] = tmpResult[i]
++    );
+   }
+ 
+   private static ResultPoint[] findRowsWithPattern(BitMatrix matrix,
+@@ -332,12 +334,8 @@
+    */
+   private static float patternMatchVariance(int[] counters, int[] pattern) {
+     int numCounters = counters.length;
+-    int total = 0;
+-    int patternLength = 0;
+-    for (int i = 0; i < numCounters; i++) {
+-      total += counters[i];
+-      patternLength += pattern[i];
+-    }
++    int total = Arrays.stream(counters).sum();
++    int patternLength = Arrays.stream(pattern).sum();
+     if (total < patternLength) {
+       // If we don't even have one pixel per unit of bar width, assume this
+       // is too small to reliably match, so fail:
+@@ -349,16 +347,18 @@
+     float unitBarWidth = (float) total / patternLength;
+     float maxIndividualVariance = MAX_INDIVIDUAL_VARIANCE * unitBarWidth;
+ 
+-    float totalVariance = 0.0f;
+-    for (int x = 0; x < numCounters; x++) {
+-      int counter = counters[x];
+-      float scaledPattern = pattern[x] * unitBarWidth;
+-      float variance = counter > scaledPattern ? counter - scaledPattern : scaledPattern - counter;
+-      if (variance > maxIndividualVariance) {
+-        return Float.POSITIVE_INFINITY;
+-      }
+-      totalVariance += variance;
++    boolean exceededMax = IntStream.range(0, numCounters)
++        .mapToDouble(x -> Math.abs(counters[x] - pattern[x] * unitBarWidth))
++        .anyMatch(variance -> variance > maxIndividualVariance);
++
++    if (exceededMax) {
++      return Float.POSITIVE_INFINITY;
+     }
+-    return totalVariance / total;
++
++    double totalVariance = IntStream.range(0, numCounters)
++        .mapToDouble(x -> Math.abs(counters[x] - pattern[x] * unitBarWidth))
++        .sum();
++
++    return (float) totalVariance / total;
+   }
+ }
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/pdf417/PDF417Common.java ../build/core/src/main/java/com/google/zxing/pdf417/PDF417Common.java
+--- ./core/src/main/java/com/google/zxing/pdf417/PDF417Common.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/pdf417/PDF417Common.java	2026-07-05 18:00:34.915869947 +0100
+@@ -56,12 +56,7 @@
+     if (list == null || list.isEmpty()) {
+       return EMPTY_INT_ARRAY;
+     }
+-    int[] result = new int[list.size()];
+-    int i = 0;
+-    for (Integer integer : list) {
+-      result[i++] = integer;
+-    }
+-    return result;
++    return list.stream().mapToInt(Integer::intValue).toArray();
+   }
+ 
+   /**
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/qrcode/decoder/DataBlock.java ../build/core/src/main/java/com/google/zxing/qrcode/decoder/DataBlock.java
+--- ./core/src/main/java/com/google/zxing/qrcode/decoder/DataBlock.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/qrcode/decoder/DataBlock.java	2026-07-05 18:00:34.916176250 +0100
+@@ -16,6 +16,9 @@
+ 
+ package com.google.zxing.qrcode.decoder;
+ 
++import java.util.Arrays;
++import java.util.stream.IntStream;
++
+ /**
+  * <p>Encapsulates a block of data within a QR Code. QR Codes may split their data into
+  * multiple blocks, each of which is a unit of data and error-correction codewords. Each
+@@ -56,58 +59,58 @@
+     // error correction level
+     Version.ECBlocks ecBlocks = version.getECBlocksForLevel(ecLevel);
+ 
+-    // First count the total number of data blocks
+-    int totalBlocks = 0;
++    // First get the EC blocks
+     Version.ECB[] ecBlockArray = ecBlocks.getECBlocks();
+-    for (Version.ECB ecBlock : ecBlockArray) {
+-      totalBlocks += ecBlock.getCount();
+-    }
+ 
+     // Now establish DataBlocks of the appropriate size and number of data codewords
+-    DataBlock[] result = new DataBlock[totalBlocks];
+-    int numResultBlocks = 0;
+-    for (Version.ECB ecBlock : ecBlockArray) {
+-      for (int i = 0; i < ecBlock.getCount(); i++) {
+-        int numDataCodewords = ecBlock.getDataCodewords();
+-        int numBlockCodewords = ecBlocks.getECCodewordsPerBlock() + numDataCodewords;
+-        result[numResultBlocks++] = new DataBlock(numDataCodewords, new byte[numBlockCodewords]);
+-      }
+-    }
++    DataBlock[] result = Arrays.stream(ecBlockArray)
++        .flatMap(ecBlock -> IntStream.range(0, ecBlock.getCount()).mapToObj(i -> {
++          int numDataCodewords = ecBlock.getDataCodewords();
++          int numBlockCodewords = ecBlocks.getECCodewordsPerBlock() + numDataCodewords;
++          return new DataBlock(numDataCodewords, new byte[numBlockCodewords]);
++        }))
++        .toArray(DataBlock[]::new);
++    int numResultBlocks = result.length;
+ 
+     // All blocks have the same amount of data, except that the last n
+     // (where n may be 0) have 1 more byte. Figure out where these start.
+     int shorterBlocksTotalCodewords = result[0].codewords.length;
+-    int longerBlocksStartAt = result.length - 1;
+-    while (longerBlocksStartAt >= 0) {
+-      int numCodewords = result[longerBlocksStartAt].codewords.length;
+-      if (numCodewords == shorterBlocksTotalCodewords) {
+-        break;
+-      }
+-      longerBlocksStartAt--;
+-    }
+-    longerBlocksStartAt++;
++    int longerBlocksStartAt = IntStream.range(0, result.length)
++        .map(i -> result.length - 1 - i) // iterate in reverse order
++        .filter(i -> {
++          int numCodewords = result[i].codewords.length;
++          return numCodewords == shorterBlocksTotalCodewords;
++        })
++        .findFirst()
++        .orElse(-1) + 1;
+ 
+     int shorterBlocksNumDataCodewords = shorterBlocksTotalCodewords - ecBlocks.getECCodewordsPerBlock();
+     // The last elements of result may be 1 element longer;
+     // first fill out as many elements as all of them have
+-    int rawCodewordsOffset = 0;
+-    for (int i = 0; i < shorterBlocksNumDataCodewords; i++) {
+-      for (int j = 0; j < numResultBlocks; j++) {
+-        result[j].codewords[i] = rawCodewords[rawCodewordsOffset++];
+-      }
+-    }
++    IntStream.range(0, shorterBlocksNumDataCodewords).forEach(i ->
++        IntStream.range(0, numResultBlocks).forEach(j ->
++          result[j].codewords[i] = rawCodewords[i * numResultBlocks + j]
++        )
++    );
++    int rawOffsetAfterShorter = shorterBlocksNumDataCodewords * numResultBlocks;
++
+     // Fill out the last data block in the longer ones
+-    for (int j = longerBlocksStartAt; j < numResultBlocks; j++) {
+-      result[j].codewords[shorterBlocksNumDataCodewords] = rawCodewords[rawCodewordsOffset++];
+-    }
++    IntStream.range(longerBlocksStartAt, numResultBlocks).forEach(j -> {
++      int rawCodewordsOffset = rawOffsetAfterShorter + (j - longerBlocksStartAt);
++      result[j].codewords[shorterBlocksNumDataCodewords] = rawCodewords[rawCodewordsOffset];
++    });
++
+     // Now add in error correction blocks
+     int max = result[0].codewords.length;
+-    for (int i = shorterBlocksNumDataCodewords; i < max; i++) {
+-      for (int j = 0; j < numResultBlocks; j++) {
++    int rawOffsetAfterLonger = rawOffsetAfterShorter + (numResultBlocks - longerBlocksStartAt);
++    IntStream.range(shorterBlocksNumDataCodewords, max).forEach(i -> {
++      int rowOffset = i - shorterBlocksNumDataCodewords;
++      IntStream.range(0, numResultBlocks).forEach(j -> {
+         int iOffset = j < longerBlocksStartAt ? i : i + 1;
+-        result[j].codewords[iOffset] = rawCodewords[rawCodewordsOffset++];
+-      }
+-    }
++        int rawCodewordsOffset = rawOffsetAfterLonger + (rowOffset * numResultBlocks) + j;
++        result[j].codewords[iOffset] = rawCodewords[rawCodewordsOffset];
++      });
++    });
+     return result;
+   }
+ 
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/qrcode/decoder/Decoder.java ../build/core/src/main/java/com/google/zxing/qrcode/decoder/Decoder.java
+--- ./core/src/main/java/com/google/zxing/qrcode/decoder/Decoder.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/qrcode/decoder/Decoder.java	2026-07-05 18:00:34.916370914 +0100
+@@ -25,6 +25,7 @@
+ import com.google.zxing.common.reedsolomon.ReedSolomonDecoder;
+ import com.google.zxing.common.reedsolomon.ReedSolomonException;
+ 
++import java.util.Arrays;
+ import java.util.Map;
+ 
+ /**
+@@ -138,10 +139,7 @@
+     DataBlock[] dataBlocks = DataBlock.getDataBlocks(codewords, version, ecLevel);
+ 
+     // Count total number of data bytes
+-    int totalBytes = 0;
+-    for (DataBlock dataBlock : dataBlocks) {
+-      totalBytes += dataBlock.getNumDataCodewords();
+-    }
++    int totalBytes = Arrays.stream(dataBlocks).mapToInt(DataBlock::getNumDataCodewords).sum();
+     byte[] resultBytes = new byte[totalBytes];
+     int resultOffset = 0;
+ 
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/qrcode/decoder/Version.java ../build/core/src/main/java/com/google/zxing/qrcode/decoder/Version.java
+--- ./core/src/main/java/com/google/zxing/qrcode/decoder/Version.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/qrcode/decoder/Version.java	2026-07-05 18:00:34.916571635 +0100
+@@ -19,6 +19,8 @@
+ import com.google.zxing.FormatException;
+ import com.google.zxing.common.BitMatrix;
+ 
++import java.util.Arrays;
++
+ /**
+  * See ISO 18004:2006 Annex D
+  *
+@@ -53,13 +55,11 @@
+     this.versionNumber = versionNumber;
+     this.alignmentPatternCenters = alignmentPatternCenters;
+     this.ecBlocks = ecBlocks;
+-    int total = 0;
+     int ecCodewords = ecBlocks[0].getECCodewordsPerBlock();
+     ECB[] ecbArray = ecBlocks[0].getECBlocks();
+-    for (ECB ecBlock : ecbArray) {
+-      total += ecBlock.getCount() * (ecBlock.getDataCodewords() + ecCodewords);
+-    }
+-    this.totalCodewords = total;
++    this.totalCodewords = Arrays.stream(ecbArray)
++      .mapToInt(ecBlock -> ecBlock.getCount() * (ecBlock.getDataCodewords() + ecCodewords))
++      .sum();
+   }
+ 
+   public int getVersionNumber() {
+@@ -194,11 +194,7 @@
+     }
+ 
+     public int getNumBlocks() {
+-      int total = 0;
+-      for (ECB ecBlock : ecBlocks) {
+-        total += ecBlock.getCount();
+-      }
+-      return total;
++      return Arrays.stream(ecBlocks).mapToInt(ECB::getCount).sum();
+     }
+ 
+     public int getTotalECCodewords() {
+diff '--color=auto' -ur ./core/src/main/java/com/google/zxing/qrcode/encoder/MinimalEncoder.java ../build/core/src/main/java/com/google/zxing/qrcode/encoder/MinimalEncoder.java
+--- ./core/src/main/java/com/google/zxing/qrcode/encoder/MinimalEncoder.java	2026-06-19 15:15:54.000000000 +0100
++++ ../build/core/src/main/java/com/google/zxing/qrcode/encoder/MinimalEncoder.java	2026-07-05 18:00:34.916836646 +0100
+@@ -26,6 +26,8 @@
+ import java.nio.charset.Charset;
+ import java.util.ArrayList;
+ import java.util.List;
++import java.util.stream.Collectors;
++import java.util.stream.IntStream;
+ 
+ 
+ /**
+@@ -151,7 +153,7 @@
+ 
+   static VersionSize getVersionSize(Version version) {
+     return version.getVersionNumber() <= 9 ? VersionSize.SMALL : version.getVersionNumber() <= 26 ?
+-      VersionSize.MEDIUM : VersionSize.LARGE;
++        VersionSize.MEDIUM : VersionSize.LARGE;
+   }
+ 
+   static Version getVersion(VersionSize versionSize) {
+@@ -226,11 +228,11 @@
+       end = priorityEncoderIndex + 1;
+     }
+ 
+-    for (int i = start; i < end; i++) {
+-      if (encoders.canEncode(stringToEncode.charAt(from), i)) {
+-        addEdge(edges, from, new Edge(Mode.BYTE, from, i, 1, previous, version));
+-      }
+-    }
++    IntStream.range(start, end)
++        .filter(i -> encoders.canEncode(stringToEncode.charAt(from), i))
++        .forEach(i ->
++          addEdge(edges, from, new Edge(Mode.BYTE, from, i, 1, previous, version))
++        );
+ 
+     if (canEncode(Mode.KANJI, stringToEncode.charAt(from))) {
+       addEdge(edges, from, new Edge(Mode.KANJI, from, 0, 1, previous, version));
+@@ -371,16 +373,14 @@
+     Edge[][][] edges = new Edge[inputLength + 1][encoders.length()][4];
+     addEdges(version, edges, 0, null);
+ 
+-    for (int i = 1; i <= inputLength; i++) {
+-      for (int j = 0; j < encoders.length(); j++) {
+-        for (int k = 0; k < 4; k++) {
+-          if (edges[i][j][k] != null && i < inputLength) {
+-            addEdges(version, edges, i, edges[i][j][k]);
+-          }
+-        }
+-      }
++    IntStream.rangeClosed(1, inputLength).forEach(i ->
++        IntStream.range(0, encoders.length()).forEach(j ->
++            IntStream.range(0, 4)
++                .filter(k -> edges[i][j][k] != null && i < inputLength)
++                .forEach(k -> addEdges(version, edges, i, edges[i][j][k]))
++        )
++    );
+ 
+-    }
+     int minimalJ = -1;
+     int minimalK = -1;
+     int minimalSize = Integer.MAX_VALUE;
+@@ -537,11 +537,9 @@
+     }
+ 
+     private int getSize(Version version) {
+-      int result = 0;
+-      for (ResultNode resultNode : list) {
+-        result += resultNode.getSize(version);
+-      }
+-      return result;
++      return list.stream()
++        .mapToInt(resultNode -> resultNode.getSize(version))
++        .sum();
+     }
+ 
+     /**
+@@ -558,16 +556,7 @@
+     }
+ 
+     public String toString() {
+-      StringBuilder result = new StringBuilder();
+-      ResultNode previous = null;
+-      for (ResultNode current : list) {
+-        if (previous != null) {
+-          result.append(",");
+-        }
+-        result.append(current.toString());
+-        previous = current;
+-      }
+-      return result.toString();
++      return list.stream().map(ResultNode::toString).collect(Collectors.joining(","));
+     }
+ 
+     final class ResultNode {
+@@ -653,13 +642,9 @@
+ 
+       private String makePrintable(String s) {
+         StringBuilder result = new StringBuilder();
+-        for (int i = 0; i < s.length(); i++) {
+-          if (s.charAt(i) < 32 || s.charAt(i) > 126) {
+-            result.append('.');
+-          } else {
+-            result.append(s.charAt(i));
+-          }
+-        }
++        IntStream.range(0, s.length())
++            .map(i -> s.charAt(i) < 32 || s.charAt(i) > 126 ? '.' : s.charAt(i))
++            .forEach(result::append);
+         return result.toString();
+       }
+     }
+diff '--color=auto' -ur ./javase/src/main/java/com/google/zxing/client/j2se/BufferedImageLuminanceSource.java ../build/javase/src/main/java/com/google/zxing/client/j2se/BufferedImageLuminanceSource.java
+--- ./javase/src/main/java/com/google/zxing/client/j2se/BufferedImageLuminanceSource.java	2026-06-19 15:15:55.000000000 +0100
++++ ../build/javase/src/main/java/com/google/zxing/client/j2se/BufferedImageLuminanceSource.java	2026-07-05 18:00:34.917151909 +0100
+@@ -74,7 +74,7 @@
+             // (306*R) >> 10 is approximately equal to R*0.299, and so on.
+             // 0x200 >> 10 is 0.5, it implements rounding.
+             buffer[x] =
+-              (306 * ((pixel >> 16) & 0xFF) +
++                (306 * ((pixel >> 16) & 0xFF) +
+                 601 * ((pixel >> 8) & 0xFF) +
+                 117 * (pixel & 0xFF) +
+                 0x200) >> 10;
 diff '--color=auto' -ur ./javase/src/main/java/com/google/zxing/client/j2se/CommandLineRunner.java ../build/javase/src/main/java/com/google/zxing/client/j2se/CommandLineRunner.java
---- ./javase/src/main/java/com/google/zxing/client/j2se/CommandLineRunner.java	2023-08-08 10:29:55.000000000 +0000
-+++ ../build/javase/src/main/java/com/google/zxing/client/j2se/CommandLineRunner.java	2023-10-30 02:48:00.388221702 +0000
+--- ./javase/src/main/java/com/google/zxing/client/j2se/CommandLineRunner.java	2026-06-19 15:15:55.000000000 +0100
++++ ../build/javase/src/main/java/com/google/zxing/client/j2se/CommandLineRunner.java	2026-07-05 18:00:34.917340837 +0100
 @@ -83,7 +83,8 @@
      }
  
@@ -21,8 +2536,8 @@ diff '--color=auto' -ur ./javase/src/main/java/com/google/zxing/client/j2se/Comm
            " successfully (" + (successful * 100 / numInputs) + "%)\n");
      }
 diff '--color=auto' -ur ./javase/src/main/java/com/google/zxing/client/j2se/DecodeWorker.java ../build/javase/src/main/java/com/google/zxing/client/j2se/DecodeWorker.java
---- ./javase/src/main/java/com/google/zxing/client/j2se/DecodeWorker.java	2023-08-08 10:29:55.000000000 +0000
-+++ ../build/javase/src/main/java/com/google/zxing/client/j2se/DecodeWorker.java	2023-10-30 02:39:30.405232036 +0000
+--- ./javase/src/main/java/com/google/zxing/client/j2se/DecodeWorker.java	2026-06-19 15:15:55.000000000 +0100
++++ ../build/javase/src/main/java/com/google/zxing/client/j2se/DecodeWorker.java	2026-07-05 18:04:26.369782401 +0100
 @@ -22,9 +22,9 @@
  import com.google.zxing.MultiFormatReader;
  import com.google.zxing.NotFoundException;
@@ -100,3 +2615,72 @@ diff '--color=auto' -ur ./javase/src/main/java/com/google/zxing/client/j2se/Deco
      return results;
    }
  
+diff '--color=auto' -ur ./javase/src/main/java/com/google/zxing/client/j2se/StringsResourceTranslator.java ../build/javase/src/main/java/com/google/zxing/client/j2se/StringsResourceTranslator.java
+--- ./javase/src/main/java/com/google/zxing/client/j2se/StringsResourceTranslator.java	2026-06-19 15:15:55.000000000 +0100
++++ ../build/javase/src/main/java/com/google/zxing/client/j2se/StringsResourceTranslator.java	2026-07-05 18:00:34.917753210 +0100
+@@ -220,12 +220,12 @@
+   private static Map<String,String> readLines(Path file) throws IOException {
+     if (Files.exists(file)) {
+       Map<String,String> entries = new TreeMap<>();
+-      for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
++      Files.readAllLines(file, StandardCharsets.UTF_8).forEach(line -> {
+         Matcher m = ENTRY_PATTERN.matcher(line);
+         if (m.find()) {
+           entries.put(m.group(1), m.group(2));
+         }
+-      }
++      });
+       return entries;
+     } else {
+       return Collections.emptyMap();
+diff '--color=auto' -ur ./zxing.appspot.com/src/main/java/com/google/zxing/web/generator/client/Generator.java ../build/zxing.appspot.com/src/main/java/com/google/zxing/web/generator/client/Generator.java
+--- ./zxing.appspot.com/src/main/java/com/google/zxing/web/generator/client/Generator.java	2026-06-19 15:15:55.000000000 +0100
++++ ../build/zxing.appspot.com/src/main/java/com/google/zxing/web/generator/client/Generator.java	2026-07-05 18:00:34.917985171 +0100
+@@ -124,10 +124,10 @@
+         "<span id=\"errorMessageID\" class=\"" + StylesDefs.ERROR_MESSAGE + "\"></span>");
+ 
+     // fills up the list of generators
+-    for (GeneratorSource generator: generators) {
++    generators.stream().forEach(generator -> {
+       genList.addItem(generator.getName());
+       setGridStyle(generator.getWidget());
+-    }
++    });
+ 
+     sizeList.addItem("Small", "120");
+     sizeList.addItem("Medium", "230");
+diff '--color=auto' -ur ./zxingorg/src/main/java/com/google/zxing/web/DecodeServlet.java ../build/zxingorg/src/main/java/com/google/zxing/web/DecodeServlet.java
+--- ./zxingorg/src/main/java/com/google/zxing/web/DecodeServlet.java	2026-06-19 15:15:55.000000000 +0100
++++ ../build/zxingorg/src/main/java/com/google/zxing/web/DecodeServlet.java	2026-07-05 18:00:34.918213744 +0100
+@@ -314,13 +314,10 @@
+       errorResponse(request, response, "badimage");
+       return;
+     }
+-    Part fileUploadPart = null;
+-    for (Part part : parts) {
+-      if (part.getHeader(HttpHeaders.CONTENT_DISPOSITION) != null) {
+-        fileUploadPart = part;
+-        break;
+-      }
+-    }
++    Part fileUploadPart = parts.stream()
++        .filter(part -> part.getHeader(HttpHeaders.CONTENT_DISPOSITION) != null)
++        .findFirst()
++        .orElse(null);
+     if (fileUploadPart == null) {
+       log.info("File upload was not multipart");
+       errorResponse(request, response, "badimage");
+diff '--color=auto' -ur ./zxingorg/src/main/java/com/google/zxing/web/DoSFilter.java ../build/zxingorg/src/main/java/com/google/zxing/web/DoSFilter.java
+--- ./zxingorg/src/main/java/com/google/zxing/web/DoSFilter.java	2026-06-19 15:15:55.000000000 +0100
++++ ../build/zxingorg/src/main/java/com/google/zxing/web/DoSFilter.java	2026-07-05 18:00:34.918432412 +0100
+@@ -94,8 +94,8 @@
+     }
+     // Non-short-circuit "|" below is on purpose
+     return
+-      (remoteHost != null && sourceAddrTracker.isBanned(remoteHost)) |
+-      sourceAddrTracker.isBanned(request.getRemoteAddr());
++        (remoteHost != null && sourceAddrTracker.isBanned(remoteHost)) |
++        sourceAddrTracker.isBanned(request.getRemoteAddr());
+   }
+ 
+   @Override
