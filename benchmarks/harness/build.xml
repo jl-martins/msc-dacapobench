@@ -39,6 +39,10 @@
     <property name="hdrhistogram-url" value="https://github.com/HdrHistogram/HdrHistogram/archive/refs/tags/"/>
     <property name="hdrhistogram-name" value="HdrHistogram-${hdrhistogram-version}.zip"/>
 
+    <property name="async-profiler-version" value="4.4"/>
+    <property name="async-profiler-url" value="${maven.url}/tools/profiler/async-profiler/${async-profiler-version}"/>
+    <property name="async-profiler-name" value="async-profiler-${async-profiler-version}.jar"/>
+
     <property name="allocation-instrumenter-version" value="3.3.4"/>
     <property name="allocation-instrumenter-url" value="${maven.url}/com/google/code/java-allocation-instrumenter/java-allocation-instrumenter/${allocation-instrumenter-version}"/>
     <property name="allocation-instrumenter-name" value="java-allocation-instrumenter-${allocation-instrumenter-version}.jar"/>
@@ -97,6 +101,12 @@
 
         <antcall target="check-source">
             <param name="target-dir" value="${harness-downloads}"/>
+            <param name="target-url" value="${async-profiler-url}"/>
+            <param name="target-file" value="${async-profiler-name}"/>
+        </antcall>
+
+        <antcall target="check-source">
+            <param name="target-dir" value="${harness-downloads}"/>
             <param name="target-url" value="${allocation-instrumenter-url}"/>
             <param name="target-file" value="${allocation-instrumenter-name}"/>
         </antcall>
@@ -120,6 +130,9 @@
 
         <!-- unjar from jaxb-core-<version>.jar into ${output-dir} -->
         <unjar src="${harness-downloads}/${jaxb-impl-name}" dest="${output-dir}"/>
+
+        <!-- unjar from async-profiler-<version>.jar into ${output-dir} -->
+        <unjar src="${harness-downloads}/${async-profiler-name}" dest="${output-dir}"/>
 
         <copy file="${harness-downloads}/${allocation-instrumenter-name}" todir="${build.target-jars}"/>
 
