@@ -1,5 +1,6 @@
---- commons-httpclient-3.1/build.xml	2007-08-18 19:02:14.000000000 +1000
-+++ ../build-new.xml	2017-12-06 13:49:28.000000000 +1100
+diff '--color=auto' -ur commons-httpclient-3.1/build.xml ../build/commons-httpclient-3.1/build.xml
+--- commons-httpclient-3.1/build.xml	2007-08-18 10:02:14.000000000 +0100
++++ ../build/commons-httpclient-3.1/build.xml	2026-07-03 14:27:57.269217987 +0100
 @@ -181,14 +181,16 @@
             destdir     ="${build.home}/classes"
             debug       ="${compile.debug}"
@@ -37,3 +38,416 @@
      >
        <classpath refid="test.classpath"/>
        <link href="${javadoc.j2sdk.link}"/>
+diff '--color=auto' -ur commons-httpclient-3.1/src/java/org/apache/commons/httpclient/cookie/CookieSpecBase.java ../build/commons-httpclient-3.1/src/java/org/apache/commons/httpclient/cookie/CookieSpecBase.java
+--- commons-httpclient-3.1/src/java/org/apache/commons/httpclient/cookie/CookieSpecBase.java	2007-08-18 10:02:15.000000000 +0100
++++ ../build/commons-httpclient-3.1/src/java/org/apache/commons/httpclient/cookie/CookieSpecBase.java	2026-07-03 14:27:57.269505557 +0100
+@@ -34,6 +34,7 @@
+ import java.util.Date;
+ import java.util.LinkedList;
+ import java.util.List;
++import java.util.stream.IntStream;
+ 
+ import org.apache.commons.httpclient.Cookie;
+ import org.apache.commons.httpclient.Header;
+@@ -553,11 +554,9 @@
+             return null;
+         }
+         List matching = new LinkedList();
+-        for (int i = 0; i < cookies.length; i++) {
+-            if (match(host, port, path, secure, cookies[i])) {
+-                addInPathOrder(matching, cookies[i]);
+-            }
+-        }
++        IntStream.range(0, cookies.length)
++                .filter(i -> match(host, port, path, secure, cookies[i]))
++                .forEach(i -> addInPathOrder(matching, cookies[i]));
+         return (Cookie[]) matching.toArray(new Cookie[matching.size()]);
+     }
+ 
+diff '--color=auto' -ur commons-httpclient-3.1/src/java/org/apache/commons/httpclient/HeaderGroup.java ../build/commons-httpclient-3.1/src/java/org/apache/commons/httpclient/HeaderGroup.java
+--- commons-httpclient-3.1/src/java/org/apache/commons/httpclient/HeaderGroup.java	2007-08-18 10:02:14.000000000 +0100
++++ ../build/commons-httpclient-3.1/src/java/org/apache/commons/httpclient/HeaderGroup.java	2026-07-03 14:27:57.269771247 +0100
+@@ -31,8 +31,13 @@
+ package org.apache.commons.httpclient;
+ 
+ import java.util.ArrayList;
++import java.util.Arrays;
+ import java.util.Iterator;
+ import java.util.List;
++import java.util.Spliterator;
++import java.util.Spliterators;
++import java.util.stream.Collectors;
++import java.util.stream.StreamSupport;
+ 
+ /**
+  * A class for combining a set of headers.  This class allows for multiple
+@@ -115,14 +120,11 @@
+         } else if (headers.length == 1) {
+             return new Header(headers[0].getName(), headers[0].getValue());
+         } else {
+-            StringBuffer valueBuffer = new StringBuffer(headers[0].getValue());
+-            
+-            for (int i = 1; i < headers.length; i++) {
+-                valueBuffer.append(", ");
+-                valueBuffer.append(headers[i].getValue());
+-            }
+-            
+-            return new Header(name.toLowerCase(), valueBuffer.toString());
++            String value = Arrays.stream(headers)
++                    .map(Header::getValue)
++                    .collect(Collectors.joining(", "));
++
++            return new Header(name.toLowerCase(), value);
+         }
+     }
+     
+@@ -137,16 +139,15 @@
+      * @return an array of length >= 0
+      */
+     public Header[] getHeaders(String name) {
+-        ArrayList headersFound = new ArrayList();
+-        
+-        for (Iterator headerIter = headers.iterator(); headerIter.hasNext();) {
+-            Header header = (Header) headerIter.next();
+-            if (header.getName().equalsIgnoreCase(name)) {
+-                headersFound.add(header);
+-            }
+-        }
+-        
+-        return (Header[]) headersFound.toArray(new Header[headersFound.size()]);
++        @SuppressWarnings("unchecked")
++        Spliterator<Header> headerSpliterator = Spliterators.spliteratorUnknownSize(
++                headers.iterator(),
++                Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.IMMUTABLE
++        );
++
++        return StreamSupport.stream(headerSpliterator, false)
++                .filter(header -> header.getName().equalsIgnoreCase(name))
++                .toArray(Header[]::new);
+     }
+     
+     /**
+@@ -158,14 +159,16 @@
+      * @return the first header or <code>null</code>
+      */
+     public Header getFirstHeader(String name) {
+-        for (Iterator headerIter = headers.iterator(); headerIter.hasNext();) {
+-            Header header = (Header) headerIter.next();
+-            if (header.getName().equalsIgnoreCase(name)) {
+-                return header;
+-            }
+-        }
+-        
+-        return null;                
++        @SuppressWarnings("unchecked")
++        Spliterator<Header> headerSpliterator = Spliterators.spliteratorUnknownSize(
++                headers.iterator(),
++                Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.IMMUTABLE
++        );
++
++        return StreamSupport.stream(headerSpliterator, false)
++                .filter(h -> h.getName().equalsIgnoreCase(name))
++                .findFirst()
++                .orElse(null);
+     }
+     
+     /**
+diff '--color=auto' -ur commons-httpclient-3.1/src/java/org/apache/commons/httpclient/HttpMethodBase.java ../build/commons-httpclient-3.1/src/java/org/apache/commons/httpclient/HttpMethodBase.java
+--- commons-httpclient-3.1/src/java/org/apache/commons/httpclient/HttpMethodBase.java	2007-08-18 10:02:15.000000000 +0100
++++ ../build/commons-httpclient-3.1/src/java/org/apache/commons/httpclient/HttpMethodBase.java	2026-07-03 14:27:57.270110766 +0100
+@@ -35,7 +35,9 @@
+ import java.io.IOException;
+ import java.io.InputStream;
+ import java.io.InterruptedIOException;
++import java.util.Arrays;
+ import java.util.Collection;
++import java.util.stream.IntStream;
+ 
+ import org.apache.commons.httpclient.auth.AuthState;
+ import org.apache.commons.httpclient.cookie.CookiePolicy;
+@@ -638,18 +640,23 @@
+         if (headers.length > 1) {
+             LOG.warn("Multiple content-length headers detected");
+         }
+-        for (int i = headers.length - 1; i >= 0; i--) {
+-            Header header = headers[i];
+-            try {
+-                return Long.parseLong(header.getValue());
+-            } catch (NumberFormatException e) {
+-                if (LOG.isWarnEnabled()) {
+-                    LOG.warn("Invalid content-length value: " + e.getMessage());
+-                }
+-            }
+-            // See if we can have better luck with another header, if present
+-        }
+-        return -1;
++        return IntStream.range(0, headers.length)
++                .map(i -> headers.length - 1 - i)  // iterate in reverse order
++                .mapToObj(i -> headers[i])
++                .mapToLong(header -> {
++                    try {
++                        return Long.parseLong(header.getValue());
++                    } catch (NumberFormatException e) {
++                        if (LOG.isWarnEnabled()) {
++                            LOG.warn("Invalid content-length value: " + e.getMessage());
++                        }
++                    }
++                    // See if we can have better luck with another header, if present
++                    return -1L;
++                })
++                .filter(contentLength -> contentLength != -1L)
++                .findFirst()
++                .orElse(-1L);
+     }
+ 
+ 
+@@ -1267,12 +1274,9 @@
+                   + "HttpConnection)");
+ 
+         Header[] cookieheaders = getRequestHeaderGroup().getHeaders("Cookie");
+-        for (int i = 0; i < cookieheaders.length; i++) {
+-            Header cookieheader = cookieheaders[i];
+-            if (cookieheader.isAutogenerated()) {
+-                getRequestHeaderGroup().removeHeader(cookieheader);
+-            }
+-        }
++        Arrays.stream(cookieheaders)
++                .filter(Header::isAutogenerated)
++                .forEach(cookieheader -> getRequestHeaderGroup().removeHeader(cookieheader));
+ 
+         CookieSpec matcher = getCookieSpec(state);
+         String host = this.params.getVirtualHost();
+@@ -1288,20 +1292,16 @@
+                 getRequestHeaderGroup().addHeader(new Header("Cookie", s, true));
+             } else {
+                 // In non-strict mode put each cookie on a separate header
+-                for (int i = 0; i < cookies.length; i++) {
+-                    String s = matcher.formatCookie(cookies[i]);
+-                    getRequestHeaderGroup().addHeader(new Header("Cookie", s, true));
+-                }
++                Arrays.stream(cookies)
++                        .map(matcher::formatCookie)
++                        .forEach(s -> getRequestHeaderGroup().addHeader(new Header("Cookie", s, true)));
+             }
+             if (matcher instanceof CookieVersionSupport) {
+                 CookieVersionSupport versupport = (CookieVersionSupport) matcher;
+                 int ver = versupport.getVersion();
+-                boolean needVersionHeader = false;
+-                for (int i = 0; i < cookies.length; i++) {
+-                    if (ver != cookies[i].getVersion()) {
+-                        needVersionHeader = true;
+-                    }
+-                }
++                boolean needVersionHeader = Arrays.stream(cookies)
++                        .mapToInt(Cookie::getVersion)
++                        .anyMatch(cookieVersion -> cookieVersion != ver);
+                 if (needVersionHeader) {
+                     // Advertise cookie version support
+                     getRequestHeaderGroup().addHeader(versupport.getVersionHeader());
+diff '--color=auto' -ur commons-httpclient-3.1/src/java/org/apache/commons/httpclient/HttpParser.java ../build/commons-httpclient-3.1/src/java/org/apache/commons/httpclient/HttpParser.java
+--- commons-httpclient-3.1/src/java/org/apache/commons/httpclient/HttpParser.java	2007-08-18 10:02:14.000000000 +0100
++++ ../build/commons-httpclient-3.1/src/java/org/apache/commons/httpclient/HttpParser.java	2026-07-03 14:27:57.270527191 +0100
+@@ -33,9 +33,14 @@
+ import java.io.IOException;
+ import java.io.InputStream;
+ import java.io.ByteArrayOutputStream;
++import java.io.UncheckedIOException;
+ import java.util.ArrayList;
++import java.util.List;
++import java.util.function.Consumer;
++import java.util.stream.Stream;
+ 
+ import org.apache.commons.httpclient.util.EncodingUtil;
++import org.apache.commons.httpclient.util.StreamExtensions;
+ import org.apache.commons.logging.Log;
+ import org.apache.commons.logging.LogFactory;
+ 
+@@ -169,15 +174,55 @@
+     public static Header[] parseHeaders(InputStream is, String charset) throws IOException, HttpException {
+         LOG.trace("enter HeaderParser.parseHeaders(InputStream, String)");
+ 
+-        ArrayList headers = new ArrayList();
+-        String name = null;
+-        StringBuffer value = null;
+-        for (; ;) {
+-            String line = HttpParser.readLine(is, charset);
+-            if ((line == null) || (line.trim().length() < 1)) {
+-                break;
++        Stream<String> lineStream = Stream.generate(() -> {
++            try {
++                return HttpParser.readLine(is, charset);
++            } catch (IOException e) {
++                throw new UncheckedIOException(e);
+             }
++        });
++        HeaderAccumulator accumulator = new HeaderAccumulator();
++        try {
++            StreamExtensions.takeWhile(lineStream, line -> (line != null) && (line.trim().length() >= 1))
++                    .forEach(accumulator::accept);
++        } catch (UncheckedIOException e) {
++            throw e.getCause();
++        }
++
++        return accumulator.getResult();
++    }
+ 
++    /**
++     * Parses headers from the given stream.  Headers with the same name are not
++     * combined.
++     * 
++     * @param is the stream to read headers from
++     * 
++     * @return an array of headers in the order in which they were parsed
++     * 
++     * @throws IOException if an IO error occurs while reading from the stream
++     * @throws HttpException if there is an error parsing a header value
++     * 
++     * @deprecated use #parseHeaders(InputStream, String)
++     */
++    public static Header[] parseHeaders(InputStream is) throws IOException, HttpException {
++        LOG.trace("enter HeaderParser.parseHeaders(InputStream, String)");
++        return parseHeaders(is, "US-ASCII");
++    }
++
++    private static final class HeaderAccumulator implements Consumer<String> {
++        private final List<Header> headers;
++        private String name;
++        private StringBuffer value;
++
++        private HeaderAccumulator() {
++            this.headers = new ArrayList<>();
++            this.name = null;
++            this.value = null;
++        }
++
++        @Override
++        public void accept(String line) {
+             // Parse the header name and value
+             // Check for folded headers first
+             // Detect LWS-char see HTTP/1.0 or HTTP/1.1 Section 2.2
+@@ -199,37 +244,20 @@
+                 // Parse the header name and value
+                 int colon = line.indexOf(":");
+                 if (colon < 0) {
+-                    throw new ProtocolException("Unable to parse header: " + line);
++                    throw new UncheckedIOException(new ProtocolException("Unable to parse header: " + line));
+                 }
+                 name = line.substring(0, colon).trim();
+                 value = new StringBuffer(line.substring(colon + 1).trim());
+             }
+-
+         }
+ 
+-        // make sure we save the last name,value pair if present
+-        if (name != null) {
+-            headers.add(new Header(name, value.toString()));
+-        }
+-        
+-        return (Header[]) headers.toArray(new Header[headers.size()]);    
+-    }
++        public Header[] getResult() {
++            // make sure we save the last name,value pair if present
++            if (name != null) {
++                headers.add(new Header(name, value.toString()));
++            }
+ 
+-    /**
+-     * Parses headers from the given stream.  Headers with the same name are not
+-     * combined.
+-     * 
+-     * @param is the stream to read headers from
+-     * 
+-     * @return an array of headers in the order in which they were parsed
+-     * 
+-     * @throws IOException if an IO error occurs while reading from the stream
+-     * @throws HttpException if there is an error parsing a header value
+-     * 
+-     * @deprecated use #parseHeaders(InputStream, String)
+-     */
+-    public static Header[] parseHeaders(InputStream is) throws IOException, HttpException {
+-        LOG.trace("enter HeaderParser.parseHeaders(InputStream, String)");
+-        return parseHeaders(is, "US-ASCII");
++            return headers.toArray(new Header[headers.size()]);
++        }
+     }
+ }
+--- ./commons-httpclient-3.1/src/java/org/apache/commons/httpclient/util/StreamExtensions.java	1970-01-01 01:00:00.000000000 +0100
++++ ../build/commons-httpclient-3.1/src/java/org/apache/commons/httpclient/util/StreamExtensions.java	2026-07-03 15:29:54.722891116 +0100
+@@ -0,0 +1,77 @@
++package org.apache.commons.httpclient.util;
++
++import java.util.Comparator;
++import java.util.Objects;
++import java.util.Spliterator;
++import java.util.function.Consumer;
++import java.util.function.Predicate;
++import java.util.stream.Stream;
++import java.util.stream.StreamSupport;
++
++public final class StreamExtensions {
++    private StreamExtensions() {
++        // utility class
++    }
++
++    public static <T> Stream<T> takeWhile(Stream<T> stream, Predicate<? super T> predicate) {
++        Objects.requireNonNull(stream, "stream must not be null");
++        Objects.requireNonNull(predicate, "predicate must not be null");
++        Spliterator<T> source = stream.spliterator();
++        Spliterator<T> takeWhileSpliterator = new StreamExtensions.TakeWhileSpliterator<>(source, predicate);
++        return StreamSupport.stream(takeWhileSpliterator, false);
++    }
++
++    private static final class TakeWhileSpliterator<T> implements Spliterator<T>, Consumer<T> {
++        private final Spliterator<T> source;
++        private final Predicate<? super T> predicate;
++
++        private boolean taking = true;
++        private T currentElement = null;
++
++        public TakeWhileSpliterator(Spliterator<T> source, Predicate<? super T> predicate) {
++            this.source = source;
++            this.predicate = predicate;
++        }
++
++        @Override
++        public void accept(T t) {
++            this.currentElement = t;
++        }
++
++        @Override
++        public boolean tryAdvance(Consumer<? super T> action) {
++            Objects.requireNonNull(action, "action must not be null");
++            if (!taking) {
++                return false;
++            }
++
++            taking = source.tryAdvance(this) && predicate.test(currentElement);
++            if (taking) {
++                action.accept(currentElement);
++            }
++
++            currentElement = null;  // allow GC of the processed element (if any)
++            return taking;
++        }
++
++        @Override
++        public Spliterator<T> trySplit() {
++            return null;  // preserve ordered takeWhile semantics
++        }
++
++        @Override
++        public long estimateSize() {
++            return taking ? source.estimateSize() : 0;
++        }
++
++        @Override
++        public int characteristics() {
++            return source.characteristics() & (~Spliterator.SIZED | ~Spliterator.SUBSIZED);
++        }
++
++        @Override
++        public Comparator<? super T> getComparator() {
++            return source.getComparator();
++        }
++    }
++}
