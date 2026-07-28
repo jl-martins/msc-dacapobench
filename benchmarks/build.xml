@@ -185,7 +185,7 @@
         <property name="build.nickname" value="${dacapo.nickname}"/>
         <!-- overwritable with -Dbuild.is-official=true on commandline-->
         <condition property="build.version"
-                    value="${dacapo.version}-${dacapo.nickname}"
+                    value="${dacapo.version}-${dacapo.nickname}-${dacapo.fork}-${dacapo.impl}"
                     else="${dacapo.version}-git-${git.hash}${git.dirty}">
             <isset property="build.is-official"/>
         </condition>
